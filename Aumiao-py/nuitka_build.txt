@@ -1,0 +1,1 @@
+python -m nuitka --standalone --main="main.py" --company-name="Aumiao Team" --product-name="Aumiao" --file-version="2.0.0" --product-version="2.0.0 alpha" --file-description="A Codemao Community Tool" --follow-imports --copyright="Copyright © 2023 喵鱼a. All rights reserved. " --output-filename="Aumiao" 

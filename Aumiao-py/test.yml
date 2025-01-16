@@ -1,0 +1,44 @@
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      # Check-out repository
+      - uses: actions/checkout@v4
+
+      # Setup Python
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13" # Version range or exact version of a Python version to use, using SemVer's version range syntax
+          architecture: "x64" # optional x64 or x86. Defaults to x64 if not specified
+
+      #Install Dependencies
+      - name: Install Dependencies
+        run: |
+          pip install -r requirements.txt
+
+      # Build python script into a single execute or app folder (macOS)
+      - uses: Nuitka/Nuitka-Action@main
+        with:
+          nuitka-version: main
+          script-name: main.py
+          mode: standalone
+          company-name: "Aumiao Team"
+          product-name: "Aumiao"
+          file-version: "2.0.0"
+          product-version: "2.0.0 alpha"
+          file-description: "A Codemao Community Tool"
+          copyright: "Copyright © 2023 喵鱼a. All rights reserved. "
+
+      #python -m nuitka --standalone --main="main.py" --company-name="Aumiao Team" --product-name="Aumiao" --file-version="2.0.0" --product-version="2.0.0 alpha" --file-description="A Codemao Community Tool" --follow-imports --copyright="Copyright © 2023 喵鱼a. All rights reserved. " --output-filename="Aumiao"
+
+      # Uploads artifact
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ runner.os }} Build
+          path: |
+            build/*.exe
+            build/*.bin
+            build/*.app/**/*
+          include-hidden-files: true

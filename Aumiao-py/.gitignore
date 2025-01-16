@@ -1,0 +1,9 @@
+*.VSCodeCounter/
+*.venv/
+*.vscode/
+*__pycache__/
+*data/
+*dist/
+*test.py
+*test/
+*log/
