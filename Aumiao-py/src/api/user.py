@@ -46,14 +46,15 @@ class Obtain:
 		)
 		return response.json()
 
+	# BUG 貌似api不起作用
 	# 获取账户信息(简略)
-	def get_data_info(self) -> dict:
-		response = self.acquire.send_request(
-			method="get",
-			url="/web/users/info",
-		)
+	# def get_data_info(self) -> dict:
+	# 	response = self.acquire.send_request(
+	# 		method="get",
+	# 		url="/web/user/info",
+	# 	)
 
-		return response.json()
+	# 	return response.json()
 
 	# 获取账户信息
 	def get_data_profile(self, method: Literal["web", "app"]):

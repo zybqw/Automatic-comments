@@ -12,8 +12,6 @@ from . import file as File
 from . import tool as Tool
 from .decorator import singleton
 
-session = requests.session()
-
 LOG_FILE_PATH: str = path.join(getcwd(), "log", f"{int(time.time())}.txt")
 
 
@@ -21,12 +19,12 @@ LOG_FILE_PATH: str = path.join(getcwd(), "log", f"{int(time.time())}.txt")
 class CodeMaoClient:
 	def __init__(self) -> None:
 		"""初始化 CodeMaoClient 实例,设置基本的请求头和基础 URL."""
+		self.session = requests.session()
 		self.data = Data.CodeMaoSetting()
 		self.tool_process = Tool.CodeMaoProcess()
 		self.file = File.CodeMaoFile()
 		self.HEADERS: dict = self.data.setting["PROGRAM"]["HEADERS"]
 		self.BASE_URL: str = "https://api.codemao.cn"
-		global session  # noqa: PLW0602
 
 	def send_request(
 		self,
@@ -53,7 +51,7 @@ class CodeMaoClient:
 		url = url if "http" in url else f"{self.BASE_URL}{url}"
 		time.sleep(sleep)
 		try:
-			response = session.request(method=method, url=url, headers=headers, params=params, data=data)
+			response = self.session.request(method=method, url=url, headers=headers, params=params, data=data)
 			response.raise_for_status()
 			if log:
 				log_content = [
@@ -137,16 +135,24 @@ class CodeMaoClient:
 
 		return all_data
 
-	def update_cookie(self, cookie: requests.cookies.RequestsCookieJar):
+	def update_cookie(self, cookie: requests.cookies.RequestsCookieJar | dict | str) -> bool:
 		"""
 		更新会话的 Cookie.
-
 		:param cookie: 要更新的 Cookie,可以是 RequestsCookieJar、字典或字符串.
 		:return: True 如果更新成功.
 		:raises ValueError: 如果 cookie 类型不支持.
 		"""
-		cookie_dict: dict = requests.utils.dict_from_cookiejar(cookie)
-		cookie_str: str = self.tool_process.convert_cookie_to_str(cookie_dict)
+		match cookie:
+			case requests.cookies.RequestsCookieJar():
+				cookie_dict = requests.utils.dict_from_cookiejar(cookie)
+				cookie_str = self.tool_process.convert_cookie_to_str(cookie_dict)
+			case dict():
+				cookie_dict = cookie
+				cookie_str = self.tool_process.convert_cookie_to_str(cookie_dict)
+			case str():
+				cookie_str = cookie
+			case _:
+				raise ValueError("不支持的cookie类型")
+
 		self.HEADERS.update({"Cookie": cookie_str})
-		session.cookies.update(cookie)
 		return True

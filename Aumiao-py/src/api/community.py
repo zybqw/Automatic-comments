@@ -51,13 +51,13 @@ class Login:
 		except (KeyError, ValueError) as err:
 			print(f"表达式输入不合法 {err}")
 			return False
-		response = self.acquire.send_request(
+		self.acquire.send_request(
 			url=self.setting["PARAMETER"]["CLIENT"]["cookie_check_url"],
 			method="post",
 			data=json.dumps({}),
 			headers={**self.acquire.HEADERS, "cookie": cookies},
 		)
-		self.acquire.update_cookie(response.cookies)
+		self.acquire.update_cookie(cookies)
 
 	# token登录(毛毡最新登录方式)
 	def login_token(self, identity: str, password: str, pid: str = "65edCTyg"):
@@ -67,17 +67,23 @@ class Login:
 		response = self.get_login_security(identity=identity, password=password, ticket=ticket, pid=pid)
 
 	# 返回完整鉴权cookie
-	# def get_login_auth(self, token):
-	# 	response = src.base_acquire.send_request(url="https://shequ.codemao.cn/",method="get",)
-	# 	aliyungf_tc = response.cookies.get_dict()["aliyungf_tc"]
-	# 	uuid_ca = uuid.uuid1()
-	# 	token_ca = {"authorization": token, "__ca_uid_key__": str(uuid_ca)}
-	# 	cookie_str = self.tool_process.convert_cookie_to_str(token_ca)
-	# 	headers = {**self.acquire.HEADERS, "cookie": cookie_str}
-	# 	response = self.acquire.send_request(method="get", url="/web/users/details", headers=headers)
-	# 	_auth = response.cookies.get_dict()
-	# 	auth_cookie = {**token_ca, **_auth}
-	# 	return auth_cookie
+	def get_login_auth(self, token):
+		response = self.acquire.send_request(
+			url="https://shequ.codemao.cn/",
+			method="get",
+		)
+		# aliyungf_tc = response.cookies.get_dict()["aliyungf_tc"]
+		# 上面这句会自己生成
+		# uuid_ca = uuid.uuid1()
+		# token_ca = {"authorization": token, "__ca_uid_key__": str(uuid_ca)}
+		# 无上面这两句会缺少__ca_uid_key__
+		token_ca = {"authorization": token}
+		cookie_str = self.tool_process.convert_cookie_to_str(token_ca)
+		headers = {**self.acquire.HEADERS, "cookie": cookie_str}
+		response = self.acquire.send_request(method="get", url="/web/users/details", headers=headers)
+		_auth = response.cookies.get_dict()
+		auth_cookie = {**token_ca, **_auth}
+		return auth_cookie
 
 	# 退出登录
 	def logout(self, method: Literal["web", "app"]):
