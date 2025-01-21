@@ -84,7 +84,9 @@ class CodeMaoClient:
 		total_key: str = "total",
 		data_key: str | None = "item",
 		method: Literal["offset", "page"] = "offset",
-		args: dict[Literal["amount", "remove", "res_amount_key", "res_remove_key"], str] = {
+		args: dict[
+			Literal["amount", "remove", "res_amount_key", "res_remove_key"], Literal["limit", "offset", "page"]
+		] = {
 			"amount": "limit",
 			"remove": "offset",
 			"res_amount_key": "limit",
@@ -105,6 +107,10 @@ class CodeMaoClient:
 		:param args: 分页参数的键.
 		:return: 数据列表.
 		"""
+		args.setdefault("amount", "limit")
+		args.setdefault("remove", "offset")
+		args.setdefault("res_amount_key", "limit")
+		args.setdefault("res_remove_key", "offset")
 		initial_response = self.send_request(url=url, method=fetch_method, params=params, data=data)
 		if not initial_response:
 			return []

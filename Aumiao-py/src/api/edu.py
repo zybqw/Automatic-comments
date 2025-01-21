@@ -259,8 +259,6 @@ class Obtain:
 		return response.json()
 
 	# 获取云端存储的所有平台的作品
-	# https://eduzone.codemao.cn/edu/zone/work/manager/student/works?page=1&mark_status=2&name=awa&type=1&updated_at_from=1736784000&updated_at_to=1737734400&teachingRecordId=0&_=1737429351605
-	# https://eduzone.codemao.cn/edu/zone/work/manager/student/works?page=1&mark_status=1&max_score=50&min_score=50&name=awa&type=1&updated_at_from=1736784000&updated_at_to=1737734400&teachingRecordId=0&_=1737429380261
 	# mark_status中1为已评分，2为未评分
 	# updated_at_from&updated_at_to按字面意思，传参时为timestamp
 	# max_score&min_score按字面意思，传参时值为0-100，且都为整十数
@@ -269,6 +267,8 @@ class Obtain:
 	# name用于区分作品名
 	# type为作品类型，源码编辑器为1，海龟编辑器2.0(c++)为16，代码岛2.0为5，海龟编辑器为7，nemo为8
 	# version用于区分源码编辑器4.0和源码编辑器，在请求中，源码编辑器4.0的version为4，源码编辑器不填
+	# 返回数据中的praise_times为点赞量
+	# 返回数据中的language_type貌似用来区分海龟编辑器2.0(c++)与海龟编辑器，海龟编辑器的language_type为3
 	def get_all_works(self):
 		time_stamp = community.Obtain().get_timestamp()["data"]
 		params = {"page": 1, "TIME": time_stamp}
@@ -277,7 +277,7 @@ class Obtain:
 			params=params,
 			data_key="items",
 			method="page",
-			args={"remove": "page", "res_amount_key": "limit", "amount": "limit"},
+			args={"remove": "page", "res_amount_key": "limit"},
 		)
 		return classes
 
@@ -291,3 +291,16 @@ class Obtain:
 			url="https://eduzone.codemao.cn/edu/zone/work/manager/works/statistics", method="get", params=params
 		)
 		return response.json()
+
+	# 获取上课记录
+	def get_teaching_record(self):
+		time_stamp = community.Obtain().get_timestamp()["data"]
+		params = {"page": 1, "TIME": time_stamp, "limit": 10}
+		records = self.acquire.fetch_data(
+			url="https://eduzone.codemao.cn/edu/zone/teaching/record/list",
+			params=params,
+			data_key="items",
+			method="page",
+			args={"remove": "page", "amount": "limit"},
+		)
+		return records
