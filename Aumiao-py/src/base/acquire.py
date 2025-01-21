@@ -108,12 +108,14 @@ class CodeMaoClient:
 		initial_response = self.send_request(url=url, method=fetch_method, params=params, data=data)
 		if not initial_response:
 			return []
-
+		# 总项数
 		total_items = int(cast(str, self.tool_process.get_nested_value(initial_response.json(), total_key)))
+		# 每次获取多少个
 		items_per_page = (
 			params[args["amount"]] if args["amount"] in params else initial_response.json()[args["res_amount_key"]]
 		)
-		total_pages = (total_items + items_per_page - 1) // items_per_page  # 向上取整
+		# 获取多少次
+		total_pages = (total_items + items_per_page - 1) // items_per_page  # 向下取整
 		all_data = []
 		fetch_count = 0
 
