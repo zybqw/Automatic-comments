@@ -5,10 +5,10 @@ from time import sleep
 from typing import Any
 
 
-def singleton(cls: Any) -> Callable[..., Any]:  # noqa: ANN401
+def singleton(cls):  # noqa: ANN001, ANN201
 	_instance = {}
 
-	def _singleton(*args: Any, **kwargs: Any) -> Any:  # noqa: ANN401
+	def _singleton(*args, **kwargs):  # noqa: ANN002, ANN003, ANN202
 		if cls not in _instance:
 			_instance[cls] = cls(*args, **kwargs)
 		return _instance[cls]
