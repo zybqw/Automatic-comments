@@ -1,31 +1,31 @@
 import json
 
-import src.base.acquire as Acquire
+from src.base import acquire
 
 version = "2024.7.14"
 
-HEADERS = Acquire.CodeMaoClient().HEADERS
+HEADERS = acquire.CodeMaoClient().HEADERS
 
 
 class Login:
 	def __init__(self) -> None:
-		self.acquire = Acquire.CodeMaoClient()
+		self.acquire = acquire.CodeMaoClient()
 
-	def login(self, phonenum: int, password: str):
+	def login(self, phonenum: int, password: str) -> dict:
 		data = json.dumps({"phonenum": phonenum, "password": password})
 		response = self.acquire.send_request(url="https://x.chatmindai.net/api/user/login", method="post", data=data)
 		return response.json()
 
-	def update_token(self, token):
+	def update_token(self, token: str) -> None:
 		global HEADERS  # noqa: PLW0602
 		HEADERS["Authorization"] = f"Bearer {token}"
 
 
 class User:
 	def __init__(self) -> None:
-		self.acquire = Acquire.CodeMaoClient()
+		self.acquire = acquire.CodeMaoClient()
 
-	def get_balance(self):
+	def get_balance(self) -> dict:
 		response = self.acquire.send_request(
 			url="https://x.chatmindai.net/api/apiCount/query",
 			method="get",
@@ -33,7 +33,7 @@ class User:
 		)
 		return response.json()
 
-	def get_details(self):
+	def get_details(self) -> dict:
 		response = self.acquire.send_request(
 			url="https://x.chatmindai.net/api/user/getUserSelfBigData",
 			method="post",
@@ -45,7 +45,7 @@ class User:
 
 class Explore:
 	def __init__(self) -> None:
-		self.acquire = Acquire.CodeMaoClient()
+		self.acquire = acquire.CodeMaoClient()
 
 	def get_models(
 		self,
@@ -54,7 +54,7 @@ class Explore:
 		category: str = "recommend",
 		originpage: str = "",
 		searchValue: str = "",  # noqa: N803
-	):
+	) -> dict:
 		originpage = originpage if originpage != "" else category
 		data = json.dumps(
 			{
@@ -65,7 +65,7 @@ class Explore:
 					"orderType": originpage,
 					"searchValue": searchValue,
 				},
-			}
+			},
 		)
 		response = self.acquire.send_request(
 			url="https://x.chatmindai.net/api/model/query",
@@ -75,7 +75,7 @@ class Explore:
 		)
 		return response.json()
 
-	def get_rank(self, method: str):
+	def get_rank(self, method: str) -> dict:
 		if method == "user":
 			url = "https://x.chatmindai.net/api/market/userRank"
 
@@ -92,9 +92,9 @@ class Explore:
 
 class Chat:
 	def __init__(self) -> None:
-		self.acquire = Acquire.CodeMaoClient()
+		self.acquire = acquire.CodeMaoClient()
 
-	def get_chats(self):
+	def get_chats(self) -> dict:
 		response = self.acquire.send_request(
 			url="https://x.chatmindai.net/api/chat/queryChats",
 			method="get",
@@ -102,13 +102,13 @@ class Chat:
 		)
 		return response.json()
 
-	def get_chat_history(self, id: str, page: int = 1, limit: int = 15):
+	def get_chat_history(self, ids: str, page: int = 1, limit: int = 15) -> dict:
 		data = json.dumps(
 			{
-				"data": {"chatid": id},
+				"data": {"chatid": ids},
 				"pageIndex": page,
 				"pageSize": limit,
-			}
+			},
 		)
 		response = self.acquire.send_request(
 			url="https://x.chatmindai.net/api/chat/queryPagesChatItems",
@@ -118,7 +118,7 @@ class Chat:
 		)
 		return response.json()
 
-	def chat(self, chatid: str, modelid: str, message: str, context_analyse: int = 1):
+	def chat(self, chatid: str, modelid: str, message: str, context_analyse: int = 1) -> dict:
 		# context_analyse为上下文分析,开启为1,关闭为0
 		data = json.dumps(
 			{
@@ -126,7 +126,7 @@ class Chat:
 				"chatid": chatid,
 				"roleid": modelid,
 				"isContextEnabled": context_analyse,
-			}
+			},
 		)
 
 		response = self.acquire.send_request(
@@ -137,7 +137,7 @@ class Chat:
 		)
 		return response.text
 
-	def save_chat(self):
+	def save_chat(self) -> dict:
 		data = json.dumps(
 			{
 				"chatid": "",  # ai回答
@@ -155,7 +155,7 @@ class Chat:
 				# ai头像可以随便上传
 				"roleId": "bmi5aruzldsb1za2m5d1718161196283",  # 每个角色被赋予唯一id
 				"sensitive": False,  # 未知
-			}
+			},
 		)
 		response = self.acquire.send_request(
 			url="https://x.chatmindai.net/api/chat/saveConversation",
@@ -168,13 +168,13 @@ class Chat:
 
 class Model:
 	def __init__(self) -> None:
-		self.acquire = Acquire.CodeMaoClient()
+		self.acquire = acquire.CodeMaoClient()
 
-	def get_model_details(self, id: str):
+	def get_model_details(self, ids: str) -> dict:
 		response = self.acquire.send_request(
 			url="https://x.chatmindai.net/api/model/getModelDetailsInfo",
 			method="post",
-			data=json.dumps({"roleId": id}),
+			data=json.dumps({"roleId": ids}),
 			headers=HEADERS,
 		)
 		return response.json()

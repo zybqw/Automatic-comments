@@ -1,6 +1,7 @@
+from collections.abc import Callable
 from json import loads
 from random import choice
-from typing import Literal, cast
+from typing import Any, Literal, cast
 
 from src.api import community, forum, shop, user, work
 from src.base import acquire, data, decorator, file, tool
@@ -36,7 +37,7 @@ class Tool(ClassUnion):
 		super().__init__()
 
 	# 新增粉丝提醒
-	def message_report(self, user_id: str):
+	def message_report(self, user_id: str) -> None:
 		response = self.user_obtain.get_user_honor(user_id=user_id)
 		timestamp = self.community_obtain.get_timestamp()["data"]
 		user_data = {
@@ -63,7 +64,7 @@ class Tool(ClassUnion):
 				},
 				date="timestamp",
 			)
-		self.cache.update(user_data)  # 使用 `update` 方法，确保同步
+		self.cache.update(user_data)  # 使用 `update` 方法,确保同步
 
 	# 猜测手机号码(暴力枚举)
 	def guess_phonenum(self, phonenum: str) -> int | None:
@@ -73,6 +74,7 @@ class Tool(ClassUnion):
 			print(test_string)
 			if self.user_motion.verify_phone(test_string):
 				return test_string
+		return None
 
 
 @decorator.singleton
@@ -81,7 +83,7 @@ class Index(ClassUnion):
 		super().__init__()
 
 	# 打印slogan
-	def index(self):
+	def index(self) -> None:
 		print(self.setting["PROGRAM"]["SLOGAN"])
 		print(f"版本号: {self.setting['PROGRAM']['VERSION']}")
 		print("*" * 22 + " 公告 " + "*" * 22)
@@ -99,7 +101,9 @@ class Obtain(ClassUnion):
 
 	# 获取新回复(传入参数就获取前*个回复,若没传入就获取新回复数量, 再获取新回复数量个回复)
 	def get_new_replies(
-		self, limit: int = 0, type_item: Literal["LIKE_FORK", "COMMENT_REPLY", "SYSTEM"] = "COMMENT_REPLY"
+		self,
+		limit: int = 0,
+		type_item: Literal["LIKE_FORK", "COMMENT_REPLY", "SYSTEM"] = "COMMENT_REPLY",
 	) -> list[dict[str, str | int | dict]]:
 		_list = []
 		reply_num = self.community_obtain.get_message_count(method="web")[0]["count"]
@@ -118,16 +122,17 @@ class Obtain(ClassUnion):
 	# 获取评论区信息
 	def get_comments_detail(  # noqa: PLR0912
 		self,
-		id: int,
+		com_id: int,
 		source: Literal["work", "post"],
 		method: Literal["user_id", "comments", "comment_id"] = "user_id",
 	) -> list[int | dict | str]:
 		if source == "work":
-			comments = self.work_obtain.get_work_comments(work_id=id, limit=200)
+			comments = self.work_obtain.get_work_comments(work_id=com_id, limit=200)
 		elif source == "post":
-			comments = self.forum_obtain.get_post_replies_posts(id=id, limit=200)
+			comments = self.forum_obtain.get_post_replies_posts(id=com_id, limit=200)
 		else:
-			raise ValueError("不支持的来源类型")
+			msg = "不支持的来源类型"
+			raise ValueError(msg)
 
 		if method == "user_id":
 			user_ids = []
@@ -138,10 +143,7 @@ class Obtain(ClassUnion):
 					user_ids.extend(reply["user"]["id"] for reply in replies)
 			else:
 				user_ids.extend(
-					reply["reply_user"]["id"]
-					for comment in comments
-					if "replies" in comment and "items" in comment["replies"]
-					for reply in comment["replies"]["items"]
+					reply["reply_user"]["id"] for comment in comments if "replies" in comment and "items" in comment["replies"] for reply in comment["replies"]["items"]
 				)
 			result = user_ids
 
@@ -153,10 +155,7 @@ class Obtain(ClassUnion):
 					comment_ids.extend(f"{comment['id']}.{reply['id']}" for reply in replies)
 			else:
 				comment_ids.extend(
-					f"{comment['id']}.{reply['id']}"
-					for comment in comments
-					if "replies" in comment and "items" in comment["replies"]
-					for reply in comment["replies"]["items"]
+					f"{comment['id']}.{reply['id']}" for comment in comments if "replies" in comment and "items" in comment["replies"] for reply in comment["replies"]["items"]
 				)
 			result = comment_ids
 
@@ -172,10 +171,7 @@ class Obtain(ClassUnion):
 					"is_top": comment.get("is_top", False),
 					"replies": [],
 				}
-				if source == "post":
-					replies = self.forum_obtain.get_reply_post_comments(post_id=comment["id"], limit=200)
-				else:
-					replies = comment.get("replies", {}).get("items", [])
+				replies = self.forum_obtain.get_reply_post_comments(post_id=comment["id"], limit=200) if source == "post" else comment.get("replies", {}).get("items", [])
 				for reply in replies:
 					reply_detail = {"id": reply["id"], "content": reply["content"], "created_at": reply["created_at"]}
 					if source == "post":
@@ -189,7 +185,8 @@ class Obtain(ClassUnion):
 			result = detailed_comments
 
 		else:
-			raise ValueError("不支持的请求方法")
+			msg = "不支持的请求方法"
+			raise ValueError(msg)
 
 		return [item for index, item in enumerate(result) if item not in result[:index]]
 
@@ -199,28 +196,30 @@ class Motion(ClassUnion):
 	def __init__(self) -> None:
 		super().__init__()
 
-	# 由于编程猫社区命名极不规范,在本函数变量中，reply指work中comment的回复或者post中reply(回帖)中的回复
+	# 由于编程猫社区命名极不规范,在本函数变量中,reply指work中comment的回复或者post中reply(回帖)中的回复
 	# comment指work中的comment或者post中的reply
 	# 但是delete_comment_post_reply函数reply指回帖,comment指回帖的回复
-	# 将列表切片翻转是为了先删评论中的回复再删评论，防止在存在评论和回复都是待删项时，删除回复报错
+	# 将列表切片翻转是为了先删评论中的回复再删评论,防止在存在评论和回复都是待删项时,删除回复报错
 	def clear_ads(self, source: Literal["work", "post"]) -> bool:
-		def get_items_and_comments():
+		def get_items_and_comments() -> tuple[list[dict[str, str | int]], Callable[..., Any]] | tuple[list[dict[Any, Any]], Callable[..., Any]]:
 			if source == "work":
 				return (
 					self.user_obtain.get_user_works_web(self.data["ACCOUNT_DATA"]["id"]),
-					lambda item_id: Obtain().get_comments_detail(id=item_id, source="work", method="comments"),
+					lambda item_id: Obtain().get_comments_detail(com_id=item_id, source="work", method="comments"),
 				)
-			elif source == "post":
+			if source == "post":
 				return (
 					self.forum_obtain.get_post_mine_all(method="created"),
-					lambda item_id: Obtain().get_comments_detail(id=item_id, source="post", method="comments"),
+					lambda item_id: Obtain().get_comments_detail(com_id=item_id, source="post", method="comments"),
 				)
-			raise ValueError("不支持的来源类型")
+			msg = "不支持的来源类型"
+			raise ValueError(msg)
 
-		def delete_comment(item_id, comment_id, is_reply=False):
+		def delete_comment(item_id: int, comment_id: int, *, is_reply: bool = False) -> bool:
 			if source == "post":
 				return self.forum_motion.delete_comment_post_reply(
-					id=comment_id, type="comments" if is_reply else "replies"
+					id=comment_id,
+					type="comments" if is_reply else "replies",
 				)
 			return self.work_motion.del_comment_work(work_id=item_id, comment_id=comment_id)
 
@@ -251,14 +250,14 @@ class Motion(ClassUnion):
 						ad_list.append(f"{item_id}.{reply_id}:reply")
 					elif str(reply_user_id) in bad_users:  # 使用 elif 避免重复添加
 						print(
-							f"在{source} {title} 中 {content} 评论中发现黑名单: {reply['nickname']}发送的评论: {reply_content}"  # noqa: E501
+							f"在{source} {title} 中 {content} 评论中发现黑名单: {reply['nickname']}发送的评论: {reply_content}",
 						)
 						bad_list.append(f"{item_id}.{reply_id}:reply")
 
 		# 移除 bad_list 中与 ad_list 重复的项
 		bad_list = [item for item in bad_list if item not in ad_list]
 
-		def process_list(list_name, list_items):
+		def process_list(list_name: str, list_items: list) -> bool:
 			if list_items:
 				print(f"发现以下{list_name}:")
 				for item in list_items[::-1]:
@@ -267,7 +266,7 @@ class Motion(ClassUnion):
 					for item in list_items[::-1]:
 						item_id, comment_id = map(int, item.split(":")[0].split("."))
 						is_reply = item.split(":")[1] == "reply"  # 修正了这里的逻辑
-						if not delete_comment(item_id, comment_id, is_reply):
+						if not delete_comment(item_id, comment_id, is_reply=is_reply):
 							print(f"删除{list_name} {item} 失败")
 							return False
 						print(f"{list_name} {item} 已删除")
@@ -297,7 +296,7 @@ class Motion(ClassUnion):
 		if method == "web":
 			while True:
 				counts = get_message_counts(method)
-				if len(set(counts[i]["count"] for i in range(3)) | {0}) == 1:
+				if len({counts[i]["count"] for i in range(3)} | {0}) == 1:
 					return True
 
 				query_types = self.setting["PARAMETER"]["CLIENT"]["all_read_type"]
@@ -315,13 +314,7 @@ class Motion(ClassUnion):
 		elif method == "nemo":
 			while True:
 				counts = get_message_counts("nemo")
-				if (
-					counts["like_collection_count"]
-					+ counts["comment_count"]
-					+ counts["re_create_count"]
-					+ counts["system_count"]
-					== 0
-				):
+				if counts["like_collection_count"] + counts["comment_count"] + counts["re_create_count"] + counts["system_count"] == 0:
 					return True
 
 				extra_items = [1, 3]
@@ -339,7 +332,7 @@ class Motion(ClassUnion):
 		return False
 
 	# 给某人作品全点赞
-	def like_all_work(self, user_id: str):
+	def like_all_work(self, user_id: str) -> bool:
 		works_list = self.user_obtain.get_user_works_web(user_id)
 		for item in works_list:
 			item["id"] = cast(int, item["id"])
@@ -353,9 +346,9 @@ class Motion(ClassUnion):
 		formatted_answers: list[dict[str, list[str] | str]] = [
 			{
 				question: (
-					[resp.format(**self.data["INFO"]) for resp in response]  # 如果是列表，格式化列表中的每个元素
+					[resp.format(**self.data["INFO"]) for resp in response]  # 如果是列表,格式化列表中的每个元素
 					if isinstance(response, list)
-					else response.format(**self.data["INFO"])  # 如果是字符串，直接格式化字符串
+					else response.format(**self.data["INFO"])  # 如果是字符串,直接格式化字符串
 				)
 				for question, response in answer_dict.items()
 			}
@@ -368,7 +361,7 @@ class Motion(ClassUnion):
 			for answer_dict in answers:
 				for keyword, response in answer_dict.items():
 					if keyword in comment:  # 如果关键词是字符串
-						return response if isinstance(response, str) else choice(response)  # 同样处理响应类型
+						return response if isinstance(response, str) else choice(response)  # 同样处理响应类型  # noqa: S311
 			return None
 
 		filtered_replies = self.tool_process.filter_items_by_values(
@@ -385,7 +378,7 @@ class Motion(ClassUnion):
 			message = content["message"]
 			comment_text = message["comment"] if reply_type in ["WORK_COMMENT", "POST_COMMENT"] else message["reply"]
 			response_comment = get_response(comment=comment_text, answers=formatted_answers)
-			comment = response_comment if response_comment else choice(formatted_replies)
+			comment = response_comment if response_comment else choice(formatted_replies)  # noqa: S311
 
 			if reply_type.startswith("WORK"):
 				business_id = message["business_id"]
@@ -403,7 +396,8 @@ class Motion(ClassUnion):
 					comment_ids = Obtain().get_comments_detail(id=business_id, source="work", method="comment_id")
 					comment_ids = cast(list[str], comment_ids)
 					comment_id = cast(
-						int, self.tool_routine.find_prefix_suffix(text=f".{message['reply_id']}", lst=comment_ids)[0]
+						int,
+						self.tool_routine.find_prefix_suffix(text=f".{message['reply_id']}", lst=comment_ids)[0],
 					)
 					self.work_motion.reply_work(
 						work_id=business_id,
@@ -426,7 +420,8 @@ class Motion(ClassUnion):
 					comment_ids = Obtain().get_comments_detail(id=business_id, source="post", method="comment_id")
 					comment_ids = cast(list[str], comment_ids)
 					comment_id = cast(
-						int, self.tool_routine.find_prefix_suffix(text=message["reply_id"], lst=comment_ids)[0]
+						int,
+						self.tool_routine.find_prefix_suffix(text=message["reply_id"], lst=comment_ids)[0],
 					)
 					self.forum_motion.reply_comment(
 						reply_id=comment_id,
@@ -436,7 +431,7 @@ class Motion(ClassUnion):
 		return True
 
 	# 工作室常驻置顶
-	def top_work(self):
+	def top_work(self) -> None:
 		detail = self.shop_obtain.get_shops_info()
 		description = self.shop_obtain.get_shop_details(detail["work_subject_id"])["description"]
 		self.shop_motion.update_shop_details(

@@ -1,18 +1,17 @@
 import time
-from os import getcwd, path
+from pathlib import Path
 from typing import Literal, cast
 
 import requests
 import requests.cookies
 import requests.utils
-from requests.exceptions import ConnectionError, HTTPError, RequestException, Timeout
+from requests.exceptions import ConnectionError as req_ConnectionError
+from requests.exceptions import HTTPError, RequestException, Timeout
 
-from . import data as Data
-from . import file as File
-from . import tool as Tool
+from . import data, file, tool
 from .decorator import singleton
 
-LOG_FILE_PATH: str = path.join(getcwd(), "log", f"{int(time.time())}.txt")
+LOG_FILE_PATH: Path = Path().cwd() / "log" / f"{int(time.time())}.txt"
 
 
 @singleton
@@ -20,9 +19,9 @@ class CodeMaoClient:
 	def __init__(self) -> None:
 		"""初始化 CodeMaoClient 实例,设置基本的请求头和基础 URL."""
 		self.session = requests.session()
-		self.data = Data.CodeMaoSetting()
-		self.tool_process = Tool.CodeMaoProcess()
-		self.file = File.CodeMaoFile()
+		self.data = data.CodeMaoSetting()
+		self.tool_process = tool.CodeMaoProcess()
+		self.file = file.CodeMaoFile()
 		self.HEADERS: dict = self.data.setting["PROGRAM"]["HEADERS"]
 		self.BASE_URL: str = "https://api.codemao.cn"
 
@@ -30,14 +29,14 @@ class CodeMaoClient:
 		self,
 		url: str,
 		method: Literal["post", "get", "delete", "patch", "put"],
-		params=None,
-		data=None,
-		headers=None,
-		sleep=0,
+		params: dict | None = None,
+		data: str | None = None,
+		headers: dict | None = None,
+		sleep: float = 0,
+		*,
 		log: Literal[True, False] = True,
-	):
-		"""
-		发送 HTTP 请求.
+	) -> requests.Response:
+		"""发送 HTTP 请求.
 
 		:param url: 请求的 URL.
 		:param method: 请求的方法,如 "post", "get", "delete", "patch", "put".
@@ -65,27 +64,29 @@ class CodeMaoClient:
 					f"响应体: {response.text}",
 				]
 				self.file.file_write(path=LOG_FILE_PATH, content=log_content, method="a")
-
 			return response
-		except (HTTPError, ConnectionError, Timeout, RequestException) as err:
+		except (HTTPError, req_ConnectionError, Timeout, RequestException) as err:
 			print(f"网络请求异常: {err}")
 			response = cast(requests.Response, None)
 			if response:
-				print(f"错误码: {response.status_code} 错误原因: {response.reason} 错误信息: {response.text}")  # type: ignore
+				print(f"错误码: {response.status_code} 错误原因: {response.reason} 错误信息: {response.text}")
+			return response
+		else:
 			return response
 
 	def fetch_data(
 		self,
 		url: str,
 		params: dict,
-		data=None,
+		data: str | None = None,
 		limit: int | None = None,
 		fetch_method: Literal["get", "post"] = "get",
 		total_key: str = "total",
 		data_key: str | None = "item",
 		method: Literal["offset", "page"] = "offset",
 		args: dict[
-			Literal["amount", "remove", "res_amount_key", "res_remove_key"], Literal["limit", "offset", "page"]
+			Literal["amount", "remove", "res_amount_key", "res_remove_key"],
+			Literal["limit", "offset", "page", "current_page", "page_size"],
 		] = {
 			"amount": "limit",
 			"remove": "offset",
@@ -93,9 +94,7 @@ class CodeMaoClient:
 			"res_remove_key": "offset",
 		},
 	) -> list[dict]:
-		"""
-		分页获取数据.
-
+		"""分页获取数据.
 		:param url: 请求的 URL.
 		:param params: URL 参数.
 		:param data: 请求体数据.
@@ -117,35 +116,28 @@ class CodeMaoClient:
 		# 总项数
 		total_items = int(cast(str, self.tool_process.get_nested_value(initial_response.json(), total_key)))
 		# 每次获取多少个
-		items_per_page = (
-			params[args["amount"]] if args["amount"] in params else initial_response.json()[args["res_amount_key"]]
-		)
+		items_per_page = params[args["amount"]] if args["amount"] in params else initial_response.json()[args["res_amount_key"]]
 		# 获取多少次
 		total_pages = (total_items + items_per_page - 1) // items_per_page  # 向下取整
 		all_data = []
 		fetch_count = 0
-
 		for page in range(total_pages):
 			if method == "offset":
 				params[args["remove"]] = page * items_per_page
 			elif method == "page":
 				params[args["remove"]] = page + 1
-
 			response = self.send_request(url=url, method=fetch_method, params=params)
 			if not response:
 				continue
-
-			data = self.tool_process.get_nested_value(response.json(), data_key)
-			all_data.extend(data)
-			fetch_count += len(data)
+			_data = self.tool_process.get_nested_value(response.json(), data_key)
+			all_data.extend(_data)
+			fetch_count += len(_data)
 			if limit and fetch_count >= limit:
 				return all_data[:limit]
-
 		return all_data
 
 	def update_cookie(self, cookie: requests.cookies.RequestsCookieJar | dict | str) -> bool:
-		"""
-		更新会话的 Cookie.
+		"""更新会话的 Cookie.
 		:param cookie: 要更新的 Cookie,可以是 RequestsCookieJar、字典或字符串.
 		:return: True 如果更新成功.
 		:raises ValueError: 如果 cookie 类型不支持.
@@ -160,7 +152,7 @@ class CodeMaoClient:
 			case str():
 				cookie_str = cookie
 			case _:
-				raise ValueError("不支持的cookie类型")
-
+				msg = "不支持的cookie类型"
+				raise ValueError(msg)
 		self.HEADERS.update({"Cookie": cookie_str})
 		return True

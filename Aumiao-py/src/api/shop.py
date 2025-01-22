@@ -1,24 +1,27 @@
 import json
-from typing import Literal
+from typing import Any, Literal
 
-import src.base.acquire as Acquire
+from src.base import acquire
 from src.base.decorator import singleton
+
+OK_CODE = 200
 
 
 @singleton
 class Obtain:
 	def __init__(self) -> None:
-		self.acquire = Acquire.CodeMaoClient()
+		self.acquire = acquire.CodeMaoClient()
 
 	# 获取工作室简介(简易,需登录工作室成员账号)
-	def get_shops_info(self):
-		response = self.acquire.send_request(url="/web/work_shops/simple", method="get")
-		result = response.json()["work_shop"]
-		return result
+	# def get_shops_info(self):
+	# 	response = self.acquire.send_request(url="/web/work_shops/simple", method="get")
+	# 	# return response.json()["work_shop"]
+	# 	return response.json()
+	# 2025/1/22 发现api变为410错误代码
 
 	# 获取工作室简介
-	def get_shop_details(self, id: str) -> dict:
-		response = self.acquire.send_request(url=f"/web/shops/{id}", method="get")
+	def get_shop_details(self, shop_id: str) -> dict:
+		response = self.acquire.send_request(url=f"/web/shops/{shop_id}", method="get")
 		return response.json()
 
 	# 获取工作室列表的函数
@@ -32,7 +35,7 @@ class Obtain:
 			"-created_at",
 			"-latest_joined_at",
 		],
-	):  # 不要问我limit默认值为啥是14,因为api默认获取14个
+	) -> dict:  # 不要问我limit默认值为啥是14,因为api默认获取14个
 		if isinstance(sort, list):
 			_sort = ",".join(sort)
 		params = {
@@ -42,26 +45,25 @@ class Obtain:
 			"offset": offset,
 			"sort": _sort,
 		}
-		shops = self.acquire.send_request(
+		response = self.acquire.send_request(
 			url="/web/work-shops/search",
 			params=params,
 			method="get",
 		)
-		return shops
+		return response.json()
 
 	# 获取工作室成员
 	def get_shops_members(
 		self,
-		id: int,
-	):
+		shop_id: int,
+	) -> list[dict[Any, Any]]:
 		params = {"limit": 40, "offset": 0}
-		members = self.acquire.fetch_data(
-			url=f"/web/shops/{id}/users",
+		return self.acquire.fetch_data(
+			url=f"/web/shops/{shop_id}/users",
 			params=params,
 			total_key="total",
 			data_key="items",
 		)
-		return members
 
 	# 获取工作室列表,包括工作室成员,工作室作品
 	def get_shops_details(
@@ -70,7 +72,7 @@ class Obtain:
 		max_number: int = 4,
 		works_limit: int = 4,
 		sort: list[str] | str = ["-ordinal,-updated_at"],
-	):
+	) -> dict:
 		_levels: str = ""
 		_sort: str = ""
 		if isinstance(levels, list):
@@ -90,26 +92,26 @@ class Obtain:
 @singleton
 class Motion:
 	def __init__(self) -> None:
-		self.acquire = Acquire.CodeMaoClient()
+		self.acquire = acquire.CodeMaoClient()
 
 	# 更新工作室简介
-	def update_shop_details(self, description: str, id: str, name: str, preview_url: str) -> bool:
+	def update_shop_details(self, description: str, shop_id: str, name: str, preview_url: str) -> bool:
 		response = self.acquire.send_request(
 			url="/web/work_shops/update",
 			method="post",
 			data=json.dumps(
 				{
 					"description": description,
-					"id": id,
+					"id": shop_id,
 					"name": name,
 					"preview_url": preview_url,
-				}
+				},
 			),
 		)
-		return response.status_code == 200
+		return response.status_code == OK_CODE
 
 	# 创建工作室
-	def create_shop(self, name: str, description: str, preview_url: str):
+	def create_shop(self, name: str, description: str, preview_url: str) -> dict:
 		response = self.acquire.send_request(
 			url="/web/work_shops/create",
 			method="post",
@@ -118,52 +120,52 @@ class Motion:
 					"name": name,
 					"description": description,
 					"preview_url": preview_url,
-				}
+				},
 			),
 		)
 		return response.json()
 
 	# 解散工作室
-	def dissolve_shop(self, shop_id: int):
+	def dissolve_shop(self, shop_id: int) -> bool:
 		response = self.acquire.send_request(
 			url="/web/work_shops/dissolve",
 			method="post",
 			data=json.dumps({"id": shop_id}),
 		)
-		return response.status_code == 200
+		return response.status_code == OK_CODE
 
 	# 在指定工作室投稿作品
-	def contribute_work(self, shop_id: int, work_id: int):
+	def contribute_work(self, shop_id: int, work_id: int) -> bool:
 		response = self.acquire.send_request(
 			url="/web/work_shops/works/contribute",
 			method="post",
 			data=json.dumps({"id": shop_id, "work_id": work_id}),
 		)
-		return response.status_code == 200
+		return response.status_code == OK_CODE
 
 	# 在指定工作室删除作品
-	def remove_work(self, shop_id: int, work_id: int):
+	def remove_work(self, shop_id: int, work_id: int) -> bool:
 		response = self.acquire.send_request(
 			url="/web/work_shops/works/remove",
 			method="post",
 			data=json.dumps({"id": shop_id, "work_id": work_id}),
 		)
-		return response.status_code == 200
+		return response.status_code == OK_CODE
 
 	# 申请加入工作室
-	def apply_join(self, shop_id: int, qq: str | None = None):
+	def apply_join(self, shop_id: int, qq: str | None = None) -> bool:
 		response = self.acquire.send_request(
 			url="/web/work_shops/users/apply/join",
 			method="post",
 			data=json.dumps({"id": shop_id, "qq": qq}),
 		)
-		return response.status_code == 200
+		return response.status_code == OK_CODE
 
 	# 审核已经申请加入工作室的用户
-	def audit_join(self, shop_id: int, status: Literal["UNACCEPTED", "ACCEPTED"], user_id: int):
+	def audit_join(self, shop_id: int, status: Literal["UNACCEPTED", "ACCEPTED"], user_id: int) -> bool:
 		response = self.acquire.send_request(
 			url="/web/work_shops/users/audit",
 			method="post",
 			data=json.dumps({"id": shop_id, "status": status, "user_id": user_id}),
 		)
-		return response.status_code == 200
+		return response.status_code == OK_CODE

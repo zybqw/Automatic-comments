@@ -1,50 +1,53 @@
 import json
-from os import getcwd, path
-from typing import Any, TypedDict, cast
+from pathlib import Path
+from typing import Any, TypedDict, TypeVar, cast
 
-from . import file as File
+from . import file
 from .decorator import singleton
 
 # 定义常量
-DATA_FILE_PATH: str = path.join(getcwd(), "data", "data.json")
-CACHE_FILE_PATH: str = path.join(getcwd(), "data", "cache.json")
-SETTING_FILE_PATH: str = path.join(getcwd(), "data", "setting.json")
+DATA_FILE_PATH: Path = Path.cwd() / "data" / "data.json"
+CACHE_FILE_PATH: Path = Path.cwd() / "data" / "cache.json"
+SETTING_FILE_PATH: Path = Path.cwd() / "data" / "setting.json"
+
+T = TypeVar("T")
 
 
-# 自定义字典类，用于自动同步到文件
+# 自定义字典类,用于自动同步到文件
 class SyncDict(dict[str, Any]):
 	"""
-	自定义字典类，用于在修改内容时自动同步到文件中。
+	自定义字典类,用于在修改内容时自动同步到文件中,
 	"""
 
-	def __init__(self, file_path: str, parent_ref: dict[str, Any], key: str | None, *args, **kwargs):
+	def __init__(self, file_path: Path, parent_ref: dict[str, Any], key: str | None, *args: T, **kwargs: T) -> None:
 		super().__init__(*args, **kwargs)
 		self.file_path = file_path
 		self.parent_ref = parent_ref  # 父级字典的引用
 		self.key = key  # 当前 SyncDict 在父字典中的键
 
-	def _sync_to_file(self):
+	def _sync_to_file(self) -> None:
 		if self.key is None:
 			self.parent_ref = self
 		else:
 			self.parent_ref[self.key] = self
 			self.parent_ref[self.key] = self
-		with open(self.file_path, "w", encoding="utf-8") as f:
+		with Path.open(self=self.file_path, mode="w", encoding="utf-8") as f:
 			json.dump(self.parent_ref, f, ensure_ascii=False, indent=4)
 
-	def __setitem__(self, key, value):
+	def __setitem__(self, key: str, value: str | dict | list | int) -> None:
 		super().__setitem__(key, value)
 		self._sync_to_file()
 
-	def __delitem__(self, key):
+	def __delitem__(self, key: str) -> None:
 		super().__delitem__(key)
 		self._sync_to_file()
 
-	def update(self, *args, **kwargs):
+	def update(self, *args: T, **kwargs: T) -> None:
 		super().update(*args, **kwargs)
 		self._sync_to_file()
+		self._sync_to_file()
 
-	def clear(self):
+	def clear(self) -> None:
 		super().clear()
 		self._sync_to_file()
 
@@ -154,25 +157,27 @@ class _CodeMaoCache(TypedDict):
 @singleton
 class CodeMaoData:
 	def __init__(self) -> None:
-		_data = File.CodeMaoFile().file_load(path=DATA_FILE_PATH, type="json")
+		_data = file.CodeMaoFile().file_load(path=DATA_FILE_PATH, _type="json")
 		_data = cast(dict[str, Any], _data)
 		self.data: _CodeMaoData = cast(
-			_CodeMaoData, SyncDict(file_path=DATA_FILE_PATH, parent_ref=_data, key=None, **_data)
+			_CodeMaoData,
+			SyncDict(file_path=DATA_FILE_PATH, parent_ref=_data, key=None, **_data),
 		)
 
 
 @singleton
 class CodeMaoCache:
 	def __init__(self) -> None:
-		_cache = File.CodeMaoFile().file_load(path=CACHE_FILE_PATH, type="json")
+		_cache = file.CodeMaoFile().file_load(path=CACHE_FILE_PATH, _type="json")
 		_cache = cast(dict[str, Any], _cache)
 		self.cache: _CodeMaoCache = cast(
-			_CodeMaoCache, SyncDict(file_path=CACHE_FILE_PATH, parent_ref=_cache, key=None, **_cache)
+			_CodeMaoCache,
+			SyncDict(file_path=CACHE_FILE_PATH, parent_ref=_cache, key=None, **_cache),
 		)
 
 
 @singleton
 class CodeMaoSetting:
 	def __init__(self) -> None:
-		_setting = File.CodeMaoFile().file_load(path=SETTING_FILE_PATH, type="json")
+		_setting = file.CodeMaoFile().file_load(path=SETTING_FILE_PATH, _type="json")
 		self.setting: _CodeMaoSetting = cast(_CodeMaoSetting, _setting)

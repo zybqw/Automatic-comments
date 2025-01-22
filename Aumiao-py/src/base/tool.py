@@ -21,22 +21,22 @@ class CodeMaoProcess:
 		:raises ValueError: 如果同时提供了 `reserve` 和 `exclude` 参数,抛出异常.
 		"""
 		if reserve and exclude:
-			raise ValueError("请仅提供 'reserve' 或 'exclude' 中的一个参数,不要同时使用.")
+			msg = "请仅提供 'reserve' 或 'exclude' 中的一个参数,不要同时使用."
+			raise ValueError(msg)
 
-		def filter_keys(item) -> dict[str, str | int]:
+		def filter_keys(item: dict) -> dict[str, str | int]:
 			if reserve is not None:
 				return {key: value for key, value in item.items() if key in reserve}
-			elif exclude is not None:
+			if exclude is not None:
 				return {key: value for key, value in item.items() if key not in exclude}
-			else:
-				return {}
+			return {}
 
 		if isinstance(data, list):
 			return [filter_keys(item) for item in data]
-		elif isinstance(data, dict):
+		if isinstance(data, dict):
 			return filter_keys(data)
-		else:
-			raise ValueError("不支持的数据类型")
+		msg = "不支持的数据类型"
+		raise ValueError(msg)
 
 	def insert_zero_width_chars(self, content: str) -> str:
 		"""
@@ -46,8 +46,7 @@ class CodeMaoProcess:
 		:return: 处理后的字符串,插入了零宽字符.
 		"""
 		content_bytes = [item.encode("UTF-8") for item in content]
-		result = b"\xe2\x80\x8b".join(content_bytes).decode("UTF-8")
-		return result
+		return b"\xe2\x80\x8b".join(content_bytes).decode("UTF-8")
 
 	def format_timestamp(self, timestamp: int) -> str:
 		"""
@@ -57,8 +56,7 @@ class CodeMaoProcess:
 		:return: 格式化的时间字符串(如 'YYYY-MM-DD HH:MM:SS').
 		"""
 		time_array = time.localtime(timestamp)
-		style_time = time.strftime("%Y-%m-%d %H:%M:%S", time_array)
-		return style_time
+		return time.strftime("%Y-%m-%d %H:%M:%S", time_array)
 
 	def get_nested_value(self, data: dict, path: str | None) -> dict:
 		"""
@@ -84,27 +82,26 @@ class CodeMaoProcess:
 		:param cookie: 包含 Cookie 键值对的字典.
 		:return: 转换后的 Cookie 字符串(如 "key1=value1; key2=value2").
 		"""
-		cookie_str = "; ".join([f"{key}={value}" for key, value in cookie.items()])
-		return cookie_str
+		return "; ".join([f"{key}={value}" for key, value in cookie.items()])
 
 	def filter_items_by_values(self, data: list[dict] | dict, id_path: str, values: list[str]) -> list[dict]:
 		"""
-		过滤数据，保留指定路径的值等于给定值列表中任意一个的字典。
+		过滤数据,保留指定路径的值等于给定值列表中任意一个的字典,
 
-		:param data: 输入的数据字典或字典列表。
-		:param id_path: 点分隔的键路径，用于获取嵌套字典中的值。
-		:param values: 要匹配的值列表。
-		:return: 过滤后的字典列表。
+		:param data: 输入的数据字典或字典列表,
+		:param id_path: 点分隔的键路径,用于获取嵌套字典中的值,
+		:param values: 要匹配的值列表,
+		:return: 过滤后的字典列表,
 		"""
 		if isinstance(data, dict):
 			items = data.get("items", [])
 		elif isinstance(data, list):
 			items = data
 		else:
-			raise ValueError("不支持的数据类型")
+			msg = "不支持的数据类型"
+			raise TypeError(msg)
 
-		filtered_items = [item for item in items if self.get_nested_value(item, id_path) in values]
-		return filtered_items
+		return [item for item in items if self.get_nested_value(item, id_path) in values]
 
 
 class CodeMaoRoutine:
@@ -114,10 +111,9 @@ class CodeMaoRoutine:
 
 		:return: 当前时间戳(浮点数).
 		"""
-		timestamp = time.time()
-		return timestamp
+		return time.time()
 
-	def display_data_changes(self, before_data: dict, after_data: dict, data: dict, date: str | None):
+	def display_data_changes(self, before_data: dict, after_data: dict, data: dict, date: str | None) -> None:
 		"""
 		打印数据变化情况,包括起始时间和变化内容.
 
