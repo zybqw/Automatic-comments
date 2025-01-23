@@ -74,6 +74,13 @@ class Motion:
 		)
 		return response.status_code == OK_CODE
 
+	# 添加、修改自定义备课包
+	# patch为修改信息,post用于创建备课包
+	def add_customized_package(self, method: Literal["post", "patch"], avatar_url: str, description: str, name: str, *, return_data: bool = True) -> dict | bool:
+		data = json.dumps({"avatar_url": avatar_url, "description": description, "name": name})
+		response = self.acquire.send_request(url="https://eduzone.codemao.cn/edu/zone/lesson/customized/packages", method=method, data=data)
+		return response.json() if return_data else response.status_code == OK_CODE
+
 
 @singleton
 class Obtain:
@@ -87,6 +94,7 @@ class Obtain:
 		response = self.acquire.send_request(url="https://eduzone.codemao.cn/edu/zone", method="get", params=params)
 		return response.json()
 
+	# 猜测返回的role_id当值为20001时为学生账号,10002为教师账号
 	# 获取账户状态
 	def get_account_status(self) -> dict:
 		time_stamp = community.Obtain().get_timestamp()["data"]
@@ -328,3 +336,93 @@ class Obtain:
 			method="page",
 			args={"remove": "page", "amount": "limit"},
 		)
+
+	# 获取教授班级(需要教师号)
+	def get_teaching_classes(self) -> dict:
+		time_stamp = community.Obtain().get_timestamp()["data"]
+		params = {"TIME": time_stamp}
+		response = self.acquire.send_request(
+			url="https://eduzone.codemao.cn/edu/zone/teaching/class/teacher/list",
+			method="get",
+			params=params,
+		)
+		return response.json()
+
+	# 获取info(需要教师账号)
+	def get_data_info(self, unit_id: int) -> dict:
+		time_stamp = community.Obtain().get_timestamp()["data"]
+		params = {"TIME": time_stamp, "unitId": unit_id}
+		response = self.acquire.send_request(
+			url="https://eduzone.codemao.cn/edu/zone/school/info",
+			method="get",
+			params=params,
+		)
+		return response.json()
+
+	# 获取官方课程包
+	def get_official_package(self) -> list[dict[Any, Any]]:
+		time_stamp = community.Obtain().get_timestamp()["data"]
+		params = {"TIME": time_stamp, "pacakgeEntryType": 0, "topicType": "all", "topicId": "all", "tagId": "all", "page": 1, "limit": 150}
+		return self.acquire.fetch_data(
+			url="https://eduzone.codemao.cn/edu/zone/lesson/offical/packages",
+			params=params,
+			method="page",
+			args={"amount": "limit", "remove": "page"},
+			data_key="items",
+		)
+
+	## 获取官方课程包主题
+	def get_official_package_topic(self) -> dict:
+		time_stamp = community.Obtain().get_timestamp()["data"]
+		params = {"TIME": time_stamp, "pacakgeEntryType": 0, "topicType": "all"}
+		response = self.acquire.send_request(
+			url="https://eduzone.codemao.cn/edu/zone/lessons/official/packages/topics",
+			method="get",
+			params=params,
+		)
+		return response.json()
+
+	# 获取官方课程包tag
+	def get_official_package_tags(self) -> dict:
+		time_stamp = community.Obtain().get_timestamp()["data"]
+		params = {"TIME": time_stamp, "pacakgeEntryType": 0, "topicType": "all"}
+		response = self.acquire.send_request(
+			url="https://eduzone.codemao.cn/edu/zone/lessons/official/packages/topics/all/tags",
+			method="get",
+			params=params,
+		)
+		return response.json()
+
+	# 获取我的备课包(需要教师号)
+	def get_customized_package(self) -> list[dict[Any, Any]]:
+		time_stamp = community.Obtain().get_timestamp()["data"]
+		params = {"TIME": time_stamp, "page": 1, "limit": 100}
+		return self.acquire.fetch_data(
+			url="https://eduzone.codemao.cn/edu/zone/lesson/offical/packages",
+			params=params,
+			method="page",
+			args={"amount": "limit", "remove": "page"},
+			data_key="items",
+		)
+
+	# 获取自定义备课包信息/删除备课包
+	def get_customized_package_info(self, package_id: int, method: Literal["get", "delete"]) -> dict | bool:
+		time_stamp = community.Obtain().get_timestamp()["data"]
+		params = {"TIME": time_stamp}
+		response = self.acquire.send_request(
+			url=f"https://eduzone.codemao.cn/edu/zone/lesson/customized/packages/{package_id}",
+			method=method,
+			params=params,
+		)
+		return response.json() if method == "get" else response.status_code == OK_CODE
+
+	# 获取自定义备课包内容
+	def get_customized_package_lesson(self, package_id: int, limit: int) -> dict:
+		time_stamp = community.Obtain().get_timestamp()["data"]
+		params = {"TIME": time_stamp, "limit": limit, "package_id": package_id}
+		response = self.acquire.send_request(
+			url="https://eduzone.codemao.cn/edu/zone/lesson/customized/package/lessons",
+			method="get",
+			params=params,
+		)
+		return response.json()

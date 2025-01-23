@@ -87,12 +87,7 @@ class CodeMaoClient:
 		args: dict[
 			Literal["amount", "remove", "res_amount_key", "res_remove_key"],
 			Literal["limit", "offset", "page", "current_page", "page_size"],
-		] = {
-			"amount": "limit",
-			"remove": "offset",
-			"res_amount_key": "limit",
-			"res_remove_key": "offset",
-		},
+		] = {},
 	) -> list[dict]:
 		"""分页获取数据.
 		:param url: 请求的 URL.

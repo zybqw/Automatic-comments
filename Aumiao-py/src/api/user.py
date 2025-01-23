@@ -404,7 +404,6 @@ class Motion:
 	# birthday值为timestamp
 	# sex中0为女,1为男
 	# https://api.codemao.cn/tiger/v3/web/accounts/info
-
 	def set_data_info(
 		self,
 		avatar_url: str,

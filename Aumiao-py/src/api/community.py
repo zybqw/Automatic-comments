@@ -206,8 +206,36 @@ class Obtain:
 		return response.json()
 
 	# 获取点个猫更新
-	def get_update_message(self) -> dict:
+	def get_update_pickcat(self) -> dict:
 		response = self.acquire.send_request(url="https://update.codemao.cn/updatev2/appsdk", method="get")
+		return response.json()
+
+	# 获取kitten4更新
+	def get_update_kitten4(self) -> dict:
+		time_stamp = self.get_timestamp()["data"]
+		params = {"TIME": time_stamp}
+		response = self.acquire.send_request(url="https://kn-cdn.codemao.cn/kitten4/application/kitten4_update_info.json", method="get", params=params)
+		return response.json()
+
+	# 获取kitten更新
+	def get_update_kitten(self) -> dict:
+		time_stamp = self.get_timestamp()["data"]
+		params = {"timeStamp": time_stamp}
+		response = self.acquire.send_request(url="https://kn-cdn.codemao.cn/application/kitten_update_info.json", method="get", params=params)
+		return response.json()
+
+	# 获取海龟编辑器更新
+	def get_update_wood(self) -> dict:
+		time_stamp = self.get_timestamp()["data"]
+		params = {"timeStamp": time_stamp}
+		response = self.acquire.send_request(url="https://static-am.codemao.cn/wood/client/xp/prod/package.json", method="get", params=params)
+		return response.json()
+
+	# 获取源码智造编辑器更新
+	def get_update_matrix(self) -> dict:
+		time_stamp = self.get_timestamp()["data"]
+		params = {"timeStamp": time_stamp}
+		response = self.acquire.send_request(url="https://public-static-edu.codemao.cn/matrix/publish/desktop_matrix.json", method="get", params=params)
 		return response.json()
 
 	# 获取时间戳
