@@ -10,7 +10,7 @@ jobs:
     timeout-minutes: 10
     name: "Lint and Format"
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: "Check Out"
         uses: actions/checkout@v4
