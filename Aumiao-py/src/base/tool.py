@@ -152,3 +152,43 @@ class CodeMaoRoutine:
 				suffix = int(suffix) if suffix and suffix.isdigit() else None
 				return [prefix, suffix]
 		return [None, None]
+
+	def merge_user_data(self, data_list: list[dict]) -> dict:
+		# 创建最终的合并字典
+		merged_data = {}
+
+		# 使用字典来统计字段出现次数
+		field_counter = {}
+
+		# 遍历所有字典数据
+		for item in data_list:
+			if isinstance(item, dict):
+				# 统计字段出现次数
+				for key in item:
+					field_counter[key] = field_counter.get(key, 0) + 1
+
+				# 递归处理嵌套字典
+				for key, value in item.items():
+					if isinstance(value, dict):
+						if key not in merged_data:
+							merged_data[key] = {}
+						merged_data[key].update(value)
+					else:
+						# 对于非字典值,只保留最新的值
+						merged_data[key] = value
+
+		# 确定常见字段(出现次数大于1的字段)
+		common_fields = [field for field, count in field_counter.items() if count > 1]
+
+		# 清理重复字段,保留一个值
+		final_data = {}
+		for field in common_fields:
+			if field in merged_data:
+				final_data[field] = merged_data[field]
+
+		# 添加其他非重复字段
+		for key, value in merged_data.items():
+			if key not in final_data:
+				final_data[key] = value
+
+		return final_data

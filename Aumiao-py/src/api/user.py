@@ -116,7 +116,7 @@ class Obtain:
 		return response.json()
 
 	# 获取用户云端作品
-	def get_data_works_cloud(self, types: Literal["nemo", "kitten"], limit: int = 10, offset: int = 0) -> dict:
+	def get_works_cloud(self, types: Literal["nemo", "kitten"], limit: int = 10, offset: int = 0) -> dict:
 		if types == "nemo":
 			work_type = 8
 		elif types == "kitten":
@@ -126,7 +126,7 @@ class Obtain:
 		return response.json()
 
 	# 获取用户nemo作品
-	def get_data_works_nemo(self, method: Literal["published"]) -> list[dict[Any, Any]]:
+	def get_works_nemo_published(self, method: Literal["published"]) -> list[dict[Any, Any]]:
 		params = {"limit": 15, "offset": 0}
 		return self.acquire.fetch_data(
 			url=f"/nemo/v2/works/list/user/{method}",
@@ -135,7 +135,7 @@ class Obtain:
 		)
 
 	# 获取用户KN作品
-	def get_data_works_kn(
+	def get_works_kn(
 		self,
 		method: Literal["published", "total"],
 		extra_params: (
@@ -157,7 +157,7 @@ class Obtain:
 		return self.acquire.fetch_data(url=url, params=params, data_key="items")
 
 	# 获取用户kitten作品列表
-	def get_data_my_works_kitten(
+	def get_works_kitten(
 		self,
 		version: Literal["KITTEN_V4", "KITTEN_V3"],
 		status: Literal["PUBLISHED", "UNPUBLISHED", "all"],
@@ -177,7 +177,7 @@ class Obtain:
 		)
 
 	# 获取用户nemo作品列表
-	def get_data_my_works_nemo(
+	def get_works_nemo(
 		self,
 		status: Literal["PUBLISHED", "UNPUBLISHED", "all"],
 	) -> list[dict[Any, Any]]:
@@ -189,7 +189,7 @@ class Obtain:
 		)
 
 	# 获取用户海龟编辑器作品列表
-	def get_data_my_works_wood(
+	def get_works_wood(
 		self,
 		status: Literal["PUBLISHED", "UNPUBLISHED"],
 		language_type: int = 0,
@@ -209,7 +209,7 @@ class Obtain:
 		)
 
 	# 获取用户box作品列表
-	def get_data_my_works_box(
+	def get_works_box(
 		self,
 		status: Literal["all", "PUBLISHED", "UNPUBLISHED"],
 		work_status: Literal["SHOW"] = "SHOW",
@@ -227,7 +227,7 @@ class Obtain:
 		)
 
 	# 获取用户小说列表
-	def get_data_my_works_fanfic(
+	def get_works_fanfic(
 		self,
 		fiction_status: Literal["SHOW"] = "SHOW",
 	) -> list[dict[Any, Any]]:
@@ -240,7 +240,7 @@ class Obtain:
 
 	# 获取用户coco作品列表
 	# TODO@Aurzex: 参数不确定
-	def get_data_my_works_coco(
+	def get_works_coco(
 		self,
 		status: int = 1,
 		*,

@@ -3,7 +3,7 @@ from json import loads
 from random import choice
 from typing import Any, Literal, cast
 
-from src.api import community, forum, shop, user, work
+from src.api import community, edu, forum, shop, user, work
 from src.base import acquire, data, decorator, file, tool
 
 
@@ -26,6 +26,7 @@ class Union:
 		self.user_obtain = user.Obtain()
 		self.work_motion = work.Motion()
 		self.work_obtain = work.Obtain()
+		self.edu_obtain = edu.Obtain()
 
 
 ClassUnion = Union().__class__
@@ -113,7 +114,7 @@ class Obtain(ClassUnion):
 		offset = 0
 		while result_num >= 0:
 			limit = sorted([5, result_num, 200])[1]
-			response = self.community_obtain.get_replies(type=type_item, limit=limit, offset=offset)
+			response = self.community_obtain.get_replies(types=type_item, limit=limit, offset=offset)
 			_list.extend(response["items"][:result_num])
 			result_num -= limit
 			offset += limit
@@ -129,7 +130,7 @@ class Obtain(ClassUnion):
 		if source == "work":
 			comments = self.work_obtain.get_work_comments(work_id=com_id, limit=200)
 		elif source == "post":
-			comments = self.forum_obtain.get_post_replies_posts(id=com_id, limit=200)
+			comments = self.forum_obtain.get_post_replies_posts(ids=com_id, limit=200)
 		else:
 			msg = "不支持的来源类型"
 			raise ValueError(msg)
@@ -218,8 +219,8 @@ class Motion(ClassUnion):
 		def delete_comment(item_id: int, comment_id: int, *, is_reply: bool = False) -> bool:
 			if source == "post":
 				return self.forum_motion.delete_comment_post_reply(
-					id=comment_id,
-					type="comments" if is_reply else "replies",
+					ids=comment_id,
+					types="comments" if is_reply else "replies",
 				)
 			return self.work_motion.del_comment_work(work_id=item_id, comment_id=comment_id)
 
@@ -393,7 +394,7 @@ class Motion(ClassUnion):
 					)
 				else:
 					parent_id = cast(int, reply.get("reference_id", message["replied_id"]))
-					comment_ids = Obtain().get_comments_detail(id=business_id, source="work", method="comment_id")
+					comment_ids = Obtain().get_comments_detail(com_id=business_id, source="work", method="comment_id")
 					comment_ids = cast(list[str], comment_ids)
 					comment_id = cast(
 						int,
@@ -417,7 +418,7 @@ class Motion(ClassUnion):
 					)
 				else:
 					parent_id = cast(int, reply.get("reference_id", message["replied_id"]))
-					comment_ids = Obtain().get_comments_detail(id=business_id, source="post", method="comment_id")
+					comment_ids = Obtain().get_comments_detail(com_id=business_id, source="post", method="comment_id")
 					comment_ids = cast(list[str], comment_ids)
 					comment_id = cast(
 						int,
@@ -432,14 +433,43 @@ class Motion(ClassUnion):
 
 	# 工作室常驻置顶
 	def top_work(self) -> None:
-		detail = self.shop_obtain.get_shops_info()
+		detail = self.shop_obtain.get_shops_details()
 		description = self.shop_obtain.get_shop_details(detail["work_subject_id"])["description"]
 		self.shop_motion.update_shop_details(
 			description=description,
-			id=detail["id"],
+			shop_id=detail["id"],
 			name=detail["name"],
 			preview_url=detail["preview_url"],
 		)
+
+	# 查看账户所有信息综合
+	def get_account_all_data(self) -> dict[Any, Any]:
+		s = self.user_obtain.get_data_details()
+		# 创建一个空列表来存储所有字典
+		all_data: list[dict] = []
+		# 调用每个函数并将结果添加到列表中
+		s = self.user_obtain.get_data_details()
+		all_data.append(s)
+		s = self.user_obtain.get_data_level()
+		all_data.append(s)
+		s = self.user_obtain.get_data_name()
+		all_data.append(s)
+		s = self.user_obtain.get_data_privacy()
+		all_data.append(s)
+		s = self.user_obtain.get_data_score()
+		all_data.append(s)
+		s = self.user_obtain.get_data_profile("web")
+		all_data.append(s)
+		s = self.user_obtain.get_data_tiger()
+		all_data.append(s)
+		s = self.edu_obtain.get_data_details()
+		all_data.append(s)
+		return self.tool_routine.merge_user_data(data_list=all_data)
+
+	# 查看账户状态
+	def get_account_status(self) -> str:
+		status = self.user_obtain.get_data_details()
+		return f"禁言状态{status['voice_forbidden']},签订友好条约{status['has_signed']}"
 
 
 # "WORK_REPLY",路人a评论{user}在某个作品的评论
