@@ -52,6 +52,7 @@ jobs:
       - uses: crate-ci/typos@master
         with:
           files: .
+          config: ./typos.toml
 
   commit:
     timeout-minutes: 10
