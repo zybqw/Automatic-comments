@@ -182,7 +182,7 @@ class BookObtain:
 	# 通用获取图鉴方法
 	def _get_book_by_params(self, params: dict) -> dict:
 		response = self.acquire.send_request(
-			url="https://api.codemao.cn/api/sprite/list/all",
+			url="/api/sprite/list/all",
 			method="get",
 			params=params,
 		)

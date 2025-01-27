@@ -97,18 +97,18 @@ class Obtain:
 	# 获取工作室投稿作品
 	def get_shop_works(self, shop_id: int, user_id: int, sort: str = "-created_at,-id") -> list[dict[Any, Any]]:
 		params = {"limit": 20, "offset": 0, "sort": sort, "user_id": user_id, "work_subject_id": shop_id}
-		return self.acquire.fetch_data(url=f"https://api.codemao.cn/web/works/subjects/{shop_id}/works", params=params, data_key="items")
+		return self.acquire.fetch_data(url=f"/web/works/subjects/{shop_id}/works", params=params, data_key="items")
 
 	# 获取与工作室关系
 	def get_shop_relation(self, relation_id: int) -> dict:
 		params = {"id": relation_id}
-		response = self.acquire.send_request(url="https://api.codemao.cn/web/work_shops/users/relation", method="get", params=params)
+		response = self.acquire.send_request(url="/web/work_shops/users/relation", method="get", params=params)
 		return response.json()
 
 	# 获取工作室讨论区的帖子
 	def get_shop_posts(self, label_id: int) -> list[dict]:
 		params = {"limit": 20, "offset": 0}
-		return self.acquire.fetch_data(url=f"https://api.codemao.cn/web/works/subjects/labels/{label_id}/posts", params=params, data_key="items")
+		return self.acquire.fetch_data(url=f"/web/works/subjects/labels/{label_id}/posts", params=params, data_key="items")
 
 
 @singleton

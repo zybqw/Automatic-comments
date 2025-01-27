@@ -305,7 +305,7 @@ class Motion(ClassUnion):
 				for query_type in query_types:
 					params["query_type"] = query_type
 					responses[query_type] = send_clear_request(
-						url="https://api.codemao.cn/web/message-record",
+						url="/web/message-record",
 						params=params,
 					)
 				item += 200

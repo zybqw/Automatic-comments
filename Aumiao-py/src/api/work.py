@@ -572,7 +572,7 @@ class Obtain:
 		response = self.acquire.send_request(url=f"/nemo/v3/work-subject/{ids}/works", method="get", params=params)
 		return response.json()
 
-	# https://api.codemao.cn/nemo/v3/work-subject/home?offset=0&limit=15
+	# /nemo/v3/work-subject/home?offset=0&limit=15
 	# 获取各个主题下的作品
 	def get_subject_works_nemo(self, limit: int = 15, offset: int = 0) -> dict:
 		params = {"limit": limit, "offset": offset}
@@ -696,7 +696,7 @@ class Obtain:
 			"fiction_status": fiction_status,
 		}
 		return self.acquire.fetch_data(
-			url="https://api.codemao.cn/web/fanfic/my/new",
+			url="/web/fanfic/my/new",
 			params=params,
 			data_key="items",
 		)

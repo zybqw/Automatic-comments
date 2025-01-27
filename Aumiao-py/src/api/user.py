@@ -183,7 +183,7 @@ class Obtain:
 	) -> list[dict[Any, Any]]:
 		params = {"offset": 0, "limit": 30, "published_status": status}
 		return self.acquire.fetch_data(
-			url="https://api.codemao.cn/creation-tools/v1/works/list",
+			url="/creation-tools/v1/works/list",
 			params=params,
 			data_key="items",
 		)
@@ -233,7 +233,7 @@ class Obtain:
 	) -> list[dict[Any, Any]]:
 		params = {"offset": 0, "limit": 30, "fiction_status": fiction_status}
 		return self.acquire.fetch_data(
-			url="https://api.codemao.cn/web/fanfic/my/new",
+			url="/web/fanfic/my/new",
 			params=params,
 			data_key="items",
 		)
@@ -403,7 +403,7 @@ class Motion:
 	# 设置info
 	# birthday值为timestamp
 	# sex中0为女,1为男
-	# https://api.codemao.cn/tiger/v3/web/accounts/info
+	# /tiger/v3/web/accounts/info
 	def set_data_info(
 		self,
 		avatar_url: str,
@@ -424,7 +424,7 @@ class Motion:
 			"sex": sex,
 		}
 		response = self.acquire.send_request(
-			url="https://api.codemao.cn/tiger/v3/web/accounts/info",
+			url="/tiger/v3/web/accounts/info",
 			method="patch",
 			data=json.dumps(data),
 		)
