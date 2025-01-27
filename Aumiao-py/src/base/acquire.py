@@ -32,7 +32,7 @@ class CodeMaoClient:
 		params: dict | None = None,
 		data: str | None = None,
 		headers: dict | None = None,
-		sleep: float = 0,
+		sleep: float = 1,
 		*,
 		log: Literal[True, False] = True,
 	) -> requests.Response:
@@ -82,7 +82,7 @@ class CodeMaoClient:
 		limit: int | None = None,
 		fetch_method: Literal["get", "post"] = "get",
 		total_key: str = "total",
-		data_key: str | None = "item",
+		data_key: str = "item",
 		method: Literal["offset", "page"] = "offset",
 		args: dict[
 			Literal["amount", "remove", "res_amount_key", "res_remove_key"],

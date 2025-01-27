@@ -68,12 +68,12 @@ class Login:
 		ticket = response["ticket"]
 		response = self.get_login_security(identity=identity, password=password, ticket=ticket, pid=pid)
 
-	# 返回完整鉴权cookie
+	# 返回完整cookie
 	def get_login_auth(self, token: str) -> dict[str, Any]:
-		response = self.acquire.send_request(
-			url="https://shequ.codemao.cn/",
-			method="get",
-		)
+		# response = self.acquire.send_request(
+		# 	url="https://shequ.codemao.cn/",
+		# 	method="get",
+		# )
 		# aliyungf_tc = response.cookies.get_dict()["aliyungf_tc"]
 		# 上面这句会自己生成
 		# uuid_ca = uuid.uuid1()
