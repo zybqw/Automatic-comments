@@ -41,8 +41,9 @@ class Dashscope:
 				**more,
 			},
 		)
-		return self.acquire.send_request(
+		response = self.acquire.send_request(
 			url="https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions",
 			method="post",
 			data=data,
 		)
+		return response.json()

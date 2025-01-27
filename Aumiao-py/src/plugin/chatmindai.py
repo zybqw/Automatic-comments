@@ -135,7 +135,7 @@ class Chat:
 			data=data,
 			headers=HEADERS,
 		)
-		return response.text
+		return response.json()
 
 	def save_chat(self) -> dict:
 		data = json.dumps(
