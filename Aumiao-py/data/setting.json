@@ -6,13 +6,12 @@
 		}
 	],
 	"PARAMETER": {
-		"CLIENT": {
-			"all_read_type": ["COMMENT_REPLY", "LIKE_FORK", "SYSTEM"],
-			"clear_ad_exclude_top": true,
-			"cookie_check_url": "/nemo/v2/works/174408420/like",
-			"get_works_method": "newest",
-			"password_login_method": "token"
-		}
+		"all_read_type": ["COMMENT_REPLY", "LIKE_FORK", "SYSTEM"],
+		"clear_ad_exclude_top": true,
+		"cookie_check_url": "/nemo/v2/works/174408420/like",
+		"get_works_method": "newest",
+		"password_login_method": "token",
+		"spam_max": 5
 	},
 	"PLUGIN": {
 		"DASHSCOPE": {

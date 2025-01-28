@@ -95,16 +95,13 @@ class DefaultAction(TypedDict):
 	name: str
 
 
-class ClientParameter(TypedDict):
+class Parameter(TypedDict):
 	all_read_type: list[str]
 	clear_ad_exclude_top: bool
 	cookie_check_url: str
 	get_works_method: str
 	password_login_method: str
-
-
-class Parameter(TypedDict):
-	CLIENT: ClientParameter
+	spam_max: int
 
 
 class ExtraBody(TypedDict):

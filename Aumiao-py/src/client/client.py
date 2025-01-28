@@ -124,13 +124,15 @@ class Obtain(ClassUnion):
 	def get_comments_detail(  # noqa: PLR0912
 		self,
 		com_id: int,
-		source: Literal["work", "post"],
+		source: Literal["work", "post", "shop"],
 		method: Literal["user_id", "comments", "comment_id"] = "user_id",
 	) -> list[int | dict | str]:
 		if source == "work":
 			comments = self.work_obtain.get_work_comments(work_id=com_id, limit=200)
 		elif source == "post":
 			comments = self.forum_obtain.get_post_replies_posts(ids=com_id, limit=200)
+		elif source == "shop":
+			comments = self.shop_obtain.get_shop_discussion(shop_id=com_id, limit=200)
 		else:
 			msg = "不支持的来源类型"
 			raise ValueError(msg)
@@ -189,7 +191,7 @@ class Obtain(ClassUnion):
 			msg = "不支持的请求方法"
 			raise ValueError(msg)
 
-		return [item for index, item in enumerate(result) if item not in result[:index]]
+		return [item for index, item in enumerate(result) if item not in result[:index]]  # 去重
 
 
 @decorator.singleton
@@ -279,6 +281,82 @@ class Motion(ClassUnion):
 
 		return process_list("广告评论", ad_list) and process_list("黑名单评论", bad_list)
 
+	# 清除刷屏评论
+	def clear_duplicate_comments(self, source: Literal["work", "post"]) -> None:
+		comments_data = []
+		if source == "work":
+			work_ids = self.user_obtain.get_user_works_web(self.data["ACCOUNT_DATA"]["id"])
+			for item in work_ids:
+				item_id = int(item["id"])
+				comments_data = Obtain().get_comments_detail(com_id=item_id, source="work", method="comments")
+				spam_comments = self.find_duplicate_comments(comments_data)
+				for spam in spam_comments:
+					print(f"在作品 {item['work_name']} 中发现刷屏评论: {spam['content']}")
+					for spam_id in spam["ids"]:
+						if spam_id.split(":")[1] == "comment":
+							self.work_motion.del_comment_work(work_id=item_id, comment_id=int(spam_id.split(":")[0]))
+						else:
+							self.work_motion.del_comment_work(
+								work_id=item_id,
+								comment_id=int(spam_id.split(":")[0].split(".")[1]),
+							)
+		elif source == "post":
+			post_ids = self.forum_obtain.get_post_mine_all(method="created")
+			for item in post_ids:
+				item_id = int(item["id"])
+				comments_data = Obtain().get_comments_detail(com_id=item_id, source="post", method="comments")
+				spam_comments = self.find_duplicate_comments(comments_data)
+				for spam in spam_comments:
+					print(f"在帖子 {item['title']} 中发现刷屏评论: {spam['content']}")
+					for spam_id in spam["ids"]:
+						if spam_id.split(":")[1] == "comment":
+							self.forum_motion.delete_comment_post_reply(ids=int(spam_id.split(":")[0]), types="replies")
+						else:
+							self.forum_motion.delete_comment_post_reply(ids=int(spam_id.split(":")[0].split(".")[1]), types="comments")
+
+	# 查找刷屏评论
+	def find_duplicate_comments(self, comments_data: list) -> list[dict]:
+		# 用于统计 (user_id, content) 组合出现的次数
+		content_count = {}
+		# 用于存储每个 (user_id, content) 组合对应的所有 id
+		id_mapping = {}
+
+		def process_comment(user_id: str, content: str, comment_id: str, *, is_reply: bool = False, parent_id: str | None = None) -> None:
+			key = (user_id, content)
+			content_count[key] = content_count.get(key, 0) + 1
+
+			if key not in id_mapping:
+				id_mapping[key] = set()
+
+			# 根据是否为回复添加不同格式的ID
+			if is_reply:
+				id_mapping[key].add(f"{parent_id}.{comment_id}:reply")
+			else:
+				id_mapping[key].add(f"{comment_id}:comment")
+
+		# 处理主评论和回复
+		for comment in comments_data:
+			# 处理主评论
+			process_comment(comment["user_id"], comment["content"], comment["id"])
+
+			# 处理回复
+			for reply in comment["replies"]:
+				process_comment(reply["user_id"], reply["content"], reply["id"], is_reply=True, parent_id=comment["id"])
+
+		# 构建结果
+		result = []
+		for (user_id, content), count in content_count.items():
+			if count >= self.setting["PARAMETER"]["spam_max"]:
+				result.append(
+					{
+						"content": content,
+						"user_id": user_id,
+						"ids": sorted(id_mapping[(user_id, content)]),
+					},
+				)
+
+		return result
+
 	# 清除邮箱红点
 	def clear_red_point(self, method: Literal["nemo", "web"] = "web") -> bool:
 		def get_message_counts(method: Literal["web", "nemo"]) -> dict:
@@ -300,7 +378,7 @@ class Motion(ClassUnion):
 				if len({counts[i]["count"] for i in range(3)} | {0}) == 1:
 					return True
 
-				query_types = self.setting["PARAMETER"]["CLIENT"]["all_read_type"]
+				query_types = self.setting["PARAMETER"]["all_read_type"]
 				responses = {}
 				for query_type in query_types:
 					params["query_type"] = query_type

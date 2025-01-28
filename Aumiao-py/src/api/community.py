@@ -53,7 +53,7 @@ class Login:
 			print(f"表达式输入不合法 {err}")
 			return False
 		self.acquire.send_request(
-			url=self.setting["PARAMETER"]["CLIENT"]["cookie_check_url"],
+			url=self.setting["PARAMETER"]["cookie_check_url"],
 			method="post",
 			data=json.dumps({}),
 			headers={**self.acquire.HEADERS, "cookie": cookies},

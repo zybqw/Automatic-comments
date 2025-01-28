@@ -32,7 +32,7 @@ class CodeMaoClient:
 		params: dict | None = None,
 		data: str | None = None,
 		headers: dict | None = None,
-		sleep: float = 1,
+		sleep: float = 0.1,
 		*,
 		log: Literal[True, False] = True,
 	) -> requests.Response:
