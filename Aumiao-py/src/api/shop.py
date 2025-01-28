@@ -5,6 +5,8 @@ from src.base import acquire
 from src.base.decorator import singleton
 
 OK_CODE = 200
+CREATED_CODE = 201
+NO_CONTENT_CODE = 204
 
 
 @singleton
@@ -191,3 +193,80 @@ class Motion:
 			data=json.dumps({"id": shop_id, "status": status, "user_id": user_id}),
 		)
 		return response.status_code == OK_CODE
+
+	# 举报讨论区下的评论
+	def report_comment(
+		self,
+		comment_id: int,
+		comment_parent_id: int,
+		description: str,
+		reason_content: str,
+		reason_id: int,
+		reporter_id: int,
+		comment_source: Literal["WORK_SHOP"] = "WORK_SHOP",
+	) -> bool:
+		response = self.acquire.send_request(
+			url="/web/reports/comments",
+			method="post",
+			data=json.dumps(
+				{
+					"comment_id": comment_id,
+					"comment_parent_id": comment_parent_id,
+					"description": description,
+					"reason_content": reason_content,
+					"reason_id": reason_id,
+					"reporter_id": reporter_id,
+					"comment_source": comment_source,
+				},
+			),
+		)
+		return response.status_code == CREATED_CODE
+
+	# 回复评论
+	# parent_id貌似只能为0
+	def reply_work(self, shop_id: int, comment_id: int, content: str, source: Literal["WORK_SHOP"] = "WORK_SHOP", parent_id: int = 0, *, return_data: bool = False) -> bool:
+		response = self.acquire.send_request(
+			url=f"/web/discussions/{shop_id}/comments/{comment_id}/reply",
+			method="post",
+			data=json.dumps(
+				{
+					"parent_id": parent_id,
+					"content": content,
+					"source": source,
+				},
+			),
+		)
+		return response.json() if return_data else response.status_code == CREATED_CODE
+
+	# 删除回复
+	def delete_reply(self, comment_id: int, source: Literal["WORK_SHOP"] = "WORK_SHOP") -> bool:
+		response = self.acquire.send_request(
+			url=f"/web/discussions/replies/{comment_id}",
+			method="delete",
+			params={"source": source},
+		)
+		return response.status_code == NO_CONTENT_CODE
+
+	# 评论
+	def comment_work(self, shop_id: int, content: str, rich_content: str, source: Literal["WORK_SHOP"] = "WORK_SHOP", *, return_code: bool = False) -> bool:
+		response = self.acquire.send_request(
+			url=f"/web/discussions/{shop_id}/comment",
+			method="post",
+			data=json.dumps(
+				{
+					"content": content,
+					"rich_content": rich_content,
+					"source": source,
+				},
+			),
+		)
+		return response.json() if return_code else response.status_code == CREATED_CODE
+
+	# 删除评论
+	def delete_comment(self, comment_id: int, source: Literal["WORK_SHOP"] = "WORK_SHOP") -> bool:
+		response = self.acquire.send_request(
+			url=f"/web/discussions/comments/{comment_id}",
+			method="delete",
+			params={"source": source},
+		)
+		return response.status_code == NO_CONTENT_CODE
