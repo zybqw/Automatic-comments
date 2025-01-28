@@ -23,7 +23,7 @@ class CodeMaoClient:
 		self.tool_process = tool.CodeMaoProcess()
 		self.file = file.CodeMaoFile()
 		self.HEADERS: dict = self.data.setting["PROGRAM"]["HEADERS"]
-		self.BASE_URL: str = ""
+		self.BASE_URL: str = "https://api.codemao.cn"
 
 	def send_request(
 		self,
