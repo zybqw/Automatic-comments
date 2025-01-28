@@ -199,8 +199,12 @@ class Motion(ClassUnion):
 	def __init__(self) -> None:
 		super().__init__()
 
+	# 由于编程猫社区命名极不规范,在本函数变量中,reply指work中comment的回复或者post中reply(回帖)中的回复
+	# comment指work中的comment或者post中的reply
+	# 但是delete_comment_post_reply函数reply指回帖,comment指回帖的回复
+	# 将列表切片翻转是为了先删评论中的回复再删评论,防止在存在评论和回复都是待删项时,删除回复报错
 	def clear_comments(self, source: Literal["work", "post"], action_type: Literal["ads", "duplicates", "blacklist"]) -> bool:  # noqa: PLR0915
-		def get_items_and_comments() -> tuple[list[dict[str, str | int]], Callable[..., Any]] | tuple[list[dict[Any, Any]], Callable[..., Any]]:
+		def get_items_and_comments() -> tuple[list[dict[str, str | int]], Callable[..., Any]]:
 			if source == "work":
 				return (
 					self.user_obtain.get_user_works_web(self.data["ACCOUNT_DATA"]["id"]),
@@ -223,7 +227,7 @@ class Motion(ClassUnion):
 			return self.work_motion.del_comment_work(work_id=item_id, comment_id=comment_id)
 
 		def process_list(list_name: str, list_items: list) -> bool:
-			if list_items != []:
+			if list_items:
 				print(f"发现以下{list_name}:")
 				for item in list_items[::-1]:
 					print(item)
@@ -231,21 +235,36 @@ class Motion(ClassUnion):
 					for item in list_items[::-1]:
 						item_id, comment_id = map(int, item.split(":")[0].split("."))
 						is_reply = item.split(":")[1] == "reply"
-						if delete_comment(item_id, comment_id, is_reply=is_reply):
-							print(f"{list_name} {item} 已删除")
-						else:
+						if not delete_comment(item_id, comment_id, is_reply=is_reply):
 							print(f"删除{list_name} {item} 失败")
 							return False
+						print(f"{list_name} {item} 已删除")
 				else:
 					print(f"未删除任何{list_name}")
 			else:
 				print(f"未发现{list_name}")
 			return True
 
+		def process_comment(comment: dict, item_id: int, title: str) -> None:
+			comment_id, content, user_id = comment["id"], comment["content"].lower(), comment["user_id"]
+			if action_type in ["ads", "blacklist"] and not comment.get("is_top", False):
+				if action_type == "ads" and any(ad in content for ad in ads):
+					print(f"在{source} {title} 中发现广告: {content}")
+					ad_list.append(f"{item_id}.{comment_id}:comment")
+				elif action_type == "blacklist" and str(user_id) in bad_users:
+					print(f"在{source} {title} 中发现黑名单: {comment['nickname']}发送的评论: {content}")
+					bad_list.append(f"{item_id}.{comment_id}:comment")
+			for reply in comment["replies"]:
+				reply_id, reply_content, reply_user_id = reply["id"], reply["content"].lower(), reply["user_id"]
+				if action_type == "ads" and any(ad in reply_content for ad in ads):
+					print(f"在{source} {title} 中 {content} 评论中发现广告: {reply_content}")
+					ad_list.append(f"{item_id}.{reply_id}:reply")
+				elif action_type == "blacklist" and str(reply_user_id) in bad_users:
+					print(f"在{source} {title} 中 {content} 评论中发现黑名单: {reply['nickname']}发送的评论: {reply_content}")
+					bad_list.append(f"{item_id}.{reply_id}:reply")
+
 		def find_duplicate_comments(comments_data: list, item_id: int) -> list[dict]:
-			# 用于统计 (user_id, content) 组合出现的次数
 			content_count = {}
-			# 用于存储每个 (user_id, content) 组合对应的所有 id
 			id_mapping = {}
 
 			def process_comment(user_id: str, content: str, item_id: int, comment_id: str, *, is_reply: bool = False) -> None:
@@ -253,21 +272,16 @@ class Motion(ClassUnion):
 				content_count[key] = content_count.get(key, 0) + 1
 				if key not in id_mapping:
 					id_mapping[key] = set()
-				# 根据是否为回复添加不同格式的ID
 				if is_reply:
 					id_mapping[key].add(f"{item_id}.{comment_id}:reply")
 				else:
 					id_mapping[key].add(f"{item_id}.{comment_id}:comment")
 
-			# 处理主评论和回复
 			for comment in comments_data:
-				# 处理主评论
 				process_comment(comment["user_id"], comment["content"], item_id=item_id, comment_id=comment["id"])
-				# 处理回复
 				for reply in comment["replies"]:
 					process_comment(reply["user_id"], reply["content"], item_id=item_id, comment_id=reply["id"], is_reply=True)
 
-			# 构建结果
 			result = []
 			for (user_id, content), count in content_count.items():
 				if count >= self.setting["PARAMETER"]["spam_max"]:
@@ -280,211 +294,31 @@ class Motion(ClassUnion):
 					)
 			return result
 
-		# 获取所有条目和评论
 		items_list, get_comments = get_items_and_comments()
-
 		ads = self.data["USER_DATA"]["ads"]
 		bad_users = self.data["USER_DATA"]["black_room"]["user"]
 		ad_list, bad_list, duplicate_list = [], [], []
 
 		for item in items_list:
 			item_id = int(item["id"])
-			title = item["title" if source == "post" else "work_name"]
+			title = cast(str, item["title" if source == "post" else "work_name"])
 			for comment in get_comments(item_id):
 				comment = cast(dict, comment)
-				comment_id, content, user_id = comment["id"], comment["content"].lower(), comment["user_id"]
-				# Check for ads or blacklisted users
-				if action_type in ["ads", "blacklist"] and not comment.get("is_top", False):
-					if action_type == "ads" and any(ad in content for ad in ads):
-						print(f"在{source} {title} 中发现广告: {content}")
-						ad_list.append(f"{item_id}.{comment_id}:comment")
-					elif action_type == "blacklist" and str(user_id) in bad_users:
-						print(f"在{source} {title} 中发现黑名单: {comment['nickname']}发送的评论: {content}")
-						bad_list.append(f"{item_id}.{comment_id}:comment")
-				# Check for replies
-				for reply in comment["replies"]:
-					reply_id, reply_content, reply_user_id = reply["id"], reply["content"].lower(), reply["user_id"]
-					if action_type == "ads" and any(ad in reply_content for ad in ads):
-						print(f"在{source} {title} 中 {content} 评论中发现广告: {reply_content}")
-						ad_list.append(f"{item_id}.{reply_id}:reply")
-					elif action_type == "blacklist" and str(reply_user_id) in bad_users:
-						print(f"在{source} {title} 中 {content} 评论中发现黑名单: {reply['nickname']}发送的评论: {reply_content}")
-						bad_list.append(f"{item_id}.{reply_id}:reply")
-				# Collect duplicate comments if needed
+				process_comment(comment, item_id, title)
 			if action_type == "duplicates":
 				spam_comments = find_duplicate_comments(get_comments(item_id), item_id=item_id)
 				for spam in spam_comments:
 					print(f"在{source} {title} 中发现刷屏评论: {spam['content']}")
 					duplicate_list.extend(spam["ids"])
 
-		# Process ads, blacklisted users or duplicates
 		if action_type == "ads":
-			bad_list = [item for item in bad_list if item not in ad_list]  # Remove duplicates from blacklist
-		if action_type == "ads":
+			bad_list = [item for item in bad_list if item not in ad_list]
 			return process_list("广告评论", ad_list)
 		if action_type == "blacklist":
 			return process_list("黑名单评论", bad_list)
 		if action_type == "duplicates":
 			return process_list("刷屏评论", duplicate_list)
 		return None
-
-	# 由于编程猫社区命名极不规范,在本函数变量中,reply指work中comment的回复或者post中reply(回帖)中的回复
-	# comment指work中的comment或者post中的reply
-	# 但是delete_comment_post_reply函数reply指回帖,comment指回帖的回复
-	# 将列表切片翻转是为了先删评论中的回复再删评论,防止在存在评论和回复都是待删项时,删除回复报错
-	def clear_ads(self, source: Literal["work", "post"]) -> bool:
-		def get_items_and_comments() -> tuple[list[dict[str, str | int]], Callable[..., Any]] | tuple[list[dict[Any, Any]], Callable[..., Any]]:
-			if source == "work":
-				return (
-					self.user_obtain.get_user_works_web(self.data["ACCOUNT_DATA"]["id"]),
-					lambda item_id: Obtain().get_comments_detail(com_id=item_id, source="work", method="comments"),
-				)
-			if source == "post":
-				return (
-					self.forum_obtain.get_post_mine_all(method="created"),
-					lambda item_id: Obtain().get_comments_detail(com_id=item_id, source="post", method="comments"),
-				)
-			msg = "不支持的来源类型"
-			raise ValueError(msg)
-
-		def delete_comment(item_id: int, comment_id: int, *, is_reply: bool = False) -> bool:
-			if source == "post":
-				return self.forum_motion.delete_comment_post_reply(
-					ids=comment_id,
-					types="comments" if is_reply else "replies",
-				)
-			return self.work_motion.del_comment_work(work_id=item_id, comment_id=comment_id)
-
-		items_list, get_comments = get_items_and_comments()
-		ads = self.data["USER_DATA"]["ads"]
-		bad_users = self.data["USER_DATA"]["black_room"]["user"]
-		ad_list, bad_list = [], []
-
-		for item in items_list:
-			item_id = int(item["id"])
-			for comment in get_comments(item_id):
-				comment = cast(dict, comment)
-				comment_id, content, user_id = comment["id"], comment["content"].lower(), comment["user_id"]
-				title = item["title" if source == "post" else "work_name"]
-
-				if not comment.get("is_top", False):
-					if any(ad in content for ad in ads):
-						print(f"在{source} {title} 中发现广告: {content}")
-						ad_list.append(f"{item_id}.{comment_id}:comment")
-					elif str(user_id) in bad_users:  # 使用 elif 避免重复添加
-						print(f"在{source} {title} 中发现黑名单: {comment['nickname']}发送的评论: {content}")
-						bad_list.append(f"{item_id}.{comment_id}:comment")
-
-				for reply in comment["replies"]:
-					reply_id, reply_content, reply_user_id = reply["id"], reply["content"].lower(), reply["user_id"]
-					if any(ad in reply_content for ad in ads):
-						print(f"在{source} {title} 中 {content} 评论中发现广告: {reply_content}")
-						ad_list.append(f"{item_id}.{reply_id}:reply")
-					elif str(reply_user_id) in bad_users:  # 使用 elif 避免重复添加
-						print(
-							f"在{source} {title} 中 {content} 评论中发现黑名单: {reply['nickname']}发送的评论: {reply_content}",
-						)
-						bad_list.append(f"{item_id}.{reply_id}:reply")
-
-		# 移除 bad_list 中与 ad_list 重复的项
-		bad_list = [item for item in bad_list if item not in ad_list]
-
-		def process_list(list_name: str, list_items: list) -> bool:
-			if list_items:
-				print(f"发现以下{list_name}:")
-				for item in list_items[::-1]:
-					print(item)
-				if input(f"是否删除所有{list_name}? (y/n): ").strip().lower() == "y":
-					for item in list_items[::-1]:
-						item_id, comment_id = map(int, item.split(":")[0].split("."))
-						is_reply = item.split(":")[1] == "reply"  # 修正了这里的逻辑
-						if not delete_comment(item_id, comment_id, is_reply=is_reply):
-							print(f"删除{list_name} {item} 失败")
-							return False
-						print(f"{list_name} {item} 已删除")
-				else:
-					print(f"未删除任何{list_name}")
-			else:
-				print(f"未发现{list_name}")
-			return True
-
-		return process_list("广告评论", ad_list) and process_list("黑名单评论", bad_list)
-
-	# 清除刷屏评论
-	def clear_duplicate_comments(self, source: Literal["work", "post"]) -> None:
-		comments_data = []
-		if source == "work":
-			work_ids = self.user_obtain.get_user_works_web(self.data["ACCOUNT_DATA"]["id"])
-			for item in work_ids:
-				item_id = int(item["id"])
-				comments_data = Obtain().get_comments_detail(com_id=item_id, source="work", method="comments")
-				spam_comments = self.find_duplicate_comments(comments_data)
-				for spam in spam_comments:
-					print(f"在作品 {item['work_name']} 中发现刷屏评论: {spam['content']}")
-					for spam_id in spam["ids"]:
-						if spam_id.split(":")[1] == "comment":
-							self.work_motion.del_comment_work(work_id=item_id, comment_id=int(spam_id.split(":")[0]))
-						else:
-							self.work_motion.del_comment_work(
-								work_id=item_id,
-								comment_id=int(spam_id.split(":")[0].split(".")[1]),
-							)
-		elif source == "post":
-			post_ids = self.forum_obtain.get_post_mine_all(method="created")
-			for item in post_ids:
-				item_id = int(item["id"])
-				comments_data = Obtain().get_comments_detail(com_id=item_id, source="post", method="comments")
-				spam_comments = self.find_duplicate_comments(comments_data)
-				for spam in spam_comments:
-					print(f"在帖子 {item['title']} 中发现刷屏评论: {spam['content']}")
-					for spam_id in spam["ids"]:
-						if spam_id.split(":")[1] == "comment":
-							self.forum_motion.delete_comment_post_reply(ids=int(spam_id.split(":")[0]), types="replies")
-						else:
-							self.forum_motion.delete_comment_post_reply(ids=int(spam_id.split(":")[0].split(".")[1]), types="comments")
-
-	# 查找刷屏评论
-	def find_duplicate_comments(self, comments_data: list) -> list[dict]:
-		# 用于统计 (user_id, content) 组合出现的次数
-		content_count = {}
-		# 用于存储每个 (user_id, content) 组合对应的所有 id
-		id_mapping = {}
-
-		def process_comment(user_id: str, content: str, comment_id: str, *, is_reply: bool = False, parent_id: str | None = None) -> None:
-			key = (user_id, content)
-			content_count[key] = content_count.get(key, 0) + 1
-
-			if key not in id_mapping:
-				id_mapping[key] = set()
-
-			# 根据是否为回复添加不同格式的ID
-			if is_reply:
-				id_mapping[key].add(f"{parent_id}.{comment_id}:reply")
-			else:
-				id_mapping[key].add(f"{comment_id}:comment")
-
-		# 处理主评论和回复
-		for comment in comments_data:
-			# 处理主评论
-			process_comment(comment["user_id"], comment["content"], comment["id"])
-
-			# 处理回复
-			for reply in comment["replies"]:
-				process_comment(reply["user_id"], reply["content"], reply["id"], is_reply=True, parent_id=comment["id"])
-
-		# 构建结果
-		result = []
-		for (user_id, content), count in content_count.items():
-			if count >= self.setting["PARAMETER"]["spam_max"]:
-				result.append(
-					{
-						"content": content,
-						"user_id": user_id,
-						"ids": sorted(id_mapping[(user_id, content)]),
-					},
-				)
-
-		return result
 
 	# 清除邮箱红点
 	def clear_red_point(self, method: Literal["nemo", "web"] = "web") -> bool:
