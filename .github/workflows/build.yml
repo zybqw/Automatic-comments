@@ -49,7 +49,7 @@ jobs:
           company-name: "Aumiao Team"
           product-name: "Aumiao"
           file-version: "2.0.0"
-          product-version: "2.0.0 alpha"
+          product-version: "2.0.0"
           file-description: "A Codemao Community Tool"
           copyright: "Copyright © 2023 喵鱼a. All rights reserved."
           enable-console: true # 添加控制台窗口支持
