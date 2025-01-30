@@ -1,9 +1,11 @@
 from .api import community, edu, forum, library, pickduck, shop, user, work
+from .base import data
 from .client import client
 
 __all__ = [
 	"client",
 	"community",
+	"data",
 	"edu",
 	"forum",
 	"library",

@@ -45,7 +45,6 @@ class SyncDict(dict[str, Any]):
 	def update(self, *args: T, **kwargs: T) -> None:
 		super().update(*args, **kwargs)
 		self._sync_to_file()
-		self._sync_to_file()
 
 	def clear(self) -> None:
 		super().clear()
