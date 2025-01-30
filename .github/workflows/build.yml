@@ -37,7 +37,7 @@ jobs:
       # 安装依赖
       - name: Install Dependencies with uv
         run: |
-          uv pip install -r ./Aumiao-py/project/requirements.txt
+          uv pip install --system -r ./Aumiao-py/project/requirements.txt
 
       # 使用 Nuitka 构建可执行文件
       - name: Build Executable with Nuitka
