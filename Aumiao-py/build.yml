@@ -1,0 +1,68 @@
+name: Build and Package with Nuitka
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      # 检出代码
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # 设置 Python 环境
+      - name: Set Up Python Environment
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13" # 使用当前最新稳定版
+          architecture: "x64"
+
+      # 使用 setup-uv 安装 uv
+      - name: Set Up UV
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest" # 安装最新版本的 uv
+          enable-cache: true # 启用缓存
+          cache-dependency-glob: |
+            **/requirements*.txt
+            **/pyproject.toml
+
+      # 安装依赖
+      - name: Install Dependencies with uv
+        run: |
+          uv pip install -r requirements.txt
+
+      # 使用 Nuitka 构建可执行文件
+      - name: Build Executable with Nuitka
+        uses: Nuitka/Nuitka-Action@main
+        with:
+          nuitka-version: main
+          script-name: main.py
+          mode: standalone
+          company-name: "Aumiao Team"
+          product-name: "Aumiao"
+          file-version: "2.0.0"
+          product-version: "2.0.0 alpha"
+          file-description: "A Codemao Community Tool"
+          copyright: "Copyright © 2023 喵鱼a. All rights reserved."
+          enable-console: true # 添加控制台窗口支持
+          windows-icon-from-ico: "path/to/your/icon.ico" # 添加应用图标
+
+      # 上传构建产物
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Aumiao Build
+          path: |
+            build/*.exe
+            build/*.bin
+            build/*.app/**/*
+          include-hidden-files: true
+# python -m nuitka --standalone --main="main.py" --company-name="Aumiao Team" --product-name="Aumiao" --file-version="2.0.0" --product-version="2.0.0 alpha" --file-description="A Codemao Community Tool" --follow-imports --copyright="Copyright © 2023 喵鱼a. All rights reserved. " --output-filename="Aumiao"
