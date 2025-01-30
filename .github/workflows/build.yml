@@ -37,7 +37,7 @@ jobs:
       # 安装依赖
       - name: Install Dependencies with uv
         run: |
-          uv pip install -r requirements.txt
+          uv pip install -r ./Aumiao-py/project/requirements.txt
 
       # 使用 Nuitka 构建可执行文件
       - name: Build Executable with Nuitka
@@ -53,7 +53,7 @@ jobs:
           file-description: "A Codemao Community Tool"
           copyright: "Copyright © 2023 喵鱼a. All rights reserved."
           enable-console: true # 添加控制台窗口支持
-          windows-icon-from-ico: "path/to/your/icon.ico" # 添加应用图标
+          windows-icon-from-ico: "./Aumiao-py/project/favicon.ico" # 添加应用图标
 
       # 上传构建产物
       - name: Upload Build Artifacts
