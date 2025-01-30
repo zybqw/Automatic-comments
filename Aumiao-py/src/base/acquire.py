@@ -101,34 +101,51 @@ class CodeMaoClient:
 		:param args: 分页参数的键.
 		:return: 数据列表.
 		"""
+		# 设置默认分页参数
 		args.setdefault("amount", "limit")
 		args.setdefault("remove", "offset")
 		args.setdefault("res_amount_key", "limit")
 		args.setdefault("res_remove_key", "offset")
+
+		# 第一次请求获取数据和总项数
 		initial_response = self.send_request(url=url, method=fetch_method, params=params, data=data)
 		if not initial_response:
 			return []
-		# 总项数
-		total_items = int(cast(str, self.tool_process.get_nested_value(initial_response.json(), total_key)))
+
+		# 获取数据并解析总项数
+		initial_json = initial_response.json()
+		_data = self.tool_process.get_nested_value(initial_json, data_key)
+		total_items = int(cast(str, self.tool_process.get_nested_value(initial_json, total_key)))
+
 		# 每次获取多少个
-		items_per_page = params[args["amount"]] if args["amount"] in params else initial_response.json()[args["res_amount_key"]]
-		# 获取多少次
+		items_per_page = params.get(args["amount"], initial_json.get(args["res_amount_key"], 0))
+
+		# 计算总页数
 		total_pages = (total_items + items_per_page - 1) // items_per_page  # 向下取整
 		all_data = []
-		fetch_count = 0
-		for page in range(total_pages):
+		all_data.extend(_data)  # 已经包含第一页数据
+		fetch_count = len(_data)  # 初始获取的数据数量
+
+		# 如果有更多数据,继续分页请求
+		for page in range(1, total_pages):  # 从第二页开始获取
 			if method == "offset":
 				params[args["remove"]] = page * items_per_page
 			elif method == "page":
 				params[args["remove"]] = page + 1
+
+			# 请求分页数据
 			response = self.send_request(url=url, method=fetch_method, params=params)
 			if not response:
 				continue
+
 			_data = self.tool_process.get_nested_value(response.json(), data_key)
 			all_data.extend(_data)
 			fetch_count += len(_data)
+
+			# 如果已经达到 limit,提前结束
 			if limit and fetch_count >= limit:
 				return all_data[:limit]
+
 		return all_data
 
 	def update_cookie(self, cookie: requests.cookies.RequestsCookieJar | dict | str) -> bool:
