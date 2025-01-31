@@ -1,65 +1,53 @@
 name: CI
 
-on: [pull_request, pull_request_target]
-
-env:
-  PYTHON_VERSION: "3.12"
+on:
+  pull_request:
+  pull_request_target:
 
 jobs:
-  lint_format:
-    timeout-minutes: 10
-    name: "Lint and Format"
+  lint-format:
+    name: Lint and Format
     runs-on: ubuntu-latest
-
+    timeout-minutes: 10
     steps:
-      - name: "Check Out"
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: "Lint"
+      - name: Run Ruff linter
         uses: astral-sh/ruff-action@v1
         with:
-          args: "check --fix"
-          changed-files: "true"
+          args: check --fix
+          changed-files: true
 
-      - name: "Format"
+      - name: Run Ruff formatter
         uses: astral-sh/ruff-action@v1
         with:
-          changed-files: "true"
-          args: "format"
-
-      # - uses: actions/setup-python@v5
-      #   with:
-      #     python-version: "${{ env.PYTHON_VERSION }}"
-
-      # - name: "Install uv"
-      #   uses: astral-sh/setup-uv@v4
-
-      # - name: "Python format"
-      #   run: uvx ruff format --diff . --exclude video
-
-      # - name: "Python lint"
-      #   run: uvx ruff check . --exclude video
-
-      # - name: "Python type check"
-      #   run: uvx mypy
+          args: format
+          changed-files: true
 
   typos:
-    timeout-minutes: 10
-    name: "Code Spell Checker"
+    name: Code Spell Check
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: crate-ci/typos@master
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check spelling
+        uses: crate-ci/typos@master
         with:
           files: .
           config: ./Aumiao-py/typos.toml
 
-  commit:
-    timeout-minutes: 10
-    name: "Commit"
+  commit-changes:
+    name: Commit Changes
+    needs: [lint-format, typos] # 添加依赖，确保在其他检查完成后运行
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: success() # 只在之前的任务成功时运行
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
         with:
           ref: ${{ github.head_ref }}
           fetch-depth: 0
@@ -74,14 +62,14 @@ jobs:
           fi
 
       - name: Commit files
-        if: env.no_changes == 'false' # 只有在文件有更改时才执行
+        if: env.no_changes == 'false'
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git commit -a -m "Add changes"
+          git commit -a -m "style: auto format and lint fixes"
 
       - name: Push changes
-        if: env.no_changes == 'false' # 只有在文件有更改时才执行
+        if: env.no_changes == 'false'
         uses: ad-m/github-push-action@master
         with:
           branch: ${{ github.head_ref }}
