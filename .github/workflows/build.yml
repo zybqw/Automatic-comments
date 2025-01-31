@@ -54,6 +54,7 @@ jobs:
           copyright: "Copyright © 2023 喵鱼a. All rights reserved."
           enable-console: true # 添加控制台窗口支持
           windows-icon-from-ico: "./Aumiao-py/project/favicon.ico" # 添加应用图标
+          remove-output: true # 删除输出目录
 
       # 上传构建产物
       - name: Upload Build Artifacts
@@ -61,8 +62,6 @@ jobs:
         with:
           name: Aumiao Build
           path: |
-            build/*.exe
-            build/*.bin
-            build/*.app/**/*
+            build/**
           include-hidden-files: true
-# python -m nuitka --standalone --main="main.py" --company-name="Aumiao Team" --product-name="Aumiao" --file-version="2.0.0" --product-version="2.0.0 alpha" --file-description="A Codemao Community Tool" --follow-imports --copyright="Copyright © 2023 喵鱼a. All rights reserved. " --output-filename="Aumiao"
+# python -m nuitka --standalone --main="main.py" --company-name="Aumiao Team" --product-name="Aumiao" --file-version="2.0.0" --product-version="2.0.0" --file-description="A Codemao Community Tool" --follow-imports --copyright="Copyright © 2023 喵鱼a. All rights reserved. " --output-filename="Aumiao" --windows-icon-from-ico="./project/favicon.ico" --remove-output --output-dir="./build" --msvc=latest
