@@ -14,6 +14,7 @@ class Union:
 		self.cache = data.CodeMaoCache().cache
 		self.community_obtain = community.Obtain()
 		self.data = data.CodeMaoData().data
+		self.edu_obtain = edu.Obtain()
 		self.file = file.CodeMaoFile()
 		self.forum_motion = forum.Motion()
 		self.forum_obtain = forum.Obtain()
@@ -26,7 +27,6 @@ class Union:
 		self.user_obtain = user.Obtain()
 		self.work_motion = work.Motion()
 		self.work_obtain = work.Obtain()
-		self.edu_obtain = edu.Obtain()
 
 
 ClassUnion = Union().__class__
@@ -513,22 +513,22 @@ class Motion(ClassUnion):
 		return f"禁言状态{status['voice_forbidden']},签订友好条约{status['has_signed']}"
 
 
-# "WORK_REPLY",路人a评论{user}在某个作品的评论
-# "WORK_REPLY_REPLY_FEEDBACK",路人a回复{user}在某个作品下发布的评论的路人b/a的回复
-# "WORK_COMMENT",路人a评论{user}的作品
-# "WORK_REPLY_REPLY_AUTHOR",路人a回复{user}作品下路人b/a对某条评论的回复
-# "WORK_REPLY_REPLY",路人a回复{user}作品下路人b/a的评论下{user}的回复
-# "POST_REPLY",
-# "POST_REPLY_REPLY_AUTHOR",
-# "POST_REPLY_AUTHOR",
 # "POST_COMMENT",
-# "POST_REPLY_REPLY_FEEDBACK",
-# "POST_REPLY_REPLY",
-# "WORK_REPLY_AUTHOR",路人a回复{user}作品下路人b的某条评论
-# "WORK_DISCUSSION_LIKED",
-# "WORK_LIKE",
-# "POST_DISCUSSION_LIKED",
 # "POST_COMMENT_DELETE_FEEDBACK",
 # "POST_DELETE_FEEDBACK",
-# "WORK_SHOP_USER_LEAVE",
+# "POST_DISCUSSION_LIKED",
+# "POST_REPLY",
+# "POST_REPLY_AUTHOR",
+# "POST_REPLY_REPLY",
+# "POST_REPLY_REPLY_AUTHOR",
+# "POST_REPLY_REPLY_FEEDBACK",
+# "WORK_COMMENT",路人a评论{user}的作品
+# "WORK_DISCUSSION_LIKED",
+# "WORK_LIKE",
+# "WORK_REPLY",路人a评论{user}在某个作品的评论
+# "WORK_REPLY_AUTHOR",路人a回复{user}作品下路人b的某条评论
+# "WORK_REPLY_REPLY",路人a回复{user}作品下路人b/a的评论下{user}的回复
+# "WORK_REPLY_REPLY_AUTHOR",路人a回复{user}作品下路人b/a对某条评论的回复
+# "WORK_REPLY_REPLY_FEEDBACK",路人a回复{user}在某个作品下发布的评论的路人b/a的回复
 # "WORK_SHOP_REPL"
+# "WORK_SHOP_USER_LEAVE",
