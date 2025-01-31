@@ -422,55 +422,67 @@ class Motion(ClassUnion):
 			response_comment = get_response(comment=comment_text, answers=formatted_answers)
 			comment = response_comment if response_comment else choice(formatted_replies)  # noqa: S311
 
-			if reply_type.startswith("WORK"):
-				business_id = message["business_id"]
-				if reply_type == "WORK_COMMENT":
-					comment_id = cast(int, reply.get("reference_id", message["comment_id"]))
-					self.work_motion.reply_work(
-						work_id=business_id,
-						comment_id=comment_id,
-						comment=comment,
-						parent_id=0,
-						return_data=True,
-					)
-				else:
-					parent_id = cast(int, reply.get("reference_id", message["replied_id"]))
-					comment_ids = Obtain().get_comments_detail(com_id=business_id, source="work", method="comment_id")
-					comment_ids = cast(list[str], comment_ids)
-					comment_id = cast(
-						int,
-						self.tool_routine.find_prefix_suffix(text=f".{message['reply_id']}", lst=comment_ids)[0],
-					)
-					self.work_motion.reply_work(
-						work_id=business_id,
-						comment_id=comment_id,
-						comment=comment,
-						parent_id=parent_id,
-						return_data=True,
-					)
-			elif reply_type.startswith("POST"):
-				business_id = message["business_id"]
-				if reply_type == "POST_COMMENT":
-					comment_id = cast(int, reply.get("reference_id", message["comment_id"]))
-					self.forum_motion.reply_comment(
-						reply_id=comment_id,
-						parent_id=0,
-						content=comment,
-					)
-				else:
-					parent_id = cast(int, reply.get("reference_id", message["replied_id"]))
-					comment_ids = Obtain().get_comments_detail(com_id=business_id, source="post", method="comment_id")
-					comment_ids = cast(list[str], comment_ids)
-					comment_id = cast(
-						int,
-						self.tool_routine.find_prefix_suffix(text=message["reply_id"], lst=comment_ids)[0],
-					)
-					self.forum_motion.reply_comment(
-						reply_id=comment_id,
-						parent_id=parent_id,
-						content=comment,
-					)
+			self.handle_reply(reply_type, message, reply, comment)
 		return True
+
+	def handle_reply(self, reply_type: str, message: dict, reply: dict, comment: str) -> None:
+		"""处理不同类型的回复
+
+		Args:
+			reply_type: 回复类型
+			message: 消息内容
+			reply: 原始回复数据
+			comment: 要发送的评论内容
+		"""
+		business_id = message["business_id"]
+
+		if reply_type.startswith("WORK"):
+			if reply_type == "WORK_COMMENT":
+				comment_id = cast(int, reply.get("reference_id", message["comment_id"]))
+				self.work_motion.reply_work(
+					work_id=business_id,
+					comment_id=comment_id,
+					comment=comment,
+					parent_id=0,
+					return_data=True,
+				)
+			else:
+				parent_id = cast(int, reply.get("reference_id", message["replied_id"]))
+				comment_ids = Obtain().get_comments_detail(com_id=business_id, source="work", method="comment_id")
+				comment_ids = cast(list[str], comment_ids)
+				comment_id = cast(
+					int,
+					self.tool_routine.find_prefix_suffix(text=f".{message['reply_id']}", lst=comment_ids)[0],
+				)
+				self.work_motion.reply_work(
+					work_id=business_id,
+					comment_id=comment_id,
+					comment=comment,
+					parent_id=parent_id,
+					return_data=True,
+				)
+
+		elif reply_type.startswith("POST"):
+			if reply_type == "POST_COMMENT":
+				comment_id = cast(int, reply.get("reference_id", message["comment_id"]))
+				self.forum_motion.reply_comment(
+					reply_id=comment_id,
+					parent_id=0,
+					content=comment,
+				)
+			else:
+				parent_id = cast(int, reply.get("reference_id", message["replied_id"]))
+				comment_ids = Obtain().get_comments_detail(com_id=business_id, source="post", method="comment_id")
+				comment_ids = cast(list[str], comment_ids)
+				comment_id = cast(
+					int,
+					self.tool_routine.find_prefix_suffix(text=message["reply_id"], lst=comment_ids)[0],
+				)
+				self.forum_motion.reply_comment(
+					reply_id=comment_id,
+					parent_id=parent_id,
+					content=comment,
+				)
 
 	# 工作室常驻置顶
 	def top_work(self) -> None:
