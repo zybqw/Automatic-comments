@@ -6,6 +6,7 @@ exclude = [
     ".venv",
     ".vscode",
     "video",
+    "test/**",
     "_build",
     "build",
     "dist",

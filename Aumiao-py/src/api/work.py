@@ -588,7 +588,7 @@ class Obtain:
 		return response.json()
 
 	# 获取协作者列表
-	def get_coll_list(self, work_id: int) -> list[dict[Any, Any]]:
+	def get_coll_list(self, work_id: int, limit: int | None = 100) -> list[dict[Any, Any]]:
 		params = {"current_page": 1, "page_size": 100}
 		return self.acquire.fetch_data(
 			url=f"https://socketcoll.codemao.cn/coll/kitten/collaborator/{work_id}",
@@ -597,6 +597,7 @@ class Obtain:
 			data_key="data.items",
 			method="page",
 			args={"amount": "current_page", "remove": "page_size"},
+			limit=limit,
 		)
 
 	# TODO@Aurzex: 功能存疑
@@ -633,11 +634,7 @@ class Obtain:
 		return response.json()
 
 	# 获取回收站作品列表
-	def get_recycle_kitten_works(
-		self,
-		version_no: Literal["KITTEN_V3", "KITTEN_V4"],
-		work_status: str = "CYCLED",
-	) -> list[dict[Any, Any]]:
+	def get_recycle_kitten_works(self, version_no: Literal["KITTEN_V3", "KITTEN_V4"], work_status: str = "CYCLED", limit: int | None = 30) -> list[dict[Any, Any]]:
 		params = {
 			"limit": 30,
 			"offset": 0,
@@ -648,15 +645,11 @@ class Obtain:
 			url="https://api-creation.codemao.cn/tiger/work/recycle/list",
 			data_key="items",
 			params=params,
+			limit=limit,
 		)
 
 	# 获取回收站海龟编辑器作品列表
-	def get_recycle_wood_works(
-		self,
-		language_type: int = 0,
-		work_status: str = "CYCLED",
-		published_status: str = "undefined",
-	) -> list[dict[Any, Any]]:
+	def get_recycle_wood_works(self, language_type: int = 0, work_status: str = "CYCLED", published_status: str = "undefined", limit: int | None = 30) -> list[dict[Any, Any]]:
 		params = {
 			"limit": 30,
 			"offset": 0,
@@ -668,13 +661,11 @@ class Obtain:
 			url="https://api-creation.codemao.cn/wood/comm/work/list",
 			params=params,
 			data_key="items",
+			limit=limit,
 		)
 
 	# 获取代码岛回收站作品列表
-	def get_recycle_box_works(
-		self,
-		work_status: str = "CYCLED",
-	) -> list[dict[Any, Any]]:
+	def get_recycle_box_works(self, work_status: str = "CYCLED", limit: int | None = 30) -> list[dict[Any, Any]]:
 		params = {
 			"limit": 30,
 			"offset": 0,
@@ -683,13 +674,11 @@ class Obtain:
 		return self.acquire.fetch_data(
 			url="https://api-creation.codemao.cn/box/v2/work/list",
 			params=params,
+			limit=limit,
 		)
 
 	# 获取回收站小说列表
-	def get_recycle_fanfic_works(
-		self,
-		fiction_status: str = "CYCLED",
-	) -> list[dict[Any, Any]]:
+	def get_recycle_fanfic_works(self, fiction_status: str = "CYCLED", limit: int | None = 30) -> list[dict[Any, Any]]:
 		params = {
 			"limit": 30,
 			"offset": 0,
@@ -699,14 +688,11 @@ class Obtain:
 			url="/web/fanfic/my/new",
 			params=params,
 			data_key="items",
+			limit=limit,
 		)
 
 	# 获取回收站KN作品列表
-	def get_recycle_kn_works(
-		self,
-		name: str = "",
-		work_business_classify: int = 1,
-	) -> list[dict[Any, Any]]:
+	def get_recycle_kn_works(self, name: str = "", work_business_classify: int = 1, limit: int | None = 24) -> list[dict[Any, Any]]:
 		params = {
 			"name": name,
 			"limit": 24,
@@ -718,10 +704,11 @@ class Obtain:
 			url="https://api-creation.codemao.cn/neko/works/v2/list/user",
 			params=params,
 			data_key="items",
+			limit=limit,
 		)
 
 	# 按关键词搜索KN全部作品
-	def search_works_kn(self, name: str, status: int = 1, work_business_classify: int = 1) -> list[dict[Any, Any]]:
+	def search_works_kn(self, name: str, status: int = 1, work_business_classify: int = 1, limit: int | None = 24) -> list[dict[Any, Any]]:
 		params = {
 			"name": name,
 			"limit": 24,
@@ -733,10 +720,11 @@ class Obtain:
 			url="https://api-creation.codemao.cn/neko/works/v2/list/user",
 			params=params,
 			data_key="items",
+			limit=limit,
 		)
 
 	# 按关键词搜索KN已发布作品
-	def search_works_kn_published(self, name: str, work_business_classify: int = 1) -> list[dict[Any, Any]]:
+	def search_works_kn_published(self, name: str, work_business_classify: int = 1, limit: int | None = 24) -> list[dict[Any, Any]]:
 		params = {
 			"name": name,
 			"limit": 24,
@@ -747,6 +735,7 @@ class Obtain:
 			url="https://api-creation.codemao.cn/neko/works/list/user/published",
 			params=params,
 			data_key="items",
+			limit=limit,
 		)
 
 	# TODO@Aurzex: 待确认

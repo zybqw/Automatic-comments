@@ -330,7 +330,7 @@ class Obtain:
 
 	# 获取KN公开课
 	# https://api-creation.codemao.cn/neko/course/publish/list?limit=10&offset=0
-	def get_kn_publish_course(self, limit: int = 10) -> list[dict]:
+	def get_kn_publish_course(self, limit: int | None = 10) -> list[dict]:
 		params = {"limit": 10, "offset": 0}
 		return self.acquire.fetch_data(
 			url="https://api-creation.codemao.cn/neko/course/publish/list",
@@ -356,26 +356,28 @@ class Obtain:
 		return response.json()
 
 	# 获取nemo端教程合集
-	def get_nemo_course_package(self, platform: int = 1) -> list[dict[Any, Any]]:
+	def get_nemo_course_package(self, platform: int = 1, limit: int | None = 50) -> list[dict[Any, Any]]:
 		params = {"limit": 50, "offset": 0, "platform": platform}
 		return self.acquire.fetch_data(
 			url="/creation-tools/v1/course/package/list",
 			params=params,
 			data_key="items",
+			limit=limit,
 		)
 
 	# 获取nemo教程
-	def get_nemo_package(self, course_package_id: int, limit: int = 50, offset: int = 0) -> list[dict[Any, Any]]:
+	def get_nemo_package(self, course_package_id: int, limit: int | None = 50) -> list[dict[Any, Any]]:
 		# course_package_id由get_nemo_course_package中获取
 		params = {
 			"course_package_id": course_package_id,
-			"limit": limit,
-			"offset": offset,
+			"limit": 50,
+			"offset": 0,
 		}
 		return self.acquire.fetch_data(
 			url="/creation-tools/v1/course/list/search",
 			params=params,
 			data_key="course_page.items",
+			limit=limit,
 			# 参数中total_key也可用total_course
 		)
 

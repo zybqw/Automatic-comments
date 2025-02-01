@@ -29,7 +29,7 @@ class Obtain:
 
 	# 回帖会单独分配一个独立于被回复帖子的id
 	# 获取帖子回帖
-	def get_post_replies_posts(self, ids: int, sort: str = "-created_at", limit: int = 15) -> list[dict[Any, Any]]:
+	def get_post_replies_posts(self, ids: int, sort: str = "-created_at", limit: int | None = 15) -> list[dict[Any, Any]]:
 		params = {"page": 1, "limit": 10, "sort": sort}
 		return self.acquire.fetch_data(
 			url=f"/web/forums/posts/{ids}/replies",
@@ -45,7 +45,7 @@ class Obtain:
 	def get_reply_post_comments(
 		self,
 		post_id: int,
-		limit: int = 10,
+		limit: int | None = 10,
 	) -> list[dict[Any, Any]]:
 		params = {"page": 1, "limit": 10}
 		return self.acquire.fetch_data(
@@ -58,10 +58,7 @@ class Obtain:
 		)
 
 	# 获取我的帖子或回复的帖子
-	def get_post_mine_all(
-		self,
-		method: Literal["created", "replied"],
-	) -> list[dict[Any, Any]]:
+	def get_post_mine_all(self, method: Literal["created", "replied"], limit: int | None = 10) -> list[dict[Any, Any]]:
 		params = {"page": 1, "limit": 10}
 		return self.acquire.fetch_data(
 			url=f"/web/forums/posts/mine/{method}",
@@ -69,6 +66,7 @@ class Obtain:
 			data_key="items",
 			method="page",
 			args={"amount": "limit", "remove": "page"},
+			limit=limit,
 		)
 
 	# 获取论坛帖子各个栏目
@@ -125,7 +123,7 @@ class Obtain:
 		return response.json()
 
 	# 通过标题搜索帖子
-	def search_posts(self, title: str, limit: int = 20) -> list[dict[Any, Any]]:
+	def search_posts(self, title: str, limit: int | None = 20) -> list[dict[Any, Any]]:
 		params = {"title": title, "limit": 20, "page": 1}
 		return self.acquire.fetch_data(
 			url="/web/forums/posts/search",

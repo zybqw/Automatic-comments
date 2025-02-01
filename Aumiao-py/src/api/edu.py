@@ -129,7 +129,7 @@ class Obtain:
 		return response.json()
 
 	# 获取所有班级
-	def get_classes(self, method: Literal["detail", "simple"] = "simple") -> dict | list[dict]:
+	def get_classes(self, method: Literal["detail", "simple"] = "simple", limit: int | None = 20) -> dict | list[dict]:
 		if method == "simple":
 			classes = self.acquire.send_request(
 				url="https://eduzone.codemao.cn/edu/zone/classes/simple",
@@ -146,11 +146,12 @@ class Obtain:
 				data_key="items",
 				method="page",
 				args={"remove": "page", "res_amount_key": "limit"},
+				limit=20,
 			)
 		return classes
 
 	# 获取删除学生记录
-	def get_record_del(self) -> list[dict[Any, Any]]:
+	def get_record_del(self, limit: int | None = 20) -> list[dict[Any, Any]]:
 		time_stamp = community.Obtain().get_timestamp()["data"]
 		params = {"page": 1, "limit": 10, "TIME": time_stamp}
 		return self.acquire.fetch_data(
@@ -159,10 +160,11 @@ class Obtain:
 			data_key="items",
 			method="page",
 			args={"amount": "limit", "remove": "page"},
+			limit=limit,
 		)
 
 	# 获取班级内全部学生
-	def get_students(self, invalid: int = 1) -> list[dict[Any, Any]]:
+	def get_students(self, invalid: int = 1, limit: int | None = 50) -> list[dict[Any, Any]]:
 		# invalid为1时为已加入班级学生,为0则反之
 		data = json.dumps({"invalid": invalid})
 		params = {"page": 1, "limit": 100}
@@ -174,6 +176,7 @@ class Obtain:
 			data_key="items",
 			method="page",
 			args={"amount": "limit", "remove": "page"},
+			limit=limit,
 		)
 
 	# 获取新闻
@@ -301,7 +304,7 @@ class Obtain:
 	# version用于区分源码编辑器4.0和源码编辑器,在请求中,源码编辑器4.0的version为4,源码编辑器不填
 	# 返回数据中的praise_times为点赞量
 	# 返回数据中的language_type貌似用来区分海龟编辑器2.0(c++)与海龟编辑器,海龟编辑器的language_type为3
-	def get_all_works(self) -> list[dict[Any, Any]]:
+	def get_all_works(self, limit: int | None = 50) -> list[dict[Any, Any]]:
 		time_stamp = community.Obtain().get_timestamp()["data"]
 		params = {"page": 1, "TIME": time_stamp}
 		return self.acquire.fetch_data(
@@ -310,6 +313,7 @@ class Obtain:
 			data_key="items",
 			method="page",
 			args={"remove": "page", "res_amount_key": "limit"},
+			limit=limit,
 		)
 
 	# 获取周作品统计数据
@@ -326,7 +330,7 @@ class Obtain:
 		return response.json()
 
 	# 获取上课记录
-	def get_teaching_record(self) -> list[dict[Any, Any]]:
+	def get_teaching_record(self, limit: int | None = 10) -> list[dict[Any, Any]]:
 		time_stamp = community.Obtain().get_timestamp()["data"]
 		params = {"page": 1, "TIME": time_stamp, "limit": 10}
 		return self.acquire.fetch_data(
@@ -335,6 +339,7 @@ class Obtain:
 			data_key="items",
 			method="page",
 			args={"remove": "page", "amount": "limit"},
+			limit=limit,
 		)
 
 	# 获取教授班级(需要教师号)
@@ -360,7 +365,7 @@ class Obtain:
 		return response.json()
 
 	# 获取官方课程包
-	def get_official_package(self) -> list[dict[Any, Any]]:
+	def get_official_package(self, limit: int | None = 150) -> list[dict[Any, Any]]:
 		time_stamp = community.Obtain().get_timestamp()["data"]
 		params = {"TIME": time_stamp, "pacakgeEntryType": 0, "topicType": "all", "topicId": "all", "tagId": "all", "page": 1, "limit": 150}
 		return self.acquire.fetch_data(
@@ -369,6 +374,7 @@ class Obtain:
 			method="page",
 			args={"amount": "limit", "remove": "page"},
 			data_key="items",
+			limit=limit,
 		)
 
 	## 获取官方课程包主题
@@ -394,7 +400,7 @@ class Obtain:
 		return response.json()
 
 	# 获取我的备课包(需要教师号)
-	def get_customized_package(self) -> list[dict[Any, Any]]:
+	def get_customized_package(self, limit: int | None = 100) -> list[dict[Any, Any]]:
 		time_stamp = community.Obtain().get_timestamp()["data"]
 		params = {"TIME": time_stamp, "page": 1, "limit": 100}
 		return self.acquire.fetch_data(
@@ -403,6 +409,7 @@ class Obtain:
 			method="page",
 			args={"amount": "limit", "remove": "page"},
 			data_key="items",
+			limit=limit,
 		)
 
 	# 获取自定义备课包信息/删除备课包

@@ -90,7 +90,7 @@ class Obtain:
 		return response.json()
 
 	# 获取个人作品列表的函数
-	def get_user_works_web(self, user_id: str, types: Literal["newest", "hot"] = "newest") -> list[dict[str, str | int]]:
+	def get_user_works_web(self, user_id: str, types: Literal["newest", "hot"] = "newest", limit: int | None = 5) -> list[dict[str, str | int]]:
 		params = {
 			"type": types,
 			"user_id": user_id,
@@ -102,6 +102,7 @@ class Obtain:
 			params=params,
 			total_key="total",
 			data_key="items",
+			limit=limit,
 		)
 
 	# 搜索用户作品
@@ -126,12 +127,13 @@ class Obtain:
 		return response.json()
 
 	# 获取用户nemo作品
-	def get_works_nemo_published(self, method: Literal["published"]) -> list[dict[Any, Any]]:
+	def get_works_nemo_published(self, method: Literal["published"], limit: int | None = 15) -> list[dict[Any, Any]]:
 		params = {"limit": 15, "offset": 0}
 		return self.acquire.fetch_data(
 			url=f"/nemo/v2/works/list/user/{method}",
 			params=params,
 			data_key="items",
+			limit=limit,
 		)
 
 	# 获取用户KN作品
@@ -145,6 +147,7 @@ class Obtain:
 			]
 			| None
 		) = None,
+		limit: int | None = 15,
 	) -> list[dict[Any, Any]]:
 		# kn获取全部作品示例链接:https://api-creation.codemao.cn/neko/works/v2/list/user?name=&limit=24&offset=0&status=1&work_business_classify=1
 		if method == "published":
@@ -154,7 +157,7 @@ class Obtain:
 		params = {"offset": 0, "limit": 15}
 		params = cast(dict, params)
 		params.update(extra_params or {})
-		return self.acquire.fetch_data(url=url, params=params, data_key="items")
+		return self.acquire.fetch_data(url=url, params=params, data_key="items", limit=limit)
 
 	# 获取用户kitten作品列表
 	def get_works_kitten(
@@ -162,6 +165,7 @@ class Obtain:
 		version: Literal["KITTEN_V4", "KITTEN_V3"],
 		status: Literal["PUBLISHED", "UNPUBLISHED", "all"],
 		work_status: Literal["SHOW"] = "SHOW",
+		limit: int | None = 30,
 	) -> list[dict[Any, Any]]:
 		params = {
 			"offset": 0,
@@ -174,18 +178,17 @@ class Obtain:
 			url="https://api-creation.codemao.cn/kitten/common/work/list2",
 			params=params,
 			data_key="items",
+			limit=limit,
 		)
 
 	# 获取用户nemo作品列表
-	def get_works_nemo(
-		self,
-		status: Literal["PUBLISHED", "UNPUBLISHED", "all"],
-	) -> list[dict[Any, Any]]:
+	def get_works_nemo(self, status: Literal["PUBLISHED", "UNPUBLISHED", "all"], limit: int | None = 30) -> list[dict[Any, Any]]:
 		params = {"offset": 0, "limit": 30, "published_status": status}
 		return self.acquire.fetch_data(
 			url="/creation-tools/v1/works/list",
 			params=params,
 			data_key="items",
+			limit=limit,
 		)
 
 	# 获取用户海龟编辑器作品列表
@@ -194,6 +197,7 @@ class Obtain:
 		status: Literal["PUBLISHED", "UNPUBLISHED"],
 		language_type: int = 0,
 		work_status: Literal["SHOW"] = "SHOW",
+		limit: int | None = 30,
 	) -> list[dict[Any, Any]]:
 		params = {
 			"offset": 0,
@@ -206,14 +210,11 @@ class Obtain:
 			url="https://api-creation.codemao.cn/wood/comm/work/list",
 			params=params,
 			data_key="items",
+			limit=limit,
 		)
 
 	# 获取用户box作品列表
-	def get_works_box(
-		self,
-		status: Literal["all", "PUBLISHED", "UNPUBLISHED"],
-		work_status: Literal["SHOW"] = "SHOW",
-	) -> list[dict[Any, Any]]:
+	def get_works_box(self, status: Literal["all", "PUBLISHED", "UNPUBLISHED"], work_status: Literal["SHOW"] = "SHOW", limit: int | None = 30) -> list[dict[Any, Any]]:
 		params = {
 			"offset": 0,
 			"limit": 30,
@@ -224,28 +225,22 @@ class Obtain:
 			url="https://api-creation.codemao.cn/box/v2/work/list",
 			params=params,
 			data_key="items",
+			limit=limit,
 		)
 
 	# 获取用户小说列表
-	def get_works_fanfic(
-		self,
-		fiction_status: Literal["SHOW"] = "SHOW",
-	) -> list[dict[Any, Any]]:
+	def get_works_fanfic(self, fiction_status: Literal["SHOW"] = "SHOW", limit: int | None = 30) -> list[dict[Any, Any]]:
 		params = {"offset": 0, "limit": 30, "fiction_status": fiction_status}
 		return self.acquire.fetch_data(
 			url="/web/fanfic/my/new",
 			params=params,
 			data_key="items",
+			limit=limit,
 		)
 
 	# 获取用户coco作品列表
 	# TODO@Aurzex: 参数不确定
-	def get_works_coco(
-		self,
-		status: int = 1,
-		*,
-		published: bool = True,
-	) -> list[dict[Any, Any]]:
+	def get_works_coco(self, status: int = 1, *, published: bool = True, limit: int | None = 30) -> list[dict[Any, Any]]:
 		params = {
 			"offset": 0,
 			"limit": 30,
@@ -257,6 +252,7 @@ class Obtain:
 			params=params,
 			data_key="data.items",
 			total_key="data.total",
+			limit=limit,
 		)
 
 	# 获取粉丝列表

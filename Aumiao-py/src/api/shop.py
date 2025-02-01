@@ -56,16 +56,14 @@ class Obtain:
 		return response.json()
 
 	# 获取工作室成员
-	def get_shops_members(
-		self,
-		shop_id: int,
-	) -> list[dict[Any, Any]]:
+	def get_shops_members(self, shop_id: int, limit: int | None = 40) -> list[dict[Any, Any]]:
 		params = {"limit": 40, "offset": 0}
 		return self.acquire.fetch_data(
 			url=f"/web/shops/{shop_id}/users",
 			params=params,
 			total_key="total",
 			data_key="items",
+			limit=limit,
 		)
 
 	# 获取工作室列表,包括工作室成员,工作室作品
@@ -97,9 +95,9 @@ class Obtain:
 		return self.acquire.fetch_data(url=f"/web/discussions/{shop_id}/comments", params=params, limit=limit, data_key="items")
 
 	# 获取工作室投稿作品
-	def get_shop_works(self, shop_id: int, user_id: int, sort: str = "-created_at,-id") -> list[dict[Any, Any]]:
+	def get_shop_works(self, shop_id: int, user_id: int, sort: str = "-created_at,-id", limit: int | None = 20) -> list[dict[Any, Any]]:
 		params = {"limit": 20, "offset": 0, "sort": sort, "user_id": user_id, "work_subject_id": shop_id}
-		return self.acquire.fetch_data(url=f"/web/works/subjects/{shop_id}/works", params=params, data_key="items")
+		return self.acquire.fetch_data(url=f"/web/works/subjects/{shop_id}/works", params=params, data_key="items", limit=limit)
 
 	# 获取与工作室关系
 	def get_shop_relation(self, relation_id: int) -> dict:
@@ -108,9 +106,9 @@ class Obtain:
 		return response.json()
 
 	# 获取工作室讨论区的帖子
-	def get_shop_posts(self, label_id: int) -> list[dict]:
+	def get_shop_posts(self, label_id: int, limit: int | None = 20) -> list[dict]:
 		params = {"limit": 20, "offset": 0}
-		return self.acquire.fetch_data(url=f"/web/works/subjects/labels/{label_id}/posts", params=params, data_key="items")
+		return self.acquire.fetch_data(url=f"/web/works/subjects/labels/{label_id}/posts", params=params, data_key="items", limit=limit)
 
 
 @singleton

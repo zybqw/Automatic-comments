@@ -4,7 +4,8 @@
 *__pycache__/
 *data/
 *dist/
+*log/
+*media/
+*src/api/whale.py
 *test.py
 *test/
-*log/
-*src/api/whale.py
