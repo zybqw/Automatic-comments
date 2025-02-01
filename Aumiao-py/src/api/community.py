@@ -329,7 +329,6 @@ class Obtain:
 		return response.json()
 
 	# 获取KN公开课
-	# https://api-creation.codemao.cn/neko/course/publish/list?limit=10&offset=0
 	def get_kn_publish_course(self, limit: int | None = 10) -> list[dict]:
 		params = {"limit": 10, "offset": 0}
 		return self.acquire.fetch_data(
@@ -340,6 +339,13 @@ class Obtain:
 			# total_key也可设置为"course_page.total",
 			data_key="course_page.items",
 		)
+
+	# 获取KN模板作品
+	# subject_id为一时返回基础指南,为2时返回进阶指南
+	def get_kn_sample_work(self, subject_id: Literal[1, 2]) -> dict:
+		params = {"subject_id": subject_id}
+		response = self.acquire.send_request(url="https://api-creation.codemao.cn/neko/sample/list", params=params, method="get")
+		return response.json()
 
 	# 获取社区各个部分开启状态
 	# TODO@Aurzex: 待完善
@@ -380,6 +386,12 @@ class Obtain:
 			limit=limit,
 			# 参数中total_key也可用total_course
 		)
+
+	# 获取教学计划
+	# TODO @Aurzex: 未知
+	def get_teaching_plan(self, limit: int = 100) -> list:
+		params = {"limit": limit, "offset": 0}
+		return self.acquire.fetch_data(url="https://api-creation.codemao.cn/neko/teaching-plan/list/team", params=params, limit=limit, data_key="items")
 
 
 @singleton

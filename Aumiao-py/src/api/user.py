@@ -308,6 +308,11 @@ class Obtain:
 		)
 		return response.json()
 
+	# 获取用户是否为新用户
+	def get_is_new_user(self) -> dict:
+		response = self.acquire.send_request(url="https://api-creation.codemao.cn/neko/works/isNewUser", method="get")
+		return response.json()
+
 
 @singleton
 class Motion:
