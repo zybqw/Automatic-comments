@@ -146,7 +146,7 @@ class Obtain:
 				data_key="items",
 				method="page",
 				args={"remove": "page", "res_amount_key": "limit"},
-				limit=20,
+				limit=limit,
 			)
 		return classes
 
