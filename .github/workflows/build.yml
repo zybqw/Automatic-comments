@@ -69,13 +69,13 @@ jobs:
           product-version: "2.0.0"
           file-description: "A Codemao Community Tool"
           copyright: "Copyright © 2023 喵鱼a. All rights reserved."
-          enable-console: true
+          windows-console-mode: force
           windows-icon-from-ico: "./Aumiao-py/project/favicon.ico"
           remove-output: true
           lto: "yes"
           enable-plugin: "upx"
           jobs: ${{ runner.os == 'Windows' && 4 || 2 }} # Windows 使用 4 个作业，其他系统使用 2 个
-          upx-binary: "./upx.exe"
+          upx-binary: "./upx/upx-4.2.4-win64/upx.exe"
           follow-imports: yes
 
       # 上传构建产物
