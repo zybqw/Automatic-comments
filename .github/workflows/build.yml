@@ -44,7 +44,7 @@ jobs:
         id: cache-upx
         uses: actions/cache@v4
         with:
-          path: upx.exe
+          path: ${{ python.venv }}/Scripts/upx.exe # 将 UPX 放在 Python 环境的 Scripts 文件夹中
           key: upx-4.2.4-win64
 
       - name: Download and Install UPX
@@ -53,7 +53,7 @@ jobs:
           $ProgressPreference = 'SilentlyContinue'
           Invoke-WebRequest -Uri "https://github.com/upx/upx/releases/download/v4.2.4/upx-4.2.4-win64.zip" -OutFile "upx.zip"
           Expand-Archive -Path "upx.zip" -DestinationPath "upx"
-          Move-Item -Path "upx\upx-4.2.4-win64\upx.exe" -Destination "upx.exe"
+          Move-Item -Path "upx\upx-4.2.4-win64\upx.exe" -Destination "${{ python.venv }}/Scripts/upx.exe"
 
       #使用 Nuitka 构建可执行文件
       - name: Build Executable with Nuitka
@@ -74,8 +74,9 @@ jobs:
           lto: "yes"
           enable-plugins: "upx"
           jobs: ${{ runner.os == 'Windows' && 4 || 2 }} # Windows 使用 4 个作业，其他系统使用 2 个
-          upx-binary: "upx.exe"
+          upx-binary: "${{ python.venv }}/Scripts/upx.exe" # 指定 UPX 可执行文件的路径
           follow-imports: yes
+
       # - name: Build with Nuitka
       #   run: |
       #     python -m nuitka --standalone `
