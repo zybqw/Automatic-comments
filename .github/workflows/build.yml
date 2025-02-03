@@ -90,7 +90,6 @@ jobs:
           remove-output: true
           lto: "yes"
           jobs: ${{ runner.os == 'Windows' && 4 || 2 }}
-          standalone: true
           follow-imports: true
           assume-yes-for-downloads: true
           output-dir: build
