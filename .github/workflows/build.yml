@@ -54,26 +54,45 @@ jobs:
           Expand-Archive -Path "upx.zip" -DestinationPath "upx"
           Move-Item -Path "upx\upx-4.2.4-win64\upx.exe" -Destination "upx.exe"
       # 使用 Nuitka 构建可执行文件
-      - name: Build Executable with Nuitka
-        uses: Nuitka/Nuitka-Action@main
-        with:
-          nuitka-version: main
-          script-name: ./Aumiao-py/main.py
-          mode: standalone
-          company-name: "Aumiao Team"
-          product-name: "Aumiao"
-          file-version: "2.0.0"
-          product-version: "2.0.0"
-          file-description: "A Codemao Community Tool"
-          copyright: "Copyright © 2025 喵鱼a. All rights reserved."
-          windows-console-mode: force
-          windows-icon-from-ico: "./Aumiao-py/project/favicon.ico"
-          remove-output: true
-          lto: "yes"
-          enable-plugins: "upx"
-          jobs: ${{ runner.os == 'Windows' && 4 || 2 }} # Windows 使用 4 个作业，其他系统使用 2 个
-          upx-binary: "./upx.exe"
-          follow-imports: yes
+      # - name: Build Executable with Nuitka
+      #   uses: Nuitka/Nuitka-Action@main
+      #   with:
+      #     nuitka-version: main
+      #     script-name: ./Aumiao-py/main.py
+      #     mode: standalone
+      #     company-name: "Aumiao Team"
+      #     product-name: "Aumiao"
+      #     file-version: "2.0.0"
+      #     product-version: "2.0.0"
+      #     file-description: "A Codemao Community Tool"
+      #     copyright: "Copyright © 2025 喵鱼a. All rights reserved."
+      #     windows-console-mode: force
+      #     windows-icon-from-ico: "./Aumiao-py/project/favicon.ico"
+      #     remove-output: true
+      #     lto: "yes"
+      #     enable-plugins: "upx"
+      #     jobs: ${{ runner.os == 'Windows' && 4 || 2 }} # Windows 使用 4 个作业，其他系统使用 2 个
+      #     upx-binary: "./upx.exe"
+      #     follow-imports: yes
+      - name: Build with Nuitka
+        run: |
+          python -m nuitka --standalone `
+            --main="./Aumiao-py/main.py" `
+            --company-name="Aumiao Team" `
+            --product-name="Aumiao" `
+            --file-version="2.0.0" `
+            --product-version="2.0.0" `
+            --file-description="A Codemao Community Tool" `
+            --copyright="Copyright © 2025 喵鱼a. All rights reserved." `
+            --windows-icon-from-ico="./Aumiao-py/project/favicon.ico" `
+            --remove-output `
+            --output-dir="./build" `
+            --lto=yes `
+            --enable-plugins=upx `
+            --jobs=4 `
+            --upx-binary="./upx-4.2.4-win64/upx.exe" `
+            --output-filename="Aumiao" `
+            --assume-yes-for-downloads
 
       - name: Get short SHA
         id: slug
