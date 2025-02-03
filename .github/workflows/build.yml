@@ -75,11 +75,16 @@ jobs:
           upx-binary: "./upx.exe"
           follow-imports: yes
 
+      - name: Get short SHA
+        id: slug
+        run: echo "::set-output name=sha8::$(echo ${GITHUB_SHA} | cut -c1-8)"
+        shell: bash
+
       # 上传构建产物
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: Aumiao-${{ github.sha.substring(0, 8) }}-win64 # 使用 commit hash 作为版本标识
+          name: Aumiao-${{ steps.slug.outputs.sha8 }}-win64 # 使用 commit hash 作为版本标识
           path: build/**
           if-no-files-found: error # 如果没有找到文件则报错
           retention-days: 5 # 保留 5 天
