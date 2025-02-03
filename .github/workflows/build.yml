@@ -45,7 +45,10 @@ jobs:
         with:
           path: upx.exe
           key: upx-4.2.4-win64
-
+      - name: Test
+        run: |
+          ./upx.exe --version
+          ./upx-4.2.4-win64/upx.exe --version
       - name: Download and Install UPX
         if: steps.cache-upx.outputs.cache-hit != 'true'
         run: |
@@ -53,8 +56,6 @@ jobs:
           Invoke-WebRequest -Uri "https://github.com/upx/upx/releases/download/v4.2.4/upx-4.2.4-win64.zip" -OutFile "upx.zip"
           Expand-Archive -Path "upx.zip" -DestinationPath "upx"
           Move-Item -Path "upx\upx-4.2.4-win64\upx.exe" -Destination "upx.exe"
-          ./upx.exe --version
-          ./upx-4.2.4-win64/upx.exe --version
       # 使用 Nuitka 构建可执行文件
       - name: Build Executable with Nuitka
         uses: Nuitka/Nuitka-Action@main
