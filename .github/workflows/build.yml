@@ -45,10 +45,7 @@ jobs:
         with:
           path: upx.exe
           key: upx-4.2.4-win64
-      - name: Test
-        run: |
-          ./upx.exe --version
-          ./upx-4.2.4-win64/upx.exe --version
+
       - name: Download and Install UPX
         if: steps.cache-upx.outputs.cache-hit != 'true'
         run: |
