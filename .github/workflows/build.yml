@@ -53,6 +53,8 @@ jobs:
           Invoke-WebRequest -Uri "https://github.com/upx/upx/releases/download/v4.2.4/upx-4.2.4-win64.zip" -OutFile "upx.zip"
           Expand-Archive -Path "upx.zip" -DestinationPath "upx"
           Move-Item -Path "upx\upx-4.2.4-win64\upx.exe" -Destination "upx.exe"
+          ./upx.exe --version
+          ./upx-4.2.4-win64/upx.exe --version
       # 使用 Nuitka 构建可执行文件
       - name: Build Executable with Nuitka
         uses: Nuitka/Nuitka-Action@main
@@ -70,7 +72,7 @@ jobs:
           windows-icon-from-ico: "./Aumiao-py/project/favicon.ico"
           remove-output: true
           lto: "yes"
-          enable-plugin: "upx"
+          enable-plugins: "upx"
           jobs: ${{ runner.os == 'Windows' && 4 || 2 }} # Windows 使用 4 个作业，其他系统使用 2 个
           upx-binary: "./upx.exe"
           follow-imports: yes
@@ -89,6 +91,4 @@ jobs:
           if-no-files-found: error # 如果没有找到文件则报错
           retention-days: 5 # 保留 5 天
 
-# python -m nuitka --standalone --main="main.py" --company-name="Aumiao Team" --product-name="Aumiao" --file-version="2.0.0" --product-version="2.0.0" --file-description="A Codemao Community Tool" --follow-imports --copyright="Copyright © 2025 喵鱼a. All rights reserved. " --output-filename="Aumiao" --windows-icon-from-ico="./project/favicon.ico" --remove-output --output-dir="./build" --lto=yes --enable-plugin=upx --jobs=4 --upx-binary=d:\upx\upx.exe --msvc=latest
-
-# python -m nuitka --standalone --main="main.py" --company-name="Aumiao Team" --product-name="Aumiao" --file-version="2.0.0" --product-version="2.0.0" --file-description="A Codemao Community Tool" --follow-imports --copyright="Copyright © 2025 喵鱼a. All rights reserved. " --output-filename="Aumiao" --windows-icon-from-ico="./project/favicon.ico" --remove-output --output-dir="./build" --lto=yes --enable-plugin=upx --jobs=4 --upx-binary=d:\upx\upx.exe --msvc=latest --assume-yes-for-downloads
+# python -m nuitka --standalone --main="main.py" --company-name="Aumiao Team" --product-name="Aumiao" --file-version="2.0.0" --product-version="2.0.0" --file-description="A Codemao Community Tool" --follow-imports --copyright="Copyright © 2025 喵鱼a. All rights reserved. " --output-filename="Aumiao" --windows-icon-from-ico="./project/favicon.ico" --remove-output --output-dir="./build" --lto=yes --enable-plugins=upx --jobs=4 --upx-binary=d:\upx\upx.exe --msvc=latest --assume-yes-for-downloads
