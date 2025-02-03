@@ -11,7 +11,6 @@ on:
 jobs:
   build:
     runs-on: windows-latest
-
     steps:
       # 检出代码
       - name: Checkout Code
@@ -23,7 +22,7 @@ jobs:
         with:
           python-version: "3.13"
           architecture: "x64"
-          cache: "pip" # 启用 pip 缓存
+          cache: "pip"  # 启用 pip 缓存
 
       # 使用 setup-uv 安装 uv
       - name: Set Up UV
@@ -34,17 +33,19 @@ jobs:
           cache-dependency-glob: |
             **/requirements*.txt
             **/pyproject.toml
+
       # 安装依赖
       - name: Install Dependencies with uv
         run: |
           uv pip install --system -r ./Aumiao-py/project/requirements.txt
-        # uv pip install --system nuitka
+          uv pip install --system nuitka
+
       # 下载并安装 UPX，使用缓存加快构建
       - name: Cache UPX
         id: cache-upx
         uses: actions/cache@v4
         with:
-          path: ${{ python.venv }}/Scripts/upx.exe # 将 UPX 放在 Python 环境的 Scripts 文件夹中
+          path: upx.exe
           key: upx-4.2.4-win64
 
       - name: Download and Install UPX
@@ -53,49 +54,32 @@ jobs:
           $ProgressPreference = 'SilentlyContinue'
           Invoke-WebRequest -Uri "https://github.com/upx/upx/releases/download/v4.2.4/upx-4.2.4-win64.zip" -OutFile "upx.zip"
           Expand-Archive -Path "upx.zip" -DestinationPath "upx"
-          Move-Item -Path "upx\upx-4.2.4-win64\upx.exe" -Destination "${{ python.venv }}/Scripts/upx.exe"
+          Move-Item -Path "upx\upx-4.2.4-win64\upx.exe" -Destination "upx.exe"
 
-      #使用 Nuitka 构建可执行文件
-      - name: Build Executable with Nuitka
-        uses: Nuitka/Nuitka-Action@main
-        with:
-          nuitka-version: main
-          script-name: ./Aumiao-py/main.py
-          mode: standalone
-          company-name: "Aumiao Team"
-          product-name: "Aumiao"
-          file-version: "2.0.0"
-          product-version: "2.0.0"
-          file-description: "A Codemao Community Tool"
-          copyright: "Copyright © 2025 喵鱼a. All rights reserved."
-          windows-console-mode: force
-          windows-icon-from-ico: "./Aumiao-py/project/favicon.ico"
-          remove-output: true
-          lto: "yes"
-          enable-plugins: "upx"
-          jobs: ${{ runner.os == 'Windows' && 4 || 2 }} # Windows 使用 4 个作业，其他系统使用 2 个
-          upx-binary: "${{ python.venv }}/Scripts/upx.exe" # 指定 UPX 可执行文件的路径
-          follow-imports: yes
+      # 使用 Nuitka 构建可执行文件
+      - name: Build with Nuitka
+        run: |
+          python -m nuitka --standalone `
+          --main="./Aumiao-py/main.py" `
+          --company-name="Aumiao Team" `
+          --product-name="Aumiao" `
+          --file-version="2.0.0" `
+          --product-version="2.0.0" `
+          --file-description="A Codemao Community Tool" `
+          --copyright="Copyright © 2025 喵鱼a. All rights reserved." `
+          --windows-icon-from-ico="./Aumiao-py/project/favicon.ico" `
+          --remove-output `
+          --output-dir="./build" `
+          --lto=yes `
+          --jobs=4 `
+          --output-filename="Aumiao" `
+          --assume-yes-for-downloads
 
-      # - name: Build with Nuitka
-      #   run: |
-      #     python -m nuitka --standalone `
-      #       --main="./Aumiao-py/main.py" `
-      #       --company-name="Aumiao Team" `
-      #       --product-name="Aumiao" `
-      #       --file-version="2.0.0" `
-      #       --product-version="2.0.0" `
-      #       --file-description="A Codemao Community Tool" `
-      #       --copyright="Copyright © 2025 喵鱼a. All rights reserved." `
-      #       --windows-icon-from-ico="./Aumiao-py/project/favicon.ico" `
-      #       --remove-output `
-      #       --output-dir="./build" `
-      #       --lto=yes `
-      #       --enable-plugins=upx `
-      #       --jobs=4 `
-      #       --upx-binary="./upx.exe" `
-      #       --output-filename="Aumiao" `
-      #       --assume-yes-for-downloads
+      # 使用 UPX 压缩构建产物
+      - name: Compress with UPX
+        run: |
+          ./upx.exe --best --lzma "./build/Aumiao.dist/Aumiao.exe"
+          ./upx.exe --best --lzma "./build/Aumiao.dist/*.dll"
 
       - name: Get short SHA
         id: slug
@@ -106,9 +90,7 @@ jobs:
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: Aumiao-${{ steps.slug.outputs.sha8 }}-win64 # 使用 commit hash 作为版本标识
+          name: Aumiao-${{ steps.slug.outputs.sha8 }}-win64  # 使用 commit hash 作为版本标识
           path: build/**
-          if-no-files-found: error # 如果没有找到文件则报错
-          retention-days: 5 # 保留 5 天
-
-# python -m nuitka --standalone --main="main.py" --company-name="Aumiao Team" --product-name="Aumiao" --file-version="2.0.0" --product-version="2.0.0" --file-description="A Codemao Community Tool" --follow-imports --copyright="Copyright © 2025 喵鱼a. All rights reserved. " --output-filename="Aumiao" --windows-icon-from-ico="./project/favicon.ico" --remove-output --output-dir="./build" --lto=yes --enable-plugins=upx --jobs=4 --upx-binary=d:\upx\upx.exe --msvc=latest --assume-yes-for-downloads
+          if-no-files-found: error  # 如果没有找到文件则报错
+          retention-days: 5  # 保留 5 天
