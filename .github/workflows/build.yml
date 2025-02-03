@@ -68,7 +68,7 @@ jobs:
           file-version: "2.0.0"
           product-version: "2.0.0"
           file-description: "A Codemao Community Tool"
-          copyright: "Copyright © 2023 喵鱼a. All rights reserved."
+          copyright: "Copyright © 2025 喵鱼a. All rights reserved."
           windows-console-mode: force
           windows-icon-from-ico: "./Aumiao-py/project/favicon.ico"
           remove-output: true
@@ -87,4 +87,4 @@ jobs:
           if-no-files-found: error # 如果没有找到文件则报错
           retention-days: 5 # 保留 5 天
 
-#python -m nuitka --standalone --main="main.py" --company-name="Aumiao Team" --product-name="Aumiao" --file-version="2.0.0" --product-version="2.0.0" --file-description="A Codemao Community Tool" --follow-imports --copyright="Copyright © 2023 喵鱼a. All rights reserved. " --output-filename="Aumiao" --windows-icon-from-ico="./project/favicon.ico" --remove-output --output-dir="./build" --lto=yes --enable-plugin=upx --jobs=4 --upx-binary=d:\upx\upx.exe
+# python -m nuitka --standalone --main="main.py" --company-name="Aumiao Team" --product-name="Aumiao" --file-version="2.0.0" --product-version="2.0.0" --file-description="A Codemao Community Tool" --follow-imports --copyright="Copyright © 2025 喵鱼a. All rights reserved. " --output-filename="Aumiao" --windows-icon-from-ico="./project/favicon.ico" --remove-output --output-dir="./build" --lto=yes --enable-plugin=upx --jobs=4 --upx-binary=d:\upx\upx.exe --msvc=latest
