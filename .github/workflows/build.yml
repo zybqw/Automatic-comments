@@ -38,7 +38,7 @@ jobs:
       - name: Install Dependencies with uv
         run: |
           uv pip install --system -r ./Aumiao-py/project/requirements.txt
-          uv pip install nuitka
+          uv pip install --system nuitka
       # 下载并安装 UPX，使用缓存加快构建
       - name: Cache UPX
         id: cache-upx
