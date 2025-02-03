@@ -90,7 +90,7 @@ jobs:
             --lto=yes `
             --enable-plugins=upx `
             --jobs=4 `
-            --upx-binary="./upx-4.2.4-win64/upx.exe" `
+            --upx-binary="./upx.exe" `
             --output-filename="Aumiao" `
             --assume-yes-for-downloads
 
