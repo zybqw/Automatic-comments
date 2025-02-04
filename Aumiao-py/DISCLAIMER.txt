@@ -4,8 +4,8 @@ All resources contained within this folder and its sub-directories are strictly 
 严禁将此文件夹及其内容用于任何商业或非法用途。对于因违反此规定而产生的任何法律后果，用户需自行承担全部责任。
 The utilization of this folder and its contents for any commercial or illegal purposes is strictly prohibited. Users will bear full responsibility for any legal consequences arising from violations of this provision.
 
-下载后的处理：请注意，您在下载任何资源后，必须在24小时内从您的电脑或存储设备中彻底删除上述资源，无论这些资源是软件、文档还是其他形式的数据。
- Users are advised that after downloading any resources, they are obliged to delete said resources from their computer or storage device within 24 hours. This applies irrespective of whether the resources are software, documents, or other forms of data.
+请注意，您在下载任何资源后，必须在24小时内从您的电脑或存储设备中彻底删除上述资源，无论这些资源是软件、文档还是其他形式的数据。
+Users are advised that after downloading any resources, they are obliged to delete said resources from their computer or storage device within 24 hours. This applies irrespective of whether the resources are software, documents, or other forms of data.
 
 根据《计算机软件保护条例》（2002年1月1日实施）的第十七条规定：为了学习和研究软件内含的设计思想和原理，通过安装、显示、传输或者存储软件的方式使用软件，可以不经软件著作权人许可，不向其支付报酬。鉴于此，我们强烈建议用户在使用该文件夹及其内容时，遵循上述法规，并确保其行为目的仅限于学习和研究软件内部的设计思想和原理。
 As per the "Regulations for the Protection of Computer Software" implemented on January 1, 2002, by the People's Republic of China, Article 17 dictates: For the purpose of studying and researching the design concepts and principles embedded in software, users can install, display, transmit, or store the software without seeking permission from the copyright holder and without incurring any remuneration obligations. In light of this, users are strongly urged to adhere to the aforementioned regulations when accessing and using the contents of this folder, ensuring their intentions align strictly with the study and research of the software's intrinsic design concepts and principles.

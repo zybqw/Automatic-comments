@@ -165,7 +165,7 @@ jobs:
           name: build-logs-${{ steps.version.outputs.GIT_SHA }}
           path: |
             build/**/*.log
-            build/**/*.txt
+            build/**/*.yml
           if-no-files-found: ignore
           retention-days: 5
 #编译后将./Aumiao-py/中的README.txt和DISCLAIMER.txt与data目录以及里面的文件也一并放入,并添加log文件夹
