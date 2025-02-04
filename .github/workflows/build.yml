@@ -4,15 +4,15 @@ on:
   push:
     branches: [main]
     paths-ignore:
-      - '**.md'
-      - '.gitignore'
-      - 'LICENSE'
+      - "**.md"
+      - ".gitignore"
+      - "LICENSE"
   pull_request:
     branches: [main]
     paths-ignore:
-      - '**.md'
-      - '.gitignore'
-      - 'LICENSE'
+      - "**.md"
+      - ".gitignore"
+      - "LICENSE"
   workflow_dispatch:
 
 env:
@@ -110,6 +110,23 @@ jobs:
           Move-Item -Path "upx\upx-${{ env.UPX_VERSION }}-win64\upx.exe" -Destination "upx.exe"
         shell: pwsh
 
+      - name: Copy Additional Files
+        run: |
+          # 创建 log 文件夹
+          New-Item -Path "build/main.dist/log" -ItemType Directory -Force
+
+          # 复制 README 和 DISCLAIMER
+          Copy-Item "./Aumiao-py/README.txt" -Destination "build/main.dist/"
+          Copy-Item "./Aumiao-py/DISCLAIMER.txt" -Destination "build/main.dist/"
+
+          # 复制 data 目录及其内容
+          Copy-Item "./Aumiao-py/data" -Destination "build/main.dist/" -Recurse
+
+          # 显示复制后的文件结构（用于调试）
+          Write-Host "Final directory structure:"
+          Get-ChildItem -Path "build/main.dist" -Recurse
+        shell: pwsh
+
       - name: Compress with UPX
         run: |
           Write-Host "Compressing executables with UPX..."
@@ -120,7 +137,6 @@ jobs:
             Write-Error "Main executable not found!"
             exit 1
           }
-          
           Get-ChildItem "./build/main.dist/*.dll" | ForEach-Object {
             Write-Host "Compressing $($_.Name)..."
             ./upx.exe --best --lzma $_.FullName
@@ -152,3 +168,4 @@ jobs:
             build/**/*.txt
           if-no-files-found: ignore
           retention-days: 5
+#编译后将./Aumiao-py/中的README.txt和DISCLAIMER.txt与data目录以及里面的文件也一并放入,并添加log文件夹
