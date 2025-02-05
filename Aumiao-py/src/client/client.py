@@ -57,13 +57,13 @@ class Tool(ClassUnion):
 			self.tool_routine.display_data_changes(
 				before_data=before_data,
 				after_data=user_data,
-				data={
+				metrics={
 					"fans": "粉丝",
 					"collected": "被收藏",
 					"liked": "被赞",
 					"view": "被预览",
 				},
-				date="timestamp",
+				date_field="timestamp",
 			)
 		self.cache.update(user_data)  # 使用 `update` 方法,确保同步
 
@@ -121,51 +121,45 @@ class Obtain(ClassUnion):
 		return _list
 
 	# 获取评论区信息
-	def get_comments_detail(  # noqa: PLR0912
+	def get_comments_detail_new(
 		self,
 		com_id: int,
 		source: Literal["work", "post", "shop"],
 		method: Literal["user_id", "comments", "comment_id"] = "user_id",
 	) -> list[int | dict | str]:
-		if source == "work":
-			comments = self.work_obtain.get_work_comments(work_id=com_id, limit=200)
-		elif source == "post":
-			comments = self.forum_obtain.get_post_replies_posts(ids=com_id, limit=200)
-		elif source == "shop":
-			comments = self.shop_obtain.get_shop_discussion(shop_id=com_id, limit=200)
-		else:
-			msg = "不支持的来源类型"
-			raise ValueError(msg)
+		def _get_replies(source: str, comment: dict) -> list[dict]:
+			"""统一获取评论回复"""
+			if source == "post":
+				return self.forum_obtain.get_reply_post_comments(post_id=comment["id"], limit=200)
+			return comment.get("replies", {}).get("items", [])
 
-		if method == "user_id":
+		def _extract_reply_user_id(reply: dict, source: str) -> int:
+			"""统一提取回复用户ID"""
+			return reply["user"]["id"] if source == "post" else reply["reply_user"]["id"]
+
+		def _handle_user_id(comments: list[dict], source: str) -> list[int]:
+			"""优化后的用户ID处理"""
 			user_ids = []
-			user_ids.extend(comment["user"]["id"] for comment in comments)
-			if source == "post":
-				for comment in comments:
-					replies = self.forum_obtain.get_reply_post_comments(post_id=comment["id"], limit=200)
-					user_ids.extend(reply["user"]["id"] for reply in replies)
-			else:
-				user_ids.extend(
-					reply["reply_user"]["id"] for comment in comments if "replies" in comment and "items" in comment["replies"] for reply in comment["replies"]["items"]
-				)
-			result = user_ids
+			for comment in comments:
+				user_ids.append(comment["user"]["id"])
+				replies = _get_replies(source, comment)
+				user_ids.extend(_extract_reply_user_id(reply, source) for reply in replies)
+			return user_ids
 
-		elif method == "comment_id":
-			comment_ids = [comment["id"] for comment in comments]
-			if source == "post":
-				for comment in comments:
-					replies = self.forum_obtain.get_reply_post_comments(post_id=comment["id"], limit=200)
-					comment_ids.extend(f"{comment['id']}.{reply['id']}" for reply in replies)
-			else:
-				comment_ids.extend(
-					f"{comment['id']}.{reply['id']}" for comment in comments if "replies" in comment and "items" in comment["replies"] for reply in comment["replies"]["items"]
-				)
-			result = comment_ids
+		def _handle_comment_id(comments: list[dict], source: str) -> list[str]:
+			"""优化后的评论ID处理"""
+			comment_ids = []
+			for comment in comments:
+				comment_ids.append(str(comment["id"]))
+				replies = _get_replies(source, comment)
+				comment_ids.extend(f"{comment['id']}.{reply['id']}" for reply in replies)
+			return comment_ids
 
-		elif method == "comments":
+		def _handle_detailed_comments(comments: list[dict], source: str) -> list[dict]:
+			"""处理完整评论信息"""
 			detailed_comments = []
 			for comment in comments:
-				comment_detail = {
+				comment_data = {
 					"user_id": comment["user"]["id"],
 					"nickname": comment["user"]["nickname"],
 					"id": comment["id"],
@@ -174,24 +168,43 @@ class Obtain(ClassUnion):
 					"is_top": comment.get("is_top", False),
 					"replies": [],
 				}
-				replies = self.forum_obtain.get_reply_post_comments(post_id=comment["id"], limit=200) if source == "post" else comment.get("replies", {}).get("items", [])
-				for reply in replies:
-					reply_detail = {"id": reply["id"], "content": reply["content"], "created_at": reply["created_at"]}
-					if source == "post":
-						reply_detail["user_id"] = reply["user"]["id"]
-						reply_detail["nickname"] = reply["user"]["nickname"]
-					else:
-						reply_detail["user_id"] = reply["reply_user"]["id"]
-						reply_detail["nickname"] = reply["reply_user"]["nickname"]
-					comment_detail["replies"].append(reply_detail)
-				detailed_comments.append(comment_detail)
-			result = detailed_comments
+				for reply in _get_replies(source, comment):
+					reply_data = {
+						"id": reply["id"],
+						"content": reply["content"],
+						"created_at": reply["created_at"],
+						"user_id": _extract_reply_user_id(reply, source),
+						"nickname": reply["user" if source == "post" else "reply_user"]["nickname"],
+					}
+					comment_data["replies"].append(reply_data)
+				detailed_comments.append(comment_data)
+			return detailed_comments
 
-		else:
+		# 通过映射表处理不同来源的评论获取逻辑
+		source_methods = {
+			"work": (self.work_obtain.get_work_comments, "work_id"),
+			"post": (self.forum_obtain.get_post_replies_posts, "ids"),
+			"shop": (self.shop_obtain.get_shop_discussion, "shop_id"),
+		}
+		if source not in source_methods:
+			msg = "不支持的来源类型"
+			raise ValueError(msg)
+		method_func, arg_key = source_methods[source]
+		comments = method_func(**{arg_key: com_id, "limit": 200})
+
+		# 处理方法映射表
+		method_handlers = {
+			"user_id": _handle_user_id,
+			"comment_id": _handle_comment_id,
+			"comments": _handle_detailed_comments,
+		}
+		if method not in method_handlers:
 			msg = "不支持的请求方法"
 			raise ValueError(msg)
 
-		return [item for index, item in enumerate(result) if item not in result[:index]]  # 去重
+		# 获取处理结果并去重
+		result = method_handlers[method](comments, source)
+		return self.tool_process.deduplicate(result) if method in ("user_id", "comment_id") else result
 
 
 @decorator.singleton
@@ -208,12 +221,12 @@ class Motion(ClassUnion):
 			if source == "work":
 				return (
 					self.user_obtain.get_user_works_web(self.data["ACCOUNT_DATA"]["id"]),
-					lambda item_id: Obtain().get_comments_detail(com_id=item_id, source="work", method="comments"),
+					lambda item_id: Obtain().get_comments_detail_new(com_id=item_id, source="work", method="comments"),
 				)
 			if source == "post":
 				return (
 					self.forum_obtain.get_post_mine_all(method="created"),
-					lambda item_id: Obtain().get_comments_detail(com_id=item_id, source="post", method="comments"),
+					lambda item_id: Obtain().get_comments_detail_new(com_id=item_id, source="post", method="comments"),
 				)
 			msg = "不支持的来源类型"
 			raise ValueError(msg)
@@ -448,11 +461,11 @@ class Motion(ClassUnion):
 				)
 			else:
 				parent_id = cast(int, reply.get("reference_id", message["replied_id"]))
-				comment_ids = Obtain().get_comments_detail(com_id=business_id, source="work", method="comment_id")
+				comment_ids = Obtain().get_comments_detail_new(com_id=business_id, source="work", method="comment_id")
 				comment_ids = cast(list[str], comment_ids)
 				comment_id = cast(
 					int,
-					self.tool_routine.find_prefix_suffix(text=f".{message['reply_id']}", lst=comment_ids)[0],
+					self.tool_routine.find_prefix_suffix(text=f".{message['reply_id']}", candidates=comment_ids)[0],
 				)
 				self.work_motion.reply_work(
 					work_id=business_id,
@@ -472,11 +485,11 @@ class Motion(ClassUnion):
 				)
 			else:
 				parent_id = cast(int, reply.get("reference_id", message["replied_id"]))
-				comment_ids = Obtain().get_comments_detail(com_id=business_id, source="post", method="comment_id")
+				comment_ids = Obtain().get_comments_detail_new(com_id=business_id, source="post", method="comment_id")
 				comment_ids = cast(list[str], comment_ids)
 				comment_id = cast(
 					int,
-					self.tool_routine.find_prefix_suffix(text=message["reply_id"], lst=comment_ids)[0],
+					self.tool_routine.find_prefix_suffix(text=message["reply_id"], candidates=comment_ids)[0],
 				)
 				self.forum_motion.reply_comment(
 					reply_id=comment_id,

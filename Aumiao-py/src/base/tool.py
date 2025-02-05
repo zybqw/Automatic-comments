@@ -1,194 +1,135 @@
 import time
+from typing import Any
 
 from .decorator import singleton
+
+Data = list[dict] | dict
+Nested_dict = dict[str, Any]
 
 
 @singleton
 class CodeMaoProcess:
 	def filter_data(
 		self,
-		data: list | dict,
-		reserve: list | None = None,
-		exclude: list | None = None,
-	) -> list[dict[str, str | int | bool]] | dict[str, str | int | bool] | None:
+		data: Data,
+		reserve: list[str] | None = None,
+		exclude: list[str] | None = None,
+	) -> Data:
 		"""
-		处理输入数据,根据 `reserve` 或 `exclude` 对键进行筛选.
+		处理输入数据,根据 `reserve` 或 `exclude` 进行键筛选
 
-		:param data: 要处理的输入数据,支持列表或字典.
-		:param reserve: 需要保留的键列表(可选).
-		:param exclude: 需要排除的键列表(可选).
-		:return: 筛选后的数据,类型与输入一致(列表或字典).
-		:raises ValueError: 如果同时提供了 `reserve` 和 `exclude` 参数,抛出异常.
+		:param data: 输入数据(列表或字典)
+		:param reserve: 保留的键列表
+		:param exclude: 排除的键列表
+		:return: 筛选后的数据,保持原数据结构
+		:raises ValueError: 参数冲突或数据类型错误
 		"""
 		if reserve and exclude:
-			msg = "请仅提供 'reserve' 或 'exclude' 中的一个参数,不要同时使用."
+			msg = "请仅提供 'reserve' 或 'exclude' 中的一个参数"
 			raise ValueError(msg)
 
-		def filter_keys(item: dict) -> dict[str, str | int]:
-			if reserve is not None:
-				return {key: value for key, value in item.items() if key in reserve}
-			if exclude is not None:
-				return {key: value for key, value in item.items() if key not in exclude}
-			return {}
+		def filter_item(item: dict) -> dict:
+			"""键过滤核心逻辑"""
+			if reserve:
+				return {k: v for k, v in item.items() if k in reserve}
+			if exclude:
+				return {k: v for k, v in item.items() if k not in exclude}
+			return dict(item)  # 无过滤条件返回副本
 
 		if isinstance(data, list):
-			return [filter_keys(item) for item in data]
+			return [filter_item(item) for item in data if isinstance(item, dict)]
 		if isinstance(data, dict):
-			return filter_keys(data)
-		msg = "不支持的数据类型"
+			return filter_item(data)
+		msg = f"不支持的数据类型: {type(data)}"
 		raise ValueError(msg)
 
-	def insert_zero_width_chars(self, content: str) -> str:
-		"""
-		对输入字符串进行特殊字符插入处理(用于屏蔽).
+	@staticmethod
+	def insert_zero_width_chars(content: str) -> str:
+		"""插入零宽字符优化实现"""
+		return "\u200b".join(content)
 
-		:param content: 输入字符串.
-		:return: 处理后的字符串,插入了零宽字符.
-		"""
-		content_bytes = [item.encode("UTF-8") for item in content]
-		return b"\xe2\x80\x8b".join(content_bytes).decode("UTF-8")
+	@staticmethod
+	def format_timestamp(timestamp: int) -> str:
+		"""时间格式化优化实现"""
+		return time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(timestamp))
 
-	def format_timestamp(self, timestamp: int) -> str:
-		"""
-		将时间戳转换为人类可读的时间格式.
-
-		:param timestamp: 时间戳(整数).
-		:return: 格式化的时间字符串(如 'YYYY-MM-DD HH:MM:SS').
-		"""
-		time_array = time.localtime(timestamp)
-		return time.strftime("%Y-%m-%d %H:%M:%S", time_array)
-
-	def get_nested_value(self, data: dict, path: str | None) -> dict:
-		"""
-		通过点分隔的键路径,从嵌套字典中获取对应的值.
-
-		:param data: 输入的嵌套字典.
-		:param path: 点分隔的键路径(如 "key1.key2.key3").
-		:return: 路径对应的值,若路径不存在,返回空字典.
-		"""
-		if path is None:
+	def get_nested_value(self, data: Nested_dict, path: str | None) -> Any:  # noqa: ANN401
+		"""安全的嵌套值获取"""
+		if not path:
 			return data
 
-		keys = path.split(".")
 		value = data
-		for key in keys:
-			value = value.get(key, {})
+		for key in path.split("."):
+			if not isinstance(value, dict):
+				return None
+			value = value.get(key)
 		return value
 
-	def convert_cookie_to_str(self, cookie: dict) -> str:
-		"""
-		将字典形式的 Cookie 转换为 HTTP 请求头中显示的字符串形式.
+	@staticmethod
+	def convert_cookie_to_str(cookie: dict[str, str]) -> str:
+		"""Cookie转换优化"""
+		return "; ".join(f"{k}={v}" for k, v in cookie.items())
 
-		:param cookie: 包含 Cookie 键值对的字典.
-		:return: 转换后的 Cookie 字符串(如 "key1=value1; key2=value2").
-		"""
-		return "; ".join([f"{key}={value}" for key, value in cookie.items()])
-
-	def filter_items_by_values(self, data: list[dict] | dict, id_path: str, values: list[str]) -> list[dict]:
-		"""
-		过滤数据,保留指定路径的值等于给定值列表中任意一个的字典,
-
-		:param data: 输入的数据字典或字典列表,
-		:param id_path: 点分隔的键路径,用于获取嵌套字典中的值,
-		:param values: 要匹配的值列表,
-		:return: 过滤后的字典列表,
-		"""
-		if isinstance(data, dict):
-			items = data.get("items", [])
-		elif isinstance(data, list):
-			items = data
-		else:
-			msg = "不支持的数据类型"
-			raise TypeError(msg)
+	def filter_items_by_values(self, data: Data, id_path: str, values: list[Any]) -> list[dict]:
+		"""增强型数据过滤"""
+		items = data.get("items", []) if isinstance(data, dict) else data if isinstance(data, list) else []
 
 		return [item for item in items if self.get_nested_value(item, id_path) in values]
 
+	@staticmethod
+	def deduplicate(sequence: list[Any]) -> list[Any]:
+		"""高效顺序去重"""
+		seen = set()
+		return [x for x in sequence if not (x in seen or seen.add(x))]
+
 
 class CodeMaoRoutine:
-	def get_timestamp(self) -> float:
-		"""
-		获取当前的时间戳(秒级).
+	def __init__(self) -> None:
+		self.process = CodeMaoProcess()
 
-		:return: 当前时间戳(浮点数).
-		"""
+	@staticmethod
+	def get_timestamp() -> float:
+		"""获取当前时间戳"""
 		return time.time()
 
-	def display_data_changes(self, before_data: dict, after_data: dict, data: dict, date: str | None) -> None:
-		"""
-		打印数据变化情况,包括起始时间和变化内容.
+	def display_data_changes(self, before_data: dict, after_data: dict, metrics: dict[str, str], date_field: str | None = None) -> None:
+		"""改进的数据变化展示"""
+		if date_field:
+			fmt = self.process.format_timestamp
+			print(f"时间段: {fmt(before_data[date_field])} → {fmt(after_data[date_field])}")
 
-		:param before_data: 开始时的数据字典.
-		:param after_data: 结束时的数据字典.
-		:param data: 需要比较的数据键值对,其中键为数据键,值为显示的标签.
-		:param date: 用于转换时间戳的键(可选).
-		"""
-		if date:
-			_before_date = CodeMaoProcess().format_timestamp(before_data[date])
-			_after_date = CodeMaoProcess().format_timestamp(after_data[date])
-			print(f"从{_before_date}到{_after_date}期间")
+		for field, label in metrics.items():
+			before = before_data.get(field, 0)
+			after = after_data.get(field, 0)
+			print(f"{label}: {after - before:+} (当前: {after}, 初始: {before})")
 
-		for key, label in data.items():
-			if key in before_data and key in after_data:
-				change = after_data[key] - before_data[key]
-				print(f"{label} 增加了 {change} 个")
-			else:
-				print(f"{key} 没有找到")
-
-	def find_prefix_suffix(self, text: str | int, lst: list[str]) -> list[int | None]:
-		"""
-		在列表中找到给定数字前的前缀部分和后缀部分(以 "." 分隔).
-
-		:param number: 目标数字,整数或字符串.
-		:param lst: 包含字符串和整数的混合列表.
-		:return: 前缀部分和后缀部分(整数),如果未找到返回 (None, None).
-		"""
-		text = str(text)
-		for item in lst:
-			if isinstance(item, str) and text in item:
-				parts = item.split(".")
-				prefix = parts[0]
-				suffix = parts[1] if len(parts) > 1 else None
-				prefix = int(prefix) if prefix.isdigit() else None
-				suffix = int(suffix) if suffix and suffix.isdigit() else None
-				return [prefix, suffix]
-		return [None, None]
+	def find_prefix_suffix(self, text: str | int, candidates: list[str]) -> tuple[int | None, int | None]:
+		"""元组返回优化实现"""
+		target = str(text)
+		for item in candidates:
+			if isinstance(item, str) and target in item:
+				parts = item.split(".", 1)
+				try:
+					return int(parts[0]), int(parts[1]) if len(parts) > 1 else None
+				except ValueError:
+					continue
+		return (None, None)
 
 	def merge_user_data(self, data_list: list[dict]) -> dict:
-		# 创建最终的合并字典
-		merged_data = {}
+		"""改进的深度合并算法"""
+		merged = {}
+		counter = {}
 
-		# 使用字典来统计字段出现次数
-		field_counter = {}
+		for item in filter(None, data_list):
+			for key, value in item.items():
+				# 字段计数
+				counter[key] = counter.get(key, 0) + 1
 
-		# 遍历所有字典数据
-		for item in data_list:
-			if isinstance(item, dict):
-				# 统计字段出现次数
-				for key in item:
-					field_counter[key] = field_counter.get(key, 0) + 1
+				# 深度合并逻辑
+				if isinstance(value, dict):
+					merged.setdefault(key, {}).update(value)
+				else:
+					merged[key] = value
 
-				# 递归处理嵌套字典
-				for key, value in item.items():
-					if isinstance(value, dict):
-						if key not in merged_data:
-							merged_data[key] = {}
-						merged_data[key].update(value)
-					else:
-						# 对于非字典值,只保留最新的值
-						merged_data[key] = value
-
-		# 确定常见字段(出现次数大于1的字段)
-		common_fields = [field for field, count in field_counter.items() if count > 1]
-
-		# 清理重复字段,保留一个值
-		final_data = {}
-		for field in common_fields:
-			if field in merged_data:
-				final_data[field] = merged_data[field]
-
-		# 添加其他非重复字段
-		for key, value in merged_data.items():
-			if key not in final_data:
-				final_data[key] = value
-
-		return final_data
+		# 保留出现多次的字段
+		return {k: v for k, v in merged.items() if counter[k] > 1}
