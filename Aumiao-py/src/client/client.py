@@ -2,7 +2,7 @@ from collections.abc import Callable
 from enum import Enum
 from json import loads
 from random import choice
-from typing import Any, Literal, TypedDict, cast
+from typing import Any, Literal, TypedDict, cast, overload
 
 from src.api import community, edu, forum, shop, user, work
 from src.base import acquire, data, decorator, file, tool
@@ -412,194 +412,121 @@ class Motion(ClassUnion):
 
 	def reply_work(self) -> bool:
 		"""自动回复工作流"""
-		# 类型提示强化
-		new_replies: list[dict] = Obtain().get_new_replies()
+		new_replies: list[dict] = Obtain().get_new_replies(limit=4)
 
-		# 预处理格式化数据
-		formatted_answers = self._preprocess_answers()
-		formatted_replies = self._preprocess_replies()
+		@overload
+		def _preprocess_data(data_type: Literal["answers"]) -> dict[str, list[str] | str]: ...
 
-		# 过滤有效回复
-		filtered_replies = self._filter_valid_replies(new_replies)
-		if not filtered_replies:
-			return True
+		@overload
+		def _preprocess_data(data_type: Literal["replies"]) -> list[str]: ...
+		# 合并预处理逻辑
+		def _preprocess_data(data_type: Literal["answers", "replies"]) -> dict[str, list[str] | str] | list[str]:
+			"""统一预处理数据"""
+			if data_type == "answers":
+				result: dict[str, list[str] | str] = {}
+				for answer_dict in self.data["USER_DATA"]["answers"]:
+					for keyword, response in answer_dict.items():
+						# 内联格式化逻辑
+						formatted = [resp.format(**self.data["INFO"]) for resp in response] if isinstance(response, list) else response.format(**self.data["INFO"])
+						result[keyword] = formatted
+				return result
+			return [reply.format(**self.data["INFO"]) for reply in self.data["USER_DATA"]["replies"]]
 
-		# 处理每条回复
-		for reply in filtered_replies:
-			self._process_single_reply(reply, formatted_answers, formatted_replies)
+		formatted_answers = _preprocess_data("answers")
+		formatted_replies = _preprocess_data("replies")
 
-		return True
-
-	def _format_response(self, response: list[str] | str) -> list[str] | str:
-		"""格式化响应内容"""
-		if isinstance(response, list):
-			return [resp.format(**self.data["INFO"]) for resp in response]
-		return response.format(**self.data["INFO"])
-
-	def _preprocess_answers(self) -> dict[str, list[str]]:
-		"""预处理答案映射表(关键词 -> 响应列表)"""
-		keyword_responses = {}
-		for answer_dict in self.data["USER_DATA"]["answers"]:
-			for keyword, response in answer_dict.items():
-				processed = self._format_response(response)
-				keyword_responses[keyword] = processed
-		return keyword_responses
-
-	def _preprocess_replies(self) -> list[str]:
-		"""预处理随机回复列表"""
-		return [reply.format(**self.data["INFO"]) for reply in self.data["USER_DATA"]["replies"]]
-
-	def _filter_valid_replies(self, replies: list[dict]) -> list[dict]:
-		"""过滤有效回复"""
-		return self.tool_process.filter_items_by_values(
-			data=replies,
+		# 合并过滤逻辑到主流程
+		filtered_replies = self.tool_process.filter_items_by_values(
+			data=new_replies,
 			id_path="type",
 			values=list(VALID_REPLY_TYPES),
 		)
+		if not filtered_replies:
+			return True
 
-	def _process_single_reply(
-		self,
-		reply: dict,
-		answers: dict[str, list[str]],
-		random_replies: list[str],
-	) -> None:
-		"""处理单条回复"""
-		reply_type = reply["type"]
-		content = loads(reply["content"])
-		message = content["message"]
+		# 合并单条回复处理逻辑
+		for reply in filtered_replies:
+			try:
+				content = loads(reply["content"])
+				message = content["message"]
+				reply_type = reply["type"]
 
-		# 提取评论文本
-		comment_text = self._extract_comment_text(reply_type, message)
+				# 合并文本提取和响应匹配逻辑
+				comment_text = message["comment"] if reply_type in {"WORK_COMMENT", "POST_COMMENT"} else message["reply"]
 
-		# 获取匹配响应
-		response = self._get_matching_response(comment_text, answers)
-		chosen_comment = response or choice(random_replies)  # noqa: S311
+				# 优化匹配逻辑
+				chosen_comment = None
+				for keyword, resp in formatted_answers.items():  # 明确 formatted_answers 是 dict
+					if keyword in comment_text:
+						chosen_comment = choice(resp) if isinstance(resp, list) else resp  # noqa: S311
+						break
+				if chosen_comment is None:  # 如果没有匹配的答案,则随机选择一个回复
+					chosen_comment = choice(formatted_replies)  # noqa: S311
 
-		self.handle_reply(reply_type, message, reply, chosen_comment)
+				# 统一处理回复操作
+				self._execute_reply(
+					reply_type=reply_type,
+					message=message,
+					raw_reply=reply,
+					comment=chosen_comment,
+				)
+			except Exception as e:
+				print(f"处理回复时发生错误: {e}")
+				continue
 
-	def _extract_comment_text(self, reply_type: str, message: dict) -> str:
-		"""提取评论文本"""
-		if reply_type in {"WORK_COMMENT", "POST_COMMENT"}:
-			return message["comment"]
-		return message["reply"]
+		return True
 
-	def _get_matching_response(
-		self,
-		comment: str,
-		answers: dict[str, list[str]],
-	) -> str | None:
-		"""获取匹配响应(优化时间复杂度为O(n))"""
-		for keyword, responses in answers.items():
-			if keyword in comment:
-				return choice(responses) if isinstance(responses, list) else responses  # noqa: S311
-		return None
-
-	def handle_reply(
+	def _execute_reply(
 		self,
 		reply_type: str,
 		message: dict,
 		raw_reply: dict,
 		comment: str,
 	) -> None:
-		"""统一处理方法"""
-		# 公共参数提取
+		"""统一执行回复操作(合并work/post处理逻辑)"""
 		business_id = message["business_id"]
 		source_type = "work" if reply_type.startswith("WORK") else "post"
 
-		# 获取评论ID逻辑抽象
-		comment_id, parent_id = self._get_reply_identifiers(
-			reply_type,
-			raw_reply,
-			message,
-			business_id,
-			source_type,
-		)
-
-		# 统一执行回复操作
-		if source_type == "work":
-			self._handle_work_reply(
-				business_id,
-				comment_id,
-				parent_id,
-				comment,
-			)
-		else:
-			self._handle_post_reply(
-				comment_id,
-				parent_id,
-				comment,
-			)
-
-	def _get_reply_identifiers(
-		self,
-		reply_type: str,
-		raw_reply: dict,
-		message: dict,
-		business_id: int,
-		source_type: Literal["work", "post"],
-	) -> tuple[int, int]:
-		"""获取评论标识"""
-		# 公共逻辑处理
-		parent_id = raw_reply.get("reference_id", message.get("replied_id", 0))
-
-		# 处理顶层评论
+		# 合并标识获取逻辑
 		if reply_type.endswith("_COMMENT"):
-			return (
-				raw_reply.get("reference_id", message["comment_id"]),
-				0,  # 顶层评论的 parent_id 固定为0
-			)
+			comment_id = raw_reply.get("reference_id", message["comment_id"])
+			parent_id = 0
+		else:
+			parent_id = raw_reply.get("reference_id", message.get("replied_id", 0))
+			comment_ids = [
+				str(item)
+				for item in Obtain().get_comments_detail_new(
+					com_id=business_id,
+					source=source_type,
+					method="comment_id",
+				)
+				if isinstance(item, int | str)
+			]
+			target_id = message.get("reply_id", "")
+			search_pattern = f".{target_id}" if source_type == "work" else target_id
+			if (found_id := self.tool_routine.find_prefix_suffix(search_pattern, comment_ids)[0]) is None:
+				msg = "未找到匹配的评论ID"
+				raise ValueError(msg)
+			comment_id = int(found_id)
 
-		# 处理回复评论
-		# 假设 Obtain().get_comments_detail_new 返回的数据需要过滤
-		comment_ids = Obtain().get_comments_detail_new(
-			com_id=business_id,
-			source=source_type,
-			method="comment_id",
+		# 合并API调用逻辑
+		params = (
+			{
+				"work_id": business_id,
+				"comment_id": comment_id,
+				"comment": comment,
+				"parent_id": parent_id,
+				"return_data": True,
+			}
+			if source_type == "work"
+			else {
+				"reply_id": comment_id,
+				"parent_id": parent_id,
+				"content": comment,
+			}
 		)
 
-		# 确保 comment_ids 是 list[str]
-		comment_ids = [str(item) for item in comment_ids if isinstance(item, int | str)]
-		target_id = message.get("reply_id", "")
-		search_pattern = f".{target_id}" if source_type == "work" else target_id
-
-		found_id = self.tool_routine.find_prefix_suffix(
-			text=search_pattern,
-			candidates=comment_ids,
-		)[0]
-		# 确保 found_id 不是 None
-		if found_id is None:
-			msg = "未找到匹配的评论ID"
-			raise ValueError(msg)
-		return int(found_id), int(parent_id)
-
-	def _handle_work_reply(
-		self,
-		work_id: int,
-		comment_id: int,
-		parent_id: int,
-		comment: str,
-	) -> None:
-		"""处理作品回复"""
-		self.work_motion.reply_work(
-			work_id=work_id,
-			comment_id=comment_id,
-			comment=comment,
-			parent_id=parent_id,
-			return_data=True,
-		)
-
-	def _handle_post_reply(
-		self,
-		comment_id: int,
-		parent_id: int,
-		comment: str,
-	) -> None:
-		"""处理帖子回复"""
-		self.forum_motion.reply_comment(
-			reply_id=comment_id,
-			parent_id=parent_id,
-			content=comment,
-		)
+		(self.work_motion.reply_work if source_type == "work" else self.forum_motion.reply_comment)(**params)
 
 	# 工作室常驻置顶
 	def top_work(self) -> None:

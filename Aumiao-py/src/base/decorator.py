@@ -39,3 +39,17 @@ def retry(retries: int = 3, delay: float = 1) -> Callable:
 		return wrapper
 
 	return decorator
+
+
+def skip_on_error(func):  # noqa: ANN001, ANN201
+	"""捕获异常并跳过当前循环"""
+
+	@wraps(func)
+	def wrapper(*args, **kwargs):  # noqa: ANN002, ANN003, ANN202
+		try:
+			return func(*args, **kwargs)
+		except Exception as e:
+			print(f"Error occurred: {e}. Skipping this iteration.")
+			return None  # 继续执行下一个循环
+
+	return wrapper

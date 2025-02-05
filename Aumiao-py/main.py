@@ -86,5 +86,6 @@ def main() -> None:
 if __name__ == "__main__":
 	try:
 		main()
-	except Exception:
+	except Exception as err:
+		print(err)
 		input("Put any key to exit")
