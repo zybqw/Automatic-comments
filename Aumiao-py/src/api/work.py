@@ -237,7 +237,7 @@ class Motion:
 		return response.json() if return_data else response.status_code == CREATED_CODE
 
 	# 删除作品某个评论或评论的回复(评论和回复都会分配一个唯一id)
-	def del_comment_work(self, work_id: int, comment_id: int) -> bool:
+	def del_comment_work(self, work_id: int, comment_id: int, **_: object) -> bool:
 		response = self.acquire.send_request(
 			url=f"/creation-tools/v1/works/{work_id}/comment/{comment_id}",
 			method="delete",
