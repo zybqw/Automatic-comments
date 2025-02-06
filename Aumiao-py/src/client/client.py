@@ -20,6 +20,7 @@ class ReplyType(Enum):
 
 
 VALID_REPLY_TYPES = {"WORK_COMMENT", "WORK_REPLY", "WORK_REPLY_REPLY", "POST_COMMENT", "POST_REPLY", "POST_REPLY_REPLY"}
+OK_CODE = 200
 
 
 @decorator.singleton
@@ -348,56 +349,79 @@ class Motion(ClassUnion):
 			return process_list("刷屏评论", duplicate_list)
 		return None
 
-	# 清除邮箱红点
 	def clear_red_point(self, method: Literal["nemo", "web"] = "web") -> bool:
 		def get_message_counts(method: Literal["web", "nemo"]) -> dict:
+			"""获取各类型消息未读数"""
 			return self.community_obtain.get_message_count(method)
 
 		def send_clear_request(url: str, params: dict) -> int:
+			"""发送标记已读请求"""
 			response = self.acquire.send_request(url=url, method="get", params=params)
 			return response.status_code
 
-		item = 0  # 初始化 item 变量
-		params: dict[str, int | str] = {
-			"limit": 200,
-			"offset": item,
-		}
+		offset = 0  # 分页偏移量
+		page_size = 200
+		params: dict[str, int | str] = {"limit": page_size, "offset": offset}
 
 		if method == "web":
+			query_types = self.setting["PARAMETER"]["all_read_type"]
 			while True:
-				counts = get_message_counts(method)
-				if len({counts[i]["count"] for i in range(3)} | {0}) == 1:
+				# 检查所有指定类型消息是否均已读
+				counts = get_message_counts("web")
+				if all(count["count"] == 0 for count in counts[:3]):
 					return True
 
-				query_types = self.setting["PARAMETER"]["all_read_type"]
+				# 更新当前分页偏移量
+				params["offset"] = offset
+
+				# 批量发送标记已读请求
 				responses = {}
-				for query_type in query_types:
-					params["query_type"] = query_type
-					responses[query_type] = send_clear_request(
+				for q_type in query_types:
+					params["query_type"] = q_type
+					responses[q_type] = send_clear_request(
 						url="/web/message-record",
 						params=params,
 					)
-				item += 200
-				if len(set(responses.values()) | {200}) != 1:
+
+				# 校验请求结果
+				if any(status != OK_CODE for status in responses.values()):
 					return False
+
+				offset += page_size
 
 		elif method == "nemo":
+			message_types = [1, 3]  # 1:点赞收藏 3:fork
 			while True:
+				# 检查所有类型消息总数
 				counts = get_message_counts("nemo")
-				if counts["like_collection_count"] + counts["comment_count"] + counts["re_create_count"] + counts["system_count"] == 0:
+				total_unread = sum(
+					counts[key]
+					for key in [
+						"like_collection_count",
+						"comment_count",
+						"re_create_count",
+						"system_count",
+					]
+				)
+				if total_unread == 0:
 					return True
 
-				extra_items = [1, 3]
-				# like为1,fork为3
+				# 更新当前分页偏移量
+				params["offset"] = offset
+
+				# 批量发送标记已读请求
 				responses = {}
-				for extra_url in extra_items:
-					responses[extra_url] = send_clear_request(
-						url=f"/nemo/v2/user/message/{extra_url}",
+				for m_type in message_types:
+					responses[m_type] = send_clear_request(
+						url=f"/nemo/v2/user/message/{m_type}",
 						params=params,
 					)
-				item += 200
-				if len(set(responses.values()) | {200}) != 1:
+
+				# 校验请求结果
+				if any(status != OK_CODE for status in responses.values()):
 					return False
+
+				offset += page_size
 
 		return False
 
