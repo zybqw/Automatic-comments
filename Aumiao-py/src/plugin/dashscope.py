@@ -2,7 +2,7 @@ from src.base import acquire
 from src.base.decorator import singleton
 
 version = "2024.8.6"
-HEADERS = acquire.CodeMaoClient().base_headers
+HEADERS = acquire.CodeMaoClient().HEADERS
 docs = "https://help.aliyun.com/zh/model-studio/developer-reference/use-qwen-by-calling-api"
 qwq = "https://bailian.console.aliyun.com/#/model-market/detail/qwen2.5-3b-instruct?tabKey=sdk"
 

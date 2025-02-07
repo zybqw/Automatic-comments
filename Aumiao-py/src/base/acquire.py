@@ -30,7 +30,7 @@ class CodeMaoClient:
 		self.data = data.CodeMaoSettingManager().get_data()
 		self.tool_process = tool.CodeMaoProcess()
 		self.file = file.CodeMaoFile()
-		self.base_headers: dict = self.data.PROGRAM.HEADERS.copy()
+		self.HEADERS: dict = self.data.PROGRAM.HEADERS.copy()
 		self.BASE_URL: str = "https://api.codemao.cn"
 
 		# Ensure log directory exists
@@ -58,11 +58,10 @@ class CodeMaoClient:
 		:return: 响应对象或 None(如果请求失败).
 		"""
 		final_url = url if url.startswith("http") else f"{self.BASE_URL}{url}"
-		final_headers = {**self.base_headers, **(headers or {})}
-
+		final_headers = {**self.HEADERS, **(headers or {})}
+		# final_headers = headers if headers else self.HEADERS
 		time.sleep(sleep)
 		response = None
-
 		try:
 			response = self.session.request(
 				method=method.upper(),
@@ -109,6 +108,8 @@ class CodeMaoClient:
 		"""Log error details."""
 		if response is not None:
 			print(f"{error_type}: [{response.status_code}] {response.reason} - {response.text}")
+			print(response.request.headers)
+			print(response.request.body)
 		else:
 			print(f"{error_type}: No response received")
 
@@ -202,5 +203,17 @@ class CodeMaoClient:
 		else:
 			msg = "Unsupported cookie type"
 			raise TypeError(msg)
-
+		# match cookie:
+		# 	case requests.cookies.RequestsCookieJar():
+		# 		cookie_dict = requests.utils.dict_from_cookiejar(cookie)
+		# 		cookie_str = self.tool_process.convert_cookie_to_str(cookie_dict)
+		# 	case dict():
+		# 		cookie_dict = cookie
+		# 		cookie_str = self.tool_process.convert_cookie_to_str(cookie_dict)
+		# 	case str():
+		# 		cookie_str = cookie
+		# 	case _:
+		# 		msg = "不支持的cookie类型"
+		# 		raise ValueError(msg)
+		# self.HEADERS.update({"Cookie": cookie_str})
 		return True

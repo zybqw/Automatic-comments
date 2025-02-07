@@ -54,7 +54,7 @@ class Login:
 			url=self.setting.PARAMETER.cookie_check_url,
 			method="post",
 			data={},
-			headers={**self.acquire.base_headers, "cookie": cookies},
+			headers={**self.acquire.HEADERS, "cookie": cookies},
 		)
 		self.acquire.update_cookie(cookies)
 		return None
@@ -79,7 +79,7 @@ class Login:
 		# 无上面这两句会缺少__ca_uid_key__
 		token_ca = {"authorization": token}
 		cookie_str = self.tool_process.convert_cookie_to_str(token_ca)
-		headers = {**self.acquire.base_headers, "cookie": cookie_str}
+		headers = {**self.acquire.HEADERS, "cookie": cookie_str}
 		response = self.acquire.send_request(method="get", url="/web/users/details", headers=headers)
 		_auth = response.cookies.get_dict()
 		return {**token_ca, **_auth}
@@ -113,7 +113,7 @@ class Login:
 			url="/tiger/v3/web/accounts/login/security",
 			method="post",
 			data=data,
-			headers={**self.acquire.base_headers, "x-captcha-ticket": ticket},
+			headers={**self.acquire.HEADERS, "x-captcha-ticket": ticket},
 		)
 		self.acquire.update_cookie(response.cookies)
 		return response.json()

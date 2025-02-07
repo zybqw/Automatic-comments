@@ -2,7 +2,7 @@ from src.base import acquire
 
 version = "2024.7.14"
 
-HEADERS = acquire.CodeMaoClient().base_headers
+HEADERS = acquire.CodeMaoClient().HEADERS
 
 
 class Login:
