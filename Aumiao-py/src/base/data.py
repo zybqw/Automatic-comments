@@ -202,7 +202,7 @@ class BaseManager(Generic[T]):
 	_data: T
 	_file_path: Path
 
-	def __init__(self, file_path: Path, data_class: type[T]):
+	def __init__(self, file_path: Path, data_class: type[T]) -> None:
 		self._data = load_json_file(file_path, data_class)
 		self._file_path = file_path
 
