@@ -1,10 +1,8 @@
-import json
-
 from src.base import acquire
 
 version = "2024.7.14"
 
-HEADERS = acquire.CodeMaoClient().HEADERS
+HEADERS = acquire.CodeMaoClient().base_headers
 
 
 class Login:
@@ -12,7 +10,7 @@ class Login:
 		self.acquire = acquire.CodeMaoClient()
 
 	def login(self, phonenum: int, password: str) -> dict:
-		data = json.dumps({"phonenum": phonenum, "password": password})
+		data = {"phonenum": phonenum, "password": password}
 		response = self.acquire.send_request(url="https://x.chatmindai.net/api/user/login", method="post", data=data)
 		return response.json()
 
@@ -37,7 +35,7 @@ class User:
 		response = self.acquire.send_request(
 			url="https://x.chatmindai.net/api/user/getUserSelfBigData",
 			method="post",
-			data=json.dumps({}),
+			data={},
 			headers=HEADERS,
 		)
 		return response.json()
@@ -56,17 +54,15 @@ class Explore:
 		searchValue: str = "",  # noqa: N803
 	) -> dict:
 		originpage = originpage if originpage != "" else category
-		data = json.dumps(
-			{
-				"pageIndex": page,
-				"pageSize": limit,
-				"data": {
-					"categoryName": category,
-					"orderType": originpage,
-					"searchValue": searchValue,
-				},
+		data = {
+			"pageIndex": page,
+			"pageSize": limit,
+			"data": {
+				"categoryName": category,
+				"orderType": originpage,
+				"searchValue": searchValue,
 			},
-		)
+		}
 		response = self.acquire.send_request(
 			url="https://x.chatmindai.net/api/model/query",
 			method="post",
@@ -86,7 +82,7 @@ class Explore:
 		else:
 			url = ""
 
-		response = self.acquire.send_request(url=url, method="post", data=json.dumps({}), headers=HEADERS)
+		response = self.acquire.send_request(url=url, method="post", data={}, headers=HEADERS)
 		return response.json()
 
 
@@ -103,13 +99,12 @@ class Chat:
 		return response.json()
 
 	def get_chat_history(self, ids: str, page: int = 1, limit: int = 15) -> dict:
-		data = json.dumps(
-			{
-				"data": {"chatid": ids},
-				"pageIndex": page,
-				"pageSize": limit,
-			},
-		)
+		data = {
+			"data": {"chatid": ids},
+			"pageIndex": page,
+			"pageSize": limit,
+		}
+
 		response = self.acquire.send_request(
 			url="https://x.chatmindai.net/api/chat/queryPagesChatItems",
 			method="post",
@@ -120,14 +115,12 @@ class Chat:
 
 	def chat(self, chatid: str, modelid: str, message: str, context_analyse: int = 1) -> dict:
 		# context_analyse为上下文分析,开启为1,关闭为0
-		data = json.dumps(
-			{
-				"message": message,
-				"chatid": chatid,
-				"roleid": modelid,
-				"isContextEnabled": context_analyse,
-			},
-		)
+		data = {
+			"message": message,
+			"chatid": chatid,
+			"roleid": modelid,
+			"isContextEnabled": context_analyse,
+		}
 
 		response = self.acquire.send_request(
 			url="https://x.chatmindai.net/api/chat-process",
@@ -138,25 +131,23 @@ class Chat:
 		return response.json()
 
 	def save_chat(self) -> dict:
-		data = json.dumps(
-			{
-				"chatid": "",  # ai回答
-				"humanid": "",  # 随机生成: p938bndy9lvueh5fok61721280190544
-				"assistantid": "",  # 随机生成: fiz55pci3fobe7g00j91721280158062
-				"chattitle": "",  # 默认为首次对话prompt
-				"prompt": "",  # 人类提问内容
-				"answer": "",  # 机器人回答
-				"chattime": "2024-07-17 16:51:02",  # 时间
-				"humantime": "2024-07-17 16:50:58",  # 时间
-				"assistanttime": "2024-07-17 16:51:02",  # 时间
-				"model": "qwen2-72B-Instruct",  # 模型
-				"questionList": [],  # 未知
-				"roleAvatar": "https://cravatar.cn/avatar/ef166b47449cc7e4e71cec1a2f826a70?s=200&d=mp",
-				# ai头像可以随便上传
-				"roleId": "bmi5aruzldsb1za2m5d1718161196283",  # 每个角色被赋予唯一id
-				"sensitive": False,  # 未知
-			},
-		)
+		data = {
+			"chatid": "",  # ai回答
+			"humanid": "",  # 随机生成: p938bndy9lvueh5fok61721280190544
+			"assistantid": "",  # 随机生成: fiz55pci3fobe7g00j91721280158062
+			"chattitle": "",  # 默认为首次对话prompt
+			"prompt": "",  # 人类提问内容
+			"answer": "",  # 机器人回答
+			"chattime": "2024-07-17 16:51:02",  # 时间
+			"humantime": "2024-07-17 16:50:58",  # 时间
+			"assistanttime": "2024-07-17 16:51:02",  # 时间
+			"model": "qwen2-72B-Instruct",  # 模型
+			"questionList": [],  # 未知
+			"roleAvatar": "https://cravatar.cn/avatar/ef166b47449cc7e4e71cec1a2f826a70?s=200&d=mp",
+			# ai头像可以随便上传
+			"roleId": "bmi5aruzldsb1za2m5d1718161196283",  # 每个角色被赋予唯一id
+			"sensitive": False,  # 未知
+		}
 		response = self.acquire.send_request(
 			url="https://x.chatmindai.net/api/chat/saveConversation",
 			method="post",
@@ -174,7 +165,7 @@ class Model:
 		response = self.acquire.send_request(
 			url="https://x.chatmindai.net/api/model/getModelDetailsInfo",
 			method="post",
-			data=json.dumps({"roleId": ids}),
+			data={"roleId": ids},
 			headers=HEADERS,
 		)
 		return response.json()

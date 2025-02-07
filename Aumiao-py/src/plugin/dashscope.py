@@ -1,10 +1,8 @@
-import json
-
 from src.base import acquire
 from src.base.decorator import singleton
 
 version = "2024.8.6"
-HEADERS = acquire.CodeMaoClient().HEADERS
+HEADERS = acquire.CodeMaoClient().base_headers
 docs = "https://help.aliyun.com/zh/model-studio/developer-reference/use-qwen-by-calling-api"
 qwq = "https://bailian.console.aliyun.com/#/model-market/detail/qwen2.5-3b-instruct?tabKey=sdk"
 
@@ -62,14 +60,11 @@ class Dashscope:
 			**more,
 		}
 
-		# 使用 json.dumps() 来序列化数据
-		data_json = json.dumps(data, ensure_ascii=False)
-
 		# 发送请求并返回响应
 		response = self.acquire.send_request(
 			url="https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions",
 			method="post",
-			data=data_json,
+			data=data,
 			headers=self.HEADERS,
 		)
 		return response.json()

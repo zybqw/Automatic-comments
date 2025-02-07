@@ -1,4 +1,3 @@
-import json
 from typing import Any, Literal
 
 from src.base import acquire, tool
@@ -27,18 +26,16 @@ class Motion:
 		work_source_label: int = 1,
 		save_type: int = 2,
 	) -> dict:
-		data = json.dumps(
-			{
-				"name": name,
-				"work_url": work_url,
-				"preview": preview,
-				"orientation": orientation,
-				"sample_id": sample_id,
-				"version": version,
-				"work_source_label": work_source_label,
-				"save_type": save_type,
-			},
-		)
+		data = {
+			"name": name,
+			"work_url": work_url,
+			"preview": preview,
+			"orientation": orientation,
+			"sample_id": sample_id,
+			"version": version,
+			"work_source_label": work_source_label,
+			"save_type": save_type,
+		}
 		response = self.acquire.send_request(
 			url="https://api-creation.codemao.cn/kitten/r2/work",
 			method="post",
@@ -66,22 +63,20 @@ class Motion:
 		# fork_enable: 0表示不开源,1表示开源
 		# if_default_cover: 1表示使用默认封面,2表示自定义封面
 		# description: 作品描述,operation:操作说明
-		data = json.dumps(
-			{
-				"name": name,
-				"description": description,
-				"operation": operation,
-				"labels": labels,
-				"cover_url": cover_url,
-				"bcmc_url": bcmc_url,
-				"work_url": work_url,
-				"fork_enable": fork_enable,
-				"if_default_cover": if_default_cover,
-				"version": version,
-				"cover_type": cover_type,
-				"user_labels": user_labels,
-			},
-		)
+		data = {
+			"name": name,
+			"description": description,
+			"operation": operation,
+			"labels": labels,
+			"cover_url": cover_url,
+			"bcmc_url": bcmc_url,
+			"work_url": work_url,
+			"fork_enable": fork_enable,
+			"if_default_cover": if_default_cover,
+			"version": version,
+			"cover_type": cover_type,
+			"user_labels": user_labels,
+		}
 		response = self.acquire.send_request(
 			url=f"https://api-creation.codemao.cn/kitten/r2/work/{work_id}/publish",
 			method="put",
@@ -105,21 +100,19 @@ class Motion:
 		n_blocks: int = 0,
 		n_roles: int = 2,
 	) -> dict:
-		data = json.dumps(
-			{
-				"name": name,
-				"bcm_version": bcm_version,
-				"preview_url": preview_url,
-				"work_url": work_url,
-				"save_type": save_type,
-				"stage_type": stage_type,
-				"work_classify": work_classify,
-				"hardware_mode": hardware_mode,
-				"blink_mode": blink_mode,
-				"n_blocks": n_blocks,
-				"n_roles": n_roles,
-			},
-		)
+		data = {
+			"name": name,
+			"bcm_version": bcm_version,
+			"preview_url": preview_url,
+			"work_url": work_url,
+			"save_type": save_type,
+			"stage_type": stage_type,
+			"work_classify": work_classify,
+			"hardware_mode": hardware_mode,
+			"blink_mode": blink_mode,
+			"n_blocks": n_blocks,
+			"n_roles": n_roles,
+		}
 		response = self.acquire.send_request(
 			url="https://api-creation.codemao.cn/neko/works",
 			method="post",
@@ -145,20 +138,18 @@ class Motion:
 		# fork_enable: 0表示不开源,1表示开源,2表示对粉丝开源
 		# if_default_cover: 1表示使用默认封面,2表示自定义封面
 		# description: 作品描述,operation:操作说明
-		data = json.dumps(
-			{
-				"name": name,
-				"preview_url": preview_url,
-				"description": description,
-				"operation": operation,
-				"fork_enable": fork_enable,
-				"if_default_cover": if_default_cover,
-				"bcmc_url": bcmc_url,
-				"work_url": work_url,
-				"bcm_version": bcm_version,
-				"cover_url": cover_url,
-			},
-		)
+		data = {
+			"name": name,
+			"preview_url": preview_url,
+			"description": description,
+			"operation": operation,
+			"fork_enable": fork_enable,
+			"if_default_cover": if_default_cover,
+			"bcmc_url": bcmc_url,
+			"work_url": work_url,
+			"bcm_version": bcm_version,
+			"cover_url": cover_url,
+		}
 		response = self.acquire.send_request(
 			url=f"https://api-creation.codemao.cn/neko/community/work/publish/{work_id}",
 			method="post",
@@ -171,7 +162,7 @@ class Motion:
 		response = self.acquire.send_request(
 			url=f"/nemo/v2/user/{user_id}/follow",
 			method=method,
-			data=json.dumps({}),
+			data={},
 		)
 
 		return response.status_code == NO_CONTENT_CODE
@@ -181,7 +172,7 @@ class Motion:
 		response = self.acquire.send_request(
 			url=f"/nemo/v2/works/{work_id}/collection",
 			method=method,
-			data=json.dumps({}),
+			data={},
 		)
 		return response.status_code == OK_CODE
 
@@ -191,7 +182,7 @@ class Motion:
 		response = self.acquire.send_request(
 			url=f"/nemo/v2/works/{work_id}/like",
 			method=method,
-			data=json.dumps({}),
+			data={},
 		)
 		return response.status_code == OK_CODE
 
@@ -200,7 +191,7 @@ class Motion:
 		response = self.acquire.send_request(
 			url=f"/nemo/v2/works/{work_id}/share",
 			method="post",
-			data=json.dumps({}),
+			data={},
 		)
 		return response.status_code == OK_CODE
 
@@ -209,12 +200,10 @@ class Motion:
 		response = self.acquire.send_request(
 			url=f"/creation-tools/v1/works/{work_id}/comment",
 			method="post",
-			data=json.dumps(
-				{
-					"content": comment,
-					"emoji_content": emoji,
-				},
-			),
+			data={
+				"content": comment,
+				"emoji_content": emoji,
+			},
 		)
 		return response.json() if return_data else response.status_code == CREATED_CODE
 
@@ -228,7 +217,7 @@ class Motion:
 		*,
 		return_data: bool = False,
 	) -> bool | dict:
-		data = json.dumps({"parent_id": parent_id, "content": comment})
+		data = {"parent_id": parent_id, "content": comment}
 		response = self.acquire.send_request(
 			url=f"/creation-tools/v1/works/{work_id}/comment/{comment_id}/reply",
 			method="post",
@@ -246,13 +235,12 @@ class Motion:
 
 	# 对某个作品举报
 	def report_work(self, describe: str, reason: str, work_id: int) -> bool:
-		data = json.dumps(
-			{
-				"work_id": work_id,
-				"report_reason": reason,
-				"report_describe": describe,
-			},
-		)
+		data = {
+			"work_id": work_id,
+			"report_reason": reason,
+			"report_describe": describe,
+		}
+
 		response = self.acquire.send_request(url="/nemo/v2/report/work", method="post", data=data)
 		return response.status_code == OK_CODE
 
@@ -265,30 +253,21 @@ class Motion:
 		*,
 		return_data: bool = False,
 	) -> bool:
-		response = self.acquire.send_request(
-			url=f"/creation-tools/v1/works/{work_id}/comment/{comment_id}/top",
-			method=method,
-			data=json.dumps({}),
-		)
+		response = self.acquire.send_request(url=f"/creation-tools/v1/works/{work_id}/comment/{comment_id}/top", method=method, data={})
+
 		return response.json() if return_data else response.status_code == NO_CONTENT_CODE
 
 	# 点赞作品的评论
 	def like_comment_work(self, work_id: int, comment_id: int, method: select = "post") -> bool:
-		response = self.acquire.send_request(
-			url=f"/creation-tools/v1/works/{work_id}/comment/{comment_id}/liked",
-			method=method,
-			data=json.dumps({}),
-		)
+		response = self.acquire.send_request(url=f"/creation-tools/v1/works/{work_id}/comment/{comment_id}/liked", method=method, data={})
 		return response.status_code == CREATED_CODE
 
 	# 举报作品的评论
 	def report_comment_work(self, work_id: int, comment_id: int, reason: str) -> bool:
-		data = json.dumps(
-			{
-				"comment_id": comment_id,
-				"report_reason": reason,
-			},
-		)
+		data = {
+			"comment_id": comment_id,
+			"report_reason": reason,
+		}
 		response = self.acquire.send_request(
 			url=f"/creation-tools/v1/works/{work_id}/comment/report",
 			method="post",
@@ -301,7 +280,7 @@ class Motion:
 		response = self.acquire.send_request(
 			url=f"https://socketcoll.codemao.cn/coll/kitten/{work_id}",
 			method="post",
-			data=json.dumps({}),
+			data={},
 		)
 		return response.status_code == OK_CODE
 
@@ -329,7 +308,7 @@ class Motion:
 		response = self.acquire.send_request(
 			url=f"/tiger/work/{work_id}/unpublish",
 			method="patch",
-			data=json.dumps({}),
+			data={},
 		)
 		return response.status_code == NO_CONTENT_CODE
 
@@ -338,7 +317,7 @@ class Motion:
 		response = self.acquire.send_request(
 			url=f"/web/works/r2/unpublish/{work_id}",
 			method="put",
-			data=json.dumps({}),
+			data={},
 		)
 		return response.status_code == OK_CODE
 
@@ -401,6 +380,7 @@ class Obtain:
 			total_key="page_total",
 			data_key="items",
 			limit=limit,
+			args={}
 		)
 
 	# 获取作品信息
@@ -595,7 +575,7 @@ class Obtain:
 			params=params,
 			total_key="data.total",
 			data_key="data.items",
-			method="page",
+			pagination_method="page",
 			args={"amount": "current_page", "remove": "page_size"},
 			limit=limit,
 		)

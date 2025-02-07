@@ -1,4 +1,3 @@
-import json
 from typing import Any, Literal
 
 from src.base import acquire
@@ -121,14 +120,12 @@ class Motion:
 		response = self.acquire.send_request(
 			url="/web/work_shops/update",
 			method="post",
-			data=json.dumps(
-				{
-					"description": description,
-					"id": shop_id,
-					"name": name,
-					"preview_url": preview_url,
-				},
-			),
+			data={
+				"description": description,
+				"id": shop_id,
+				"name": name,
+				"preview_url": preview_url,
+			},
 		)
 		return response.status_code == OK_CODE
 
@@ -137,13 +134,11 @@ class Motion:
 		response = self.acquire.send_request(
 			url="/web/work_shops/create",
 			method="post",
-			data=json.dumps(
-				{
-					"name": name,
-					"description": description,
-					"preview_url": preview_url,
-				},
-			),
+			data={
+				"name": name,
+				"description": description,
+				"preview_url": preview_url,
+			},
 		)
 		return response.json()
 
@@ -152,7 +147,7 @@ class Motion:
 		response = self.acquire.send_request(
 			url="/web/work_shops/dissolve",
 			method="post",
-			data=json.dumps({"id": shop_id}),
+			data={"id": shop_id},
 		)
 		return response.status_code == OK_CODE
 
@@ -161,7 +156,7 @@ class Motion:
 		response = self.acquire.send_request(
 			url="/web/work_shops/works/contribute",
 			method="post",
-			data=json.dumps({"id": shop_id, "work_id": work_id}),
+			data={"id": shop_id, "work_id": work_id},
 		)
 		return response.status_code == OK_CODE
 
@@ -170,7 +165,7 @@ class Motion:
 		response = self.acquire.send_request(
 			url="/web/work_shops/works/remove",
 			method="post",
-			data=json.dumps({"id": shop_id, "work_id": work_id}),
+			data={"id": shop_id, "work_id": work_id},
 		)
 		return response.status_code == OK_CODE
 
@@ -179,7 +174,7 @@ class Motion:
 		response = self.acquire.send_request(
 			url="/web/work_shops/users/apply/join",
 			method="post",
-			data=json.dumps({"id": shop_id, "qq": qq}),
+			data={"id": shop_id, "qq": qq},
 		)
 		return response.status_code == OK_CODE
 
@@ -188,7 +183,7 @@ class Motion:
 		response = self.acquire.send_request(
 			url="/web/work_shops/users/audit",
 			method="post",
-			data=json.dumps({"id": shop_id, "status": status, "user_id": user_id}),
+			data={"id": shop_id, "status": status, "user_id": user_id},
 		)
 		return response.status_code == OK_CODE
 
@@ -206,17 +201,15 @@ class Motion:
 		response = self.acquire.send_request(
 			url="/web/reports/comments",
 			method="post",
-			data=json.dumps(
-				{
-					"comment_id": comment_id,
-					"comment_parent_id": comment_parent_id,
-					"description": description,
-					"reason_content": reason_content,
-					"reason_id": reason_id,
-					"reporter_id": reporter_id,
-					"comment_source": comment_source,
-				},
-			),
+			data={
+				"comment_id": comment_id,
+				"comment_parent_id": comment_parent_id,
+				"description": description,
+				"reason_content": reason_content,
+				"reason_id": reason_id,
+				"reporter_id": reporter_id,
+				"comment_source": comment_source,
+			},
 		)
 		return response.status_code == CREATED_CODE
 
@@ -226,13 +219,11 @@ class Motion:
 		response = self.acquire.send_request(
 			url=f"/web/discussions/{shop_id}/comments/{comment_id}/reply",
 			method="post",
-			data=json.dumps(
-				{
-					"parent_id": parent_id,
-					"content": content,
-					"source": source,
-				},
-			),
+			data={
+				"parent_id": parent_id,
+				"content": content,
+				"source": source,
+			},
 		)
 		return response.json() if return_data else response.status_code == CREATED_CODE
 
@@ -250,13 +241,11 @@ class Motion:
 		response = self.acquire.send_request(
 			url=f"/web/discussions/{shop_id}/comment",
 			method="post",
-			data=json.dumps(
-				{
-					"content": content,
-					"rich_content": rich_content,
-					"source": source,
-				},
-			),
+			data={
+				"content": content,
+				"rich_content": rich_content,
+				"source": source,
+			},
 		)
 		return response.json() if return_code else response.status_code == CREATED_CODE
 

@@ -1,4 +1,3 @@
-import json
 from typing import Literal
 
 from src.base import acquire
@@ -129,11 +128,9 @@ class NovelMotion:
 		response = self.acquire.send_request(
 			url=f"/api/fanfic/comments/{novel_id}",
 			method="post",
-			data=json.dumps(
-				{
-					"content": comment,
-				},
-			),
+			data={
+				"content": comment,
+			},
 		)
 		return response.json() if return_data else response.status_code == OK_CODE
 

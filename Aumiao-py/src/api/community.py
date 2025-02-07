@@ -1,4 +1,3 @@
-import json
 from typing import Any, Literal
 
 from src.base import acquire, data, tool
@@ -14,7 +13,7 @@ class Login:
 	def __init__(self) -> None:
 		self.acquire = acquire.CodeMaoClient()
 		self.tool_process = tool.CodeMaoProcess()
-		self.setting = data.CodeMaoSetting().setting
+		self.setting = data.CodeMaoSettingManager().get_data()
 
 	# 密码登录函数
 	def login_password(
@@ -34,14 +33,13 @@ class Login:
 		response = self.acquire.send_request(
 			url="/tiger/v3/web/accounts/login",
 			method="post",
-			data=json.dumps(
-				{
-					"identity": identity,
-					"password": password,
-					"pid": pid,
-				},
-			),
+			data={
+				"identity": identity,
+				"password": password,
+				"pid": pid,
+			},
 		)
+
 		self.acquire.update_cookie(response.cookies)
 
 	# cookie登录
@@ -53,10 +51,10 @@ class Login:
 			print(f"表达式输入不合法 {err}")
 			return False
 		self.acquire.send_request(
-			url=self.setting["PARAMETER"]["cookie_check_url"],
+			url=self.setting.PARAMETER.cookie_check_url,
 			method="post",
-			data=json.dumps({}),
-			headers={**self.acquire.HEADERS, "cookie": cookies},
+			data={},
+			headers={**self.acquire.base_headers, "cookie": cookies},
 		)
 		self.acquire.update_cookie(cookies)
 		return None
@@ -81,7 +79,7 @@ class Login:
 		# 无上面这两句会缺少__ca_uid_key__
 		token_ca = {"authorization": token}
 		cookie_str = self.tool_process.convert_cookie_to_str(token_ca)
-		headers = {**self.acquire.HEADERS, "cookie": cookie_str}
+		headers = {**self.acquire.base_headers, "cookie": cookie_str}
 		response = self.acquire.send_request(method="get", url="/web/users/details", headers=headers)
 		_auth = response.cookies.get_dict()
 		return {**token_ca, **_auth}
@@ -91,7 +89,7 @@ class Login:
 		response = self.acquire.send_request(
 			url=f"/tiger/v3/{method}/accounts/logout",
 			method="post",
-			data=json.dumps({}),
+			data={},
 		)
 		return response.status_code == NO_CONTENT_CODE
 
@@ -104,19 +102,18 @@ class Login:
 		pid: str = "65edCTyg",
 		agreement_ids: list = [-1],
 	) -> dict:
-		data = json.dumps(
-			{
-				"identity": identity,
-				"password": password,
-				"pid": pid,
-				"agreement_ids": agreement_ids,
-			},
-		)
+		data = {
+			"identity": identity,
+			"password": password,
+			"pid": pid,
+			"agreement_ids": agreement_ids,
+		}
+
 		response = self.acquire.send_request(
 			url="/tiger/v3/web/accounts/login/security",
 			method="post",
 			data=data,
-			headers={**self.acquire.HEADERS, "x-captcha-ticket": ticket},
+			headers={**self.acquire.base_headers, "x-captcha-ticket": ticket},
 		)
 		self.acquire.update_cookie(response.cookies)
 		return response.json()
@@ -135,15 +132,14 @@ class Login:
 		# _ca = {"__ca_uid_key__": str(uuid_ca)}
 		# cookie_str = self.tool_process.convert_cookie_to_str(_ca)
 		# headers = {**self.acquire.HEADERS, "cookie": cookie_str}
-		data = json.dumps(
-			{
-				"identity": identity,
-				"scene": scene,
-				"pid": pid,
-				"deviceId": deviced,
-				"timestamp": timestamp,
-			},
-		)
+		data = {
+			"identity": identity,
+			"scene": scene,
+			"pid": pid,
+			"deviceId": deviced,
+			"timestamp": timestamp,
+		}
+
 		response = self.acquire.send_request(
 			url="https://open-service.codemao.cn/captcha/rule/v3",
 			method="post",
@@ -418,15 +414,13 @@ class Motion:
 		pid: str = "65edCTyg",
 		agreement_ids: list = [186, 13],
 	) -> dict:
-		data = json.dumps(
-			{
-				"identity": identity,
-				"password": password,
-				"captcha": captcha,
-				"pid": pid,
-				"agreement_ids": agreement_ids,
-			},
-		)
+		data = {
+			"identity": identity,
+			"password": password,
+			"captcha": captcha,
+			"pid": pid,
+			"agreement_ids": agreement_ids,
+		}
 
 		response = self.acquire.send_request(
 			url="/tiger/v3/web/accounts/register/phone/with-agreement",

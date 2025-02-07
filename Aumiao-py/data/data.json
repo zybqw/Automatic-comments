@@ -1,17 +1,17 @@
 {
-    "ACCOUNT_DATA": {
-        "identity": "Aurzex",
-        "password": "******",
-        "id": "12770114",
-        "nickname": "喵鱼a",
-        "create_time": 1605554626,
-        "description": "博客 aurzex.top ",
-        "author_level": 4
-    },
     "INFO": {
         "e_mail": "zybqw@qq.com",
         "nickname": "喵鱼a",
         "qq_number": 3611198191
+    },
+    "ACCOUNT_DATA": {
+        "author_level": 4,
+        "create_time": 1605554626,
+        "description": "博客 aurzex.top ",
+        "id": "12770114",
+        "identity": "Aurzex",
+        "nickname": "喵鱼a",
+        "password": "******"
     },
     "USER_DATA": {
         "ads": [

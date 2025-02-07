@@ -9,8 +9,8 @@ def login() -> None:
 		src.community.Login().login_token(identity=identity, password=password)
 		data = src.user.Obtain().get_data_details()
 		# 使用 update 方法更新字典中的数据
-		account_data = src.data.CodeMaoData().data
-		account_data.update(
+		account_data_manager = src.data.CodeMaoDataManager()
+		account_data_manager.update(
 			{
 				"ACCOUNT_DATA": {
 					"identity": identity,
@@ -69,34 +69,31 @@ def logout() -> None:
 
 
 def main() -> None:
-	try:
-		src.client.Index().index()
-		while True:
-			print("\n请选择操作:")
-			print("1. 登录")
-			print("2. 清除评论")
-			print("3. 清除邮箱红点")
-			print("4. 自动回复")
-			print("5. 登出")
-			print("6. 退出")
-			choice = input("请输入选择 (1-6): ")
-			print("*" * 50)
-			if choice == "1":
-				login()
-			elif choice == "2":
-				clear_comments()
-			elif choice == "3":
-				clear_red_point()
-			elif choice == "4":
-				reply_work()
-			elif choice == "5":
-				logout()
-			elif choice == "6":
-				break
-			else:
-				print("无效的选择, 请重新输入")
-	except Exception as err:
-		print(f"程序发生错误: {err}")
+	src.client.Index().index()
+	while True:
+		print("\n请选择操作:")
+		print("1. 登录")
+		print("2. 清除评论")
+		print("3. 清除邮箱红点")
+		print("4. 自动回复")
+		print("5. 登出")
+		print("6. 退出")
+		choice = input("请输入选择 (1-6): ")
+		print("*" * 50)
+		if choice == "1":
+			login()
+		elif choice == "2":
+			clear_comments()
+		elif choice == "3":
+			clear_red_point()
+		elif choice == "4":
+			reply_work()
+		elif choice == "5":
+			logout()
+		elif choice == "6":
+			break
+		else:
+			print("无效的选择, 请重新输入")
 
 
 if __name__ == "__main__":

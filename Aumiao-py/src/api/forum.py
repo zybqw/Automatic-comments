@@ -1,4 +1,3 @@
-import json
 from typing import Any, Literal
 
 from src.base import acquire
@@ -36,7 +35,7 @@ class Obtain:
 			params=params,
 			total_key="total",
 			data_key="items",
-			method="page",
+			pagination_method="page",
 			args={"amount": "limit", "remove": "page"},
 			limit=limit,
 		)
@@ -53,7 +52,7 @@ class Obtain:
 			params=params,
 			data_key="items",
 			limit=limit,
-			method="page",
+			pagination_method="page",
 			args={"amount": "limit", "remove": "page"},
 		)
 
@@ -64,7 +63,7 @@ class Obtain:
 			url=f"/web/forums/posts/mine/{method}",
 			params=params,
 			data_key="items",
-			method="page",
+			pagination_method="page",
 			args={"amount": "limit", "remove": "page"},
 			limit=limit,
 		)
@@ -127,7 +126,7 @@ class Obtain:
 		params = {"title": title, "limit": 20, "page": 1}
 		return self.acquire.fetch_data(
 			url="/web/forums/posts/search",
-			method="page",
+			pagination_method="page",
 			params=params,
 			data_key="items",
 			limit=limit,
@@ -148,7 +147,7 @@ class Motion:
 		*,
 		return_data: bool = False,
 	) -> dict | bool:
-		data = json.dumps({"content": content})
+		data = {"content": content}
 		response = self.acquire.send_request(
 			url=f"/web/forums/posts/{post_id}/replies",
 			method="post",
@@ -158,7 +157,7 @@ class Motion:
 
 	# 对某个回帖评论进行回复
 	def reply_comment(self, reply_id: int, parent_id: int, content: str, *, return_data: bool = False) -> dict | bool:
-		data = json.dumps({"content": content, "parent_id": parent_id})
+		data = {"content": content, "parent_id": parent_id}
 		response = self.acquire.send_request(url=f"/web/forums/replies/{reply_id}/comments", method="post", data=data)
 		return response.json() if return_data else response.status_code == CREATED_CODE
 
@@ -189,14 +188,12 @@ class Motion:
 		return_data: bool = False,
 	) -> dict | bool:
 		# get_report_reasons()仅返回1-8的reason_id,其中description与reason_id一一对应 0为自定义举报理由
-		data = json.dumps(
-			{
-				"reason_id": reason_id,
-				"description": description,
-				"discussion_id": comment_id,
-				"source": source,
-			},
-		)
+		data = {
+			"reason_id": reason_id,
+			"description": description,
+			"discussion_id": comment_id,
+			"source": source,
+		}
 		response = self.acquire.send_request(
 			url="/web/reports/posts/discussions",
 			method="post",
@@ -214,13 +211,11 @@ class Motion:
 		return_data: bool = False,
 	) -> dict | bool:
 		# description与reason_id并不对应,可以自定义描述
-		data = json.dumps(
-			{
-				"reason_id": reason_id,
-				"description": description,
-				"post_id": post_id,
-			},
-		)
+		data = {
+			"reason_id": reason_id,
+			"description": description,
+			"post_id": post_id,
+		}
 		response = self.acquire.send_request(
 			url="/web/reports/posts",
 			method="post",
@@ -256,7 +251,7 @@ class Motion:
 		return_data: bool = False,
 	) -> dict | bool:
 		# board_id类型可从get_post_categories()获取
-		data = json.dumps({"title": title, "content": content})
+		data = {"title": title, "content": content}
 		if method == "board":
 			url = f"/web/forums/boards/{board_id}/posts"
 		elif method == "work_shop":

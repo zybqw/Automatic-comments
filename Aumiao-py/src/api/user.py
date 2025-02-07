@@ -1,4 +1,3 @@
-import json
 from typing import Any, Literal, cast
 
 from src.base import acquire
@@ -321,7 +320,7 @@ class Motion:
 
 	# 设置正在做的事
 	def set_data_doing(self, doing: str) -> bool:
-		response = self.acquire.send_request(url="/nemo/v2/user/basic", method="put", data=json.dumps({"doing": doing}))
+		response = self.acquire.send_request(url="/nemo/v2/user/basic", method="put", data={"doing": doing})
 		return response.status_code == OK_CODE
 
 	# 设置登录用户名(实验性功能)
@@ -329,7 +328,7 @@ class Motion:
 		response = self.acquire.send_request(
 			url="/tiger/v3/web/accounts/username",
 			method="patch",
-			data=json.dumps({"username": username}),
+			data={"username": username},
 		)
 		return response.status_code == NO_CONTENT_CODE
 
@@ -341,13 +340,11 @@ class Motion:
 
 	# 修改密码
 	def modify_password(self, old_password: str, new_password: str) -> bool:
-		data = json.dumps(
-			{
-				"old_password": old_password,
-				"password": new_password,
-				"confirm_password": new_password,
-			},
-		)
+		data = {
+			"old_password": old_password,
+			"password": new_password,
+			"confirm_password": new_password,
+		}
 		response = self.acquire.send_request(
 			url="/tiger/v3/web/accounts/password",
 			method="patch",
@@ -357,7 +354,7 @@ class Motion:
 
 	# 修改手机号(获取验证码)
 	def modify_phonenum_captcha(self, old_phonenum: int, new_phonenum: int) -> bool:
-		data = json.dumps({"phone_number": new_phonenum, "old_phone_number": old_phonenum})
+		data = {"phone_number": new_phonenum, "old_phone_number": old_phonenum}
 		response = self.acquire.send_request(
 			url="/tiger/v3/web/accounts/captcha/phone/change",
 			method="post",
@@ -367,7 +364,7 @@ class Motion:
 
 	# 修改手机号
 	def modify_phonenum(self, captcha: int, phonenum: int) -> bool:
-		data = json.dumps({"phone_number": phonenum, "captcha": captcha})
+		data = {"phone_number": phonenum, "captcha": captcha}
 		response = self.acquire.send_request(
 			url="/tiger/v3/web/accounts/phone/change",
 			method="patch",
@@ -381,7 +378,7 @@ class Motion:
 		if not data:
 			msg = "至少需要传入一个参数"
 			raise ValueError(msg)
-		response = self.acquire.send_request(url="/nemo/v2/user/basic", method="put", data=json.dumps(data))
+		response = self.acquire.send_request(url="/nemo/v2/user/basic", method="put", data=data)
 		return response.status_code == OK_CODE
 
 	# 取消设置头像框
@@ -427,6 +424,6 @@ class Motion:
 		response = self.acquire.send_request(
 			url="/tiger/v3/web/accounts/info",
 			method="patch",
-			data=json.dumps(data),
+			data=data,
 		)
 		return response.status_code == NO_CONTENT_CODE

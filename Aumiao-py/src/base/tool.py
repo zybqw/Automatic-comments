@@ -1,10 +1,12 @@
 import time
-from typing import Any
+from dataclasses import asdict, is_dataclass
+from typing import Any, TypeVar, cast
 
 from .decorator import singleton
 
 Data = list[dict] | dict
 Nested_dict = dict[str, Any]
+T = TypeVar("T")
 
 
 @singleton
@@ -92,15 +94,39 @@ class CodeMaoRoutine:
 		"""获取当前时间戳"""
 		return time.time()
 
-	def display_data_changes(self, before_data: dict, after_data: dict, metrics: dict[str, str], date_field: str | None = None) -> None:
+	def display_data_changes(
+		self,
+		before_data: dict[str, Any] | T,
+		after_data: dict[str, Any] | T,
+		metrics: dict[str, str],
+		date_field: str | None = None,
+	) -> None:
 		"""改进的数据变化展示"""
+
+		def to_dict(data: dict[str, Any] | T) -> dict[str, Any]:
+			if isinstance(data, dict):
+				return data
+			if hasattr(data, "__dict__"):
+				return vars(data)
+			if is_dataclass(data):
+				return asdict(cast(Any, data))
+			msg = f"Unsupported data type: {type(data)}"
+			raise TypeError(msg)
+
+		try:
+			before_dict = to_dict(before_data)
+			after_dict = to_dict(after_data)
+		except TypeError as e:
+			print(f"Error converting data to dictionary: {e}")
+			return
+
 		if date_field:
 			fmt = self.process.format_timestamp
-			print(f"时间段: {fmt(before_data[date_field])} → {fmt(after_data[date_field])}")
+			print(f"时间段: {fmt(before_dict[date_field])} → {fmt(after_dict[date_field])}")
 
 		for field, label in metrics.items():
-			before = before_data.get(field, 0)
-			after = after_data.get(field, 0)
+			before = before_dict.get(field, 0)
+			after = after_dict.get(field, 0)
 			print(f"{label}: {after - before:+} (当前: {after}, 初始: {before})")
 
 	def find_prefix_suffix(self, text: str | int, candidates: list[str]) -> tuple[int | None, int | None]:

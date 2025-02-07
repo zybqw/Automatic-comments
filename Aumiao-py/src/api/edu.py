@@ -1,4 +1,3 @@
-import json
 from typing import Any, Literal
 
 from src.base import acquire
@@ -29,7 +28,7 @@ class Motion:
 
 	# 创建班级
 	def create_class(self, name: str) -> dict:
-		data = json.dumps({"name": name})
+		data = {"name": name}
 		response = self.acquire.send_request(url="https://eduzone.codemao.cn/edu/zone/class", method="post", data=data)
 		return response.json()
 
@@ -46,7 +45,7 @@ class Motion:
 
 	# 班级内新建学生账号
 	def create_student(self, name: list[str], class_id: int) -> bool:
-		data = json.dumps({"student_names": name})
+		data = {"student_names": name}
 		response = self.acquire.send_request(
 			url=f"https://eduzone.codemao.cn/edu/zone/class/{class_id}/students",
 			method="post",
@@ -56,7 +55,7 @@ class Motion:
 
 	# 重置密码
 	def reset_password(self, stu_id: list[int]) -> bool:
-		data = json.dumps({"student_id": stu_id})
+		data = {"student_id": stu_id}
 		response = self.acquire.send_request(
 			url="https://eduzone.codemao.cn/edu/zone/students/password",
 			method="patch",
@@ -66,7 +65,7 @@ class Motion:
 
 	# 删除班级内学生
 	def remove_student(self, stu_id: int) -> bool:
-		data = json.dumps({})
+		data = {}
 		response = self.acquire.send_request(
 			url=f"https://eduzone.codemao.cn/edu/zone/student/remove/{stu_id}",
 			method="post",
@@ -77,7 +76,7 @@ class Motion:
 	# 添加、修改自定义备课包
 	# patch为修改信息,post用于创建备课包
 	def add_customized_package(self, method: Literal["post", "patch"], avatar_url: str, description: str, name: str, *, return_data: bool = True) -> dict | bool:
-		data = json.dumps({"avatar_url": avatar_url, "description": description, "name": name})
+		data = {"avatar_url": avatar_url, "description": description, "name": name}
 		response = self.acquire.send_request(url="https://eduzone.codemao.cn/edu/zone/lesson/customized/packages", method=method, data=data)
 		return response.json() if return_data else response.status_code == OK_CODE
 
@@ -144,7 +143,7 @@ class Obtain:
 				url=url,
 				params=params,
 				data_key="items",
-				method="page",
+				pagination_method="page",
 				args={"remove": "page", "res_amount_key": "limit"},
 				limit=limit,
 			)
@@ -158,7 +157,7 @@ class Obtain:
 			url="https://eduzone.codemao.cn/edu/zone/student/remove/record",
 			params=params,
 			data_key="items",
-			method="page",
+			pagination_method="page",
 			args={"amount": "limit", "remove": "page"},
 			limit=limit,
 		)
@@ -166,7 +165,7 @@ class Obtain:
 	# 获取班级内全部学生
 	def get_students(self, invalid: int = 1, limit: int | None = 50) -> list[dict[Any, Any]]:
 		# invalid为1时为已加入班级学生,为0则反之
-		data = json.dumps({"invalid": invalid})
+		data = {"invalid": invalid}
 		params = {"page": 1, "limit": 100}
 		return self.acquire.fetch_data(
 			url="https://eduzone.codemao.cn/edu/zone/students",
@@ -174,7 +173,7 @@ class Obtain:
 			data=data,
 			fetch_method="post",
 			data_key="items",
-			method="page",
+			pagination_method="page",
 			args={"amount": "limit", "remove": "page"},
 			limit=limit,
 		)
@@ -311,7 +310,7 @@ class Obtain:
 			url="https://eduzone.codemao.cn/edu/zone/work/manager/student/works",
 			params=params,
 			data_key="items",
-			method="page",
+			pagination_method="page",
 			args={"remove": "page", "res_amount_key": "limit"},
 			limit=limit,
 		)
@@ -337,7 +336,7 @@ class Obtain:
 			url="https://eduzone.codemao.cn/edu/zone/teaching/record/list",
 			params=params,
 			data_key="items",
-			method="page",
+			pagination_method="page",
 			args={"remove": "page", "amount": "limit"},
 			limit=limit,
 		)
@@ -371,7 +370,7 @@ class Obtain:
 		return self.acquire.fetch_data(
 			url="https://eduzone.codemao.cn/edu/zone/lesson/offical/packages",
 			params=params,
-			method="page",
+			pagination_method="page",
 			args={"amount": "limit", "remove": "page"},
 			data_key="items",
 			limit=limit,
@@ -406,7 +405,7 @@ class Obtain:
 		return self.acquire.fetch_data(
 			url="https://eduzone.codemao.cn/edu/zone/lesson/offical/packages",
 			params=params,
-			method="page",
+			pagination_method="page",
 			args={"amount": "limit", "remove": "page"},
 			data_key="items",
 			limit=limit,

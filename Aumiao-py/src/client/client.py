@@ -27,14 +27,14 @@ OK_CODE = 200
 class Union:
 	def __init__(self) -> None:
 		self.acquire = acquire.CodeMaoClient()
-		self.cache = data.CodeMaoCache().cache
+		self.cache = data.CodeMaoCacheManager().get_data()
 		self.community_obtain = community.Obtain()
-		self.data = data.CodeMaoData().data
+		self.data = data.CodeMaoDataManager().get_data()
 		self.edu_obtain = edu.Obtain()
 		self.file = file.CodeMaoFile()
 		self.forum_motion = forum.Motion()
 		self.forum_obtain = forum.Obtain()
-		self.setting = data.CodeMaoSetting().setting
+		self.setting = data.CodeMaoSettingManager().get_data()
 		self.shop_motion = shop.Motion()
 		self.shop_obtain = shop.Obtain()
 		self.tool_process = tool.CodeMaoProcess()
@@ -52,8 +52,8 @@ ClassUnion = Union().__class__
 class Tool(ClassUnion):
 	def __init__(self) -> None:
 		super().__init__()
+		self.cache_manager = data.CodeMaoCacheManager()  # 添加这行
 
-	# 新增粉丝提醒
 	def message_report(self, user_id: str) -> None:
 		response = self.user_obtain.get_user_honor(user_id=user_id)
 		timestamp = self.community_obtain.get_timestamp()["data"]
@@ -67,8 +67,7 @@ class Tool(ClassUnion):
 			"view": response["view_times"],
 			"timestamp": timestamp,
 		}
-		self.cache = cast(dict, self.cache)
-		before_data = self.cache
+		before_data = self.cache_manager.get_data()
 		if before_data != {}:
 			self.tool_routine.display_data_changes(
 				before_data=before_data,
@@ -81,7 +80,7 @@ class Tool(ClassUnion):
 				},
 				date_field="timestamp",
 			)
-		self.cache.update(user_data)  # 使用 `update` 方法,确保同步
+		self.cache_manager.update(user_data)  # 使用管理器的 update 方法
 
 	# 猜测手机号码(暴力枚举)
 	def guess_phonenum(self, phonenum: str) -> int | None:
@@ -101,13 +100,13 @@ class Index(ClassUnion):
 
 	# 打印slogan
 	def index(self) -> None:
-		print(self.setting["PROGRAM"]["SLOGAN"])
-		print(f"版本号: {self.setting['PROGRAM']['VERSION']}")
+		print(self.setting.PROGRAM.SLOGAN)
+		print(f"版本号: {self.setting.PROGRAM.VERSION}")
 		print("*" * 22 + " 公告 " + "*" * 22)
 		print("编程猫社区行为守则 https://shequ.codemao.cn/community/1619098")
 		print("2025编程猫拜年祭活动 https://shequ.codemao.cn/community/1619855")
 		print("*" * 22 + " 数据 " + "*" * 22)
-		Tool().message_report(user_id=self.data["ACCOUNT_DATA"]["id"])
+		Tool().message_report(user_id=self.data.ACCOUNT_DATA.id)
 		print("*" * 50)
 
 
@@ -243,7 +242,7 @@ class Motion(ClassUnion):
 		def get_source_data() -> ...:
 			if source == "work":
 				return (
-					self.user_obtain.get_user_works_web(self.data["ACCOUNT_DATA"]["id"], limit=None),
+					self.user_obtain.get_user_works_web(self.data.ACCOUNT_DATA.id, limit=None),
 					lambda _id: Obtain().get_comments_detail_new(_id, "work", "comments"),
 					self.work_motion.del_comment_work,
 				)
@@ -262,9 +261,9 @@ class Motion(ClassUnion):
 		items, get_comments, delete_handler = get_source_data()
 		lists = {"ads": [], "blacklist": [], "duplicates": []}
 		params = {
-			"ads": self.data["USER_DATA"]["ads"],
-			"blacklist": self.data["USER_DATA"]["black_room"]["user"],
-			"spam_max": self.setting["PARAMETER"]["spam_max"],
+			"ads": self.data.USER_DATA.ads,
+			"blacklist": self.data.USER_DATA.black_room.user,
+			"spam_max": self.setting.PARAMETER.spam_max,
 		}
 
 		# 主处理逻辑
@@ -390,7 +389,7 @@ class Motion(ClassUnion):
 		params: dict[str, int | str] = {"limit": page_size, "offset": offset}
 
 		if method == "web":
-			query_types = self.setting["PARAMETER"]["all_read_type"]
+			query_types = self.setting.PARAMETER.all_read_type
 			while True:
 				# 检查所有指定类型消息是否均已读
 				counts = get_message_counts("web")
@@ -462,7 +461,7 @@ class Motion(ClassUnion):
 
 	def reply_work(self) -> bool:
 		"""自动回复工作流"""
-		new_replies: list[dict] = Obtain().get_new_replies(limit=4)
+		new_replies: list[dict] = Obtain().get_new_replies()
 
 		@overload
 		def _preprocess_data(data_type: Literal["answers"]) -> dict[str, list[str] | str]: ...
@@ -474,13 +473,13 @@ class Motion(ClassUnion):
 			"""统一预处理数据"""
 			if data_type == "answers":
 				result: dict[str, list[str] | str] = {}
-				for answer_dict in self.data["USER_DATA"]["answers"]:
+				for answer_dict in self.data.USER_DATA.answers:
 					for keyword, response in answer_dict.items():
 						# 内联格式化逻辑
-						formatted = [resp.format(**self.data["INFO"]) for resp in response] if isinstance(response, list) else response.format(**self.data["INFO"])
+						formatted = [resp.format(**self.data.INFO) for resp in response] if isinstance(response, list) else response.format(**self.data.INFO)
 						result[keyword] = formatted
 				return result
-			return [reply.format(**self.data["INFO"]) for reply in self.data["USER_DATA"]["replies"]]
+			return [reply.format(**self.data.INFO) for reply in self.data.USER_DATA.replies]
 
 		formatted_answers = _preprocess_data("answers")
 		formatted_replies = _preprocess_data("replies")
