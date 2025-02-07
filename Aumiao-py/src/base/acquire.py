@@ -69,7 +69,7 @@ class CodeMaoClient:
 				headers=final_headers,
 				params=params,
 				data=json.dumps(data) if data else None,
-				# 如果 data 参数为 None,这会导致整个请求体变成 "null" 字符串
+				# 使用 json.dumps(data) 来序列化请求数据,如果 data 参数为 None,这会导致整个请求体变成 "null" 字符串
 			)
 			response.raise_for_status()
 		except HTTPError as err:
