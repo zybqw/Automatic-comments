@@ -86,7 +86,6 @@ class Obtain:
 	# 获取用户姓名
 	def get_data_name(self) -> dict:
 		response = self.acquire.send_request(url="/api/v2/pc/lesson/user/info", method="get")
-		print(response)
 		return response.json()
 
 	# 获取个人作品列表的函数
