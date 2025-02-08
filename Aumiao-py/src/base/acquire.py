@@ -2,7 +2,7 @@ import json
 import time
 from enum import Enum
 from pathlib import Path
-from typing import Literal, Protocol, TypeAlias, TypedDict, cast
+from typing import Literal, Protocol, TypedDict, cast
 
 import requests
 from requests.cookies import RequestsCookieJar
@@ -34,14 +34,14 @@ class Loggable(Protocol):
 	def file_write(self, path: Path, content: str, method: str) -> None: ...
 
 
-HttpMethod: TypeAlias = Literal["GET", "POST", "DELETE", "PATCH", "PUT"]
-FetchMethod: TypeAlias = Literal["GET", "POST"]
+type HttpMethod = Literal["GET", "POST", "DELETE", "PATCH", "PUT"]
+type FetchMethod = Literal["GET", "POST"]
 
 
 @singleton
 class CodeMaoClient:
 	def __init__(self) -> None:
-		"""初始化客户端实例，增强配置管理"""
+		"""初始化客户端实例,增强配置管理"""
 		self._session = requests.Session()
 		self._config = data.SettingManager().data
 		self._processor = tool.CodeMaoProcess()
@@ -62,9 +62,10 @@ class CodeMaoClient:
 		retries: int = 3,
 		backoff_factor: float = 0.3,
 		timeout: float = 10.0,
+		*,
 		log: bool = True,
 	) -> requests.Response:
-		"""增强型请求方法，支持重试机制和更安全的超时处理"""
+		"""增强型请求方法,支持重试机制和更安全的超时处理"""
 		url = endpoint if endpoint.startswith("http") else f"{self.base_url}{endpoint}"
 		merged_headers = {**self.headers, **(headers or {})}
 
@@ -72,9 +73,7 @@ class CodeMaoClient:
 			try:
 				response = self._session.request(method=method, url=url, headers=merged_headers, params=params, json=payload, timeout=timeout)
 				response.raise_for_status()
-				if log:
-					self._log_request(response)
-				return response
+
 			except HTTPError as e:
 				self._log_error(e.response, f"HTTP Error {e.response.status_code}")
 				if e.response.status_code in (429, 503):
@@ -89,6 +88,10 @@ class CodeMaoClient:
 			except RequestException as e:
 				print(f"Request failed: {type(e).__name__} - {e}")
 				break
+			else:
+				if log:
+					self._log_request(response)
+				return response
 		return cast(requests.Response, None)
 
 	def fetch_data(
@@ -175,7 +178,8 @@ class CodeMaoClient:
 		elif isinstance(cookies, RequestsCookieJar):
 			self._session.cookies = cookies
 		else:
-			raise TypeError(f"Unsupported cookie type: {type(cookies).__name__}")
+			msg = f"Unsupported cookie type: {type(cookies).__name__}"
+			raise TypeError(msg)
 
 	def _log_request(self, response: requests.Response) -> None:
 		"""结构化日志记录"""

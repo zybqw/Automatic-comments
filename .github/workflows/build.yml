@@ -122,7 +122,7 @@ jobs:
           # 复制 data 目录及其内容
           Copy-Item "./Aumiao-py/data" -Destination "build/main.dist/" -Recurse
 
-          # 显示复制后的文件结构（用于调试）
+          # 显示复制后的文件结构(用于调试)
           Write-Host "Final directory structure:"
           Get-ChildItem -Path "build/main.dist" -Recurse
         shell: pwsh

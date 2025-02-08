@@ -131,9 +131,10 @@ class CodeMaoSetting:
 # 增强型转换工具
 # --------------------------
 def dict_to_dataclass(cls: type[T], data: Mapping[str, Any]) -> T:
-	"""安全类型转换字典到数据类，支持嵌套结构和泛型"""
+	"""安全类型转换字典到数据类,支持嵌套结构和泛型"""
 	if not (is_dataclass(cls) and isinstance(cls, type)):
-		raise ValueError(f"{cls.__name__} must be a dataclass type")
+		msg = f"{cls.__name__} must be a dataclass type"
+		raise ValueError(msg)
 
 	field_types = get_type_hints(cls)
 	kwargs = {}
@@ -146,10 +147,10 @@ def dict_to_dataclass(cls: type[T], data: Mapping[str, Any]) -> T:
 		origin_type = get_origin(field_type)
 		type_args = get_args(field_type)
 
-		# 处理嵌套数据类（添加类型断言）
+		# 处理嵌套数据类(添加类型断言)
 		if is_dataclass(field_type):
 			kwargs[field_name] = dict_to_dataclass(cast(type, field_type), value)
-		# 处理泛型容器（添加类型断言）
+		# 处理泛型容器(添加类型断言)
 		elif origin_type is list and type_args:
 			item_type = type_args[0]
 			if is_dataclass(item_type):
@@ -175,7 +176,7 @@ def dict_to_dataclass(cls: type[T], data: Mapping[str, Any]) -> T:
 # 增强型文件操作
 # --------------------------
 def load_json_file(path: Path, data_class: type[T]) -> T:
-	"""安全加载JSON文件，增强错误处理"""
+	"""安全加载JSON文件,增强错误处理"""
 	try:
 		if not path.exists():
 			return data_class()
@@ -191,10 +192,11 @@ def load_json_file(path: Path, data_class: type[T]) -> T:
 		return data_class()
 
 
-def save_json_file(path: Path, data: Any) -> None:
-	"""原子化写入JSON文件，防止数据损坏"""
+def save_json_file(path: Path, data: object) -> None:
+	"""原子化写入JSON文件,防止数据损坏"""
 	if not is_dataclass(data) or isinstance(data, type):
-		raise ValueError("Only dataclass instances can be saved")
+		msg = "Only dataclass instances can be saved"
+		raise ValueError(msg)
 	temp_file = path.with_suffix(".tmp")
 	try:
 		serialized = asdict(data)
@@ -203,7 +205,8 @@ def save_json_file(path: Path, data: Any) -> None:
 		temp_file.replace(path)
 	except Exception as e:
 		temp_file.unlink(missing_ok=True)
-		raise RuntimeError(f"Failed to save {path.name}: {e!s}") from e
+		msg = f"Failed to save {path.name}: {e!s}"
+		raise RuntimeError(msg) from e
 
 
 # --------------------------
@@ -235,12 +238,13 @@ class BaseManager(Generic[T]):
 
 			if is_dataclass(current):
 				if not isinstance(value, dict):
-					raise TypeError(f"Expected dict for {key}, got {type(value).__name__}")
+					msg = f"Expected dict for {key}, got {type(value).__name__}"
+					raise TypeError(msg)
 
 				# 使用 cast 来确保类型检查器知道 current 是一个数据类实例
 				current = cast(DataclassInstance, current)
 
-				# 创建一个新的字典，只包含数据类字段中存在的键
+				# 创建一个新的字典,只包含数据类字段中存在的键
 				valid_fields = {f.name for f in fields(current)}
 				filtered_value = {k: v for k, v in value.items() if k in valid_fields}
 				updated_value = replace(current, **filtered_value)

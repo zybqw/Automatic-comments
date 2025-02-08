@@ -41,7 +41,7 @@ jobs:
 
   commit-changes:
     name: Commit Changes
-    needs: [lint-format, typos] # 添加依赖，确保在其他检查完成后运行
+    needs: [lint-format, typos] # 添加依赖,确保在其他检查完成后运行
     runs-on: ubuntu-latest
     timeout-minutes: 10
     if: success() # 只在之前的任务成功时运行
