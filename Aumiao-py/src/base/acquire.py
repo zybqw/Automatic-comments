@@ -1,126 +1,103 @@
 import json
 import time
+from enum import Enum
 from pathlib import Path
-from typing import Literal, TypedDict, cast
+from typing import Literal, Protocol, TypeAlias, TypedDict, cast
 
 import requests
-import requests.cookies
-from requests.exceptions import ConnectionError as req_ConnectionError
+from requests.cookies import RequestsCookieJar
+from requests.exceptions import ConnectionError as ReqConnectionError
 from requests.exceptions import HTTPError, RequestException, Timeout
 
 from . import data, file, tool
 from .decorator import singleton
 
-LOG_DIR: Path = Path().cwd() / "log"
+LOG_DIR: Path = Path.cwd() / "log"
 LOG_FILE_PATH: Path = LOG_DIR / f"{int(time.time())}.txt"
 
 
-class PaginationArgs(TypedDict, total=False):
-	amount: Literal["limit", "page_size", "current_page"]
-	remove: Literal["offset", "page", "current_page", "page_size"]
-	res_amount_key: Literal["limit", "page_size"]
-	res_remove_key: Literal["offset", "page", "current_page"]
+class HTTPSTATUS(Enum):
+	OK = 200
+	CREATED = 201
+	NO_CONTENT = 204
+
+
+# 类型定义增强
+class PaginationConfig(TypedDict, total=False):
+	amount_key: Literal["limit", "page_size", "current_page"]
+	offset_key: Literal["offset", "page", "current_page"]
+	response_amount_key: Literal["limit", "page_size"]
+	response_offset_key: Literal["offset", "page"]
+
+
+class Loggable(Protocol):
+	def file_write(self, path: Path, content: str, method: str) -> None: ...
+
+
+HttpMethod: TypeAlias = Literal["GET", "POST", "DELETE", "PATCH", "PUT"]
+FetchMethod: TypeAlias = Literal["GET", "POST"]
 
 
 @singleton
 class CodeMaoClient:
 	def __init__(self) -> None:
-		"""初始化 CodeMaoClient 实例,设置基本的请求头和基础 URL."""
-		self.session = requests.Session()
-		self.data = data.CodeMaoSettingManager().get_data()
-		self.tool_process = tool.CodeMaoProcess()
-		self.file = file.CodeMaoFile()
-		self.HEADERS: dict = self.data.PROGRAM.HEADERS.copy()
-		self.BASE_URL: str = "https://api.codemao.cn"
+		"""初始化客户端实例，增强配置管理"""
+		self._session = requests.Session()
+		self._config = data.SettingManager().data
+		self._processor = tool.CodeMaoProcess()
+		self._file: Loggable = file.CodeMaoFile()
 
-		# Ensure log directory exists
+		self.base_url = "https://api.codemao.cn"
+		self.headers = self._config.PROGRAM.HEADERS.copy()
+		self.tool_process = tool.CodeMaoProcess()
 		LOG_DIR.mkdir(parents=True, exist_ok=True)
 
 	def send_request(
 		self,
-		url: str,
-		method: Literal["post", "get", "delete", "patch", "put"],
+		endpoint: str,
+		method: HttpMethod,
 		params: dict | None = None,
-		data: dict | None = None,
+		payload: dict | None = None,
 		headers: dict | None = None,
-		sleep: float = 0.1,
-		*,
+		retries: int = 3,
+		backoff_factor: float = 0.3,
+		timeout: float = 10.0,
 		log: bool = True,
 	) -> requests.Response:
-		"""发送 HTTP 请求.
+		"""增强型请求方法，支持重试机制和更安全的超时处理"""
+		url = endpoint if endpoint.startswith("http") else f"{self.base_url}{endpoint}"
+		merged_headers = {**self.headers, **(headers or {})}
 
-		:param url: 请求的 URL.
-		:param method: 请求的方法,如 "post", "get", "delete", "patch", "put".
-		:param params: URL 参数.
-		:param data: 请求体数据.
-		:param headers: 请求头.
-		:param sleep: 请求前的等待时间(秒).
-		:return: 响应对象或 None(如果请求失败).
-		"""
-		final_url = url if url.startswith("http") else f"{self.BASE_URL}{url}"
-		final_headers = {**self.HEADERS, **(headers or {})}
-		# final_headers = headers if headers else self.HEADERS
-		time.sleep(sleep)
-		response = None
-		try:
-			response = self.session.request(
-				method=method.upper(),
-				url=final_url,
-				headers=final_headers,
-				params=params,
-				data=json.dumps(data) if data else None,
-				# 使用 json.dumps(data) 来序列化请求数据,如果 data 参数为 None,这会导致整个请求体变成 "null" 字符串
-			)
-			response.raise_for_status()
-		except HTTPError as err:
-			self._log_error(err.response, "HTTP Error")
-		except req_ConnectionError as err:
-			print(f"Connection failed: {err}")
-		except Timeout as err:
-			print(f"Request timed out: {err}")
-		except RequestException as err:
-			print(f"Request failed: {err}")
-		else:
-			if log and response is not None:
-				self._log_request(response)
-			return cast(requests.Response, response)
+		for attempt in range(retries):
+			try:
+				response = self._session.request(method=method, url=url, headers=merged_headers, params=params, json=payload, timeout=timeout)
+				response.raise_for_status()
+				if log:
+					self._log_request(response)
+				return response
+			except HTTPError as e:
+				self._log_error(e.response, f"HTTP Error {e.response.status_code}")
+				if e.response.status_code in (429, 503):
+					time.sleep(2**attempt * backoff_factor)
+					continue
+				break
+			except (ReqConnectionError, Timeout) as e:
+				print(f"Network error ({type(e).__name__}): {e}")
+				if attempt == retries - 1:
+					raise
+				time.sleep(2**attempt * backoff_factor)
+			except RequestException as e:
+				print(f"Request failed: {type(e).__name__} - {e}")
+				break
 		return cast(requests.Response, None)
-
-	def _log_request(self, response: requests.Response) -> None:
-		"""Log request details to file."""
-		log_content = [
-			"*" * 100,
-			f"Request URL: {response.url}",
-			f"Method: {response.request.method}",
-			f"Status Code: {response.status_code}",
-			f"Request Headers: {response.request.headers}",
-			f"Request Body: {response.request.body}",
-			f"Response Headers: {response.headers}",
-			f"Response Body: {response.text}",
-			"\n",
-		]
-		self.file.file_write(
-			path=LOG_FILE_PATH,
-			content="\n".join(log_content),
-			method="a",
-		)
-
-	def _log_error(self, response: requests.Response | None, error_type: str) -> None:
-		"""Log error details."""
-		if response is not None:
-			print(f"{error_type}: [{response.status_code}] {response.reason} - {response.text}")
-			print(response.request.headers)
-			print(response.request.body)
-		else:
-			print(f"{error_type}: No response received")
 
 	def fetch_data(
 		self,
-		url: str,
+		endpoint: str,
 		params: dict,
-		data: dict | None = None,
+		payload: dict | None = None,
 		limit: int | None = None,
-		fetch_method: Literal["get", "post"] = "get",
+		fetch_method: FetchMethod = "GET",
 		total_key: str = "total",
 		data_key: str = "items",
 		pagination_method: Literal["offset", "page"] = "offset",
@@ -130,7 +107,7 @@ class CodeMaoClient:
 		] = {},
 	) -> list[dict]:
 		"""分页获取数据.
-		:param url: 请求的 URL.
+		:param endpoint: 请求的 URL.
 		:param params: URL 参数.
 		:param data: 请求体数据.
 		:param limit: 获取数据的最大数量.
@@ -149,7 +126,7 @@ class CodeMaoClient:
 		args.setdefault("res_remove_key", "offset")
 
 		# 第一次请求获取数据和总项数
-		initial_response = self.send_request(url=url, method=fetch_method, params=params, data=data)
+		initial_response = self.send_request(endpoint=endpoint, method=fetch_method, params=params, payload=payload)
 		if not initial_response:
 			return []
 
@@ -175,7 +152,7 @@ class CodeMaoClient:
 				params[args["remove"]] = page + 1
 
 			# 请求分页数据
-			response = self.send_request(url=url, method=fetch_method, params=params)
+			response = self.send_request(endpoint=endpoint, method=fetch_method, params=params)
 			if not response:
 				continue
 
@@ -189,32 +166,47 @@ class CodeMaoClient:
 
 		return all_data
 
-	def update_cookie(self, cookie: requests.cookies.RequestsCookieJar | dict | str) -> bool:
-		"""Update session cookies.
-
-		Args:
-			cookie: Cookies to add to the session
-
-		Returns:
-			True if cookies were updated successfully
-		"""
-
-		if isinstance(cookie, dict | requests.cookies.RequestsCookieJar):
-			self.session.cookies.update(cookie)
+	def update_cookies(self, cookies: RequestsCookieJar | dict) -> None:
+		"""类型安全的Cookie更新方法"""
+		# if isinstance(cookies, str):
+		# 	self._session.cookies.update(requests.utils.cookiejar_from_dict(self._processor.convert_cookie_to_str(cookies)))
+		if isinstance(cookies, dict):
+			self._session.cookies.update(cookies)
+		elif isinstance(cookies, RequestsCookieJar):
+			self._session.cookies = cookies
 		else:
-			msg = "Unsupported cookie type"
-			raise TypeError(msg)
-		# match cookie:
-		# 	case requests.cookies.RequestsCookieJar():
-		# 		cookie_dict = requests.utils.dict_from_cookiejar(cookie)
-		# 		cookie_str = self.tool_process.convert_cookie_to_str(cookie_dict)
-		# 	case dict():
-		# 		cookie_dict = cookie
-		# 		cookie_str = self.tool_process.convert_cookie_to_str(cookie_dict)
-		# 	case str():
-		# 		cookie_str = cookie
-		# 	case _:
-		# 		msg = "不支持的cookie类型"
-		# 		raise ValueError(msg)
-		# self.HEADERS.update({"Cookie": cookie_str})
-		return True
+			raise TypeError(f"Unsupported cookie type: {type(cookies).__name__}")
+
+	def _log_request(self, response: requests.Response) -> None:
+		"""结构化日志记录"""
+		log_entry = {
+			"timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+			"method": response.request.method,
+			"url": response.url,
+			"status": response.status_code,
+			"request_headers": dict(response.request.headers),
+			"response_headers": dict(response.headers),
+			"response_size": len(response.content),
+		}
+
+		self._file.file_write(path=LOG_FILE_PATH, content=json.dumps(log_entry, ensure_ascii=False) + "\n", method="a")
+
+	def _log_error(self, response: requests.Response | None, error_msg: str) -> None:
+		"""统一错误日志处理"""
+		error_info = {
+			"error": error_msg,
+			"url": response.url if response else "Unknown",
+			"status": response.status_code if response else 0,
+			"response": response.text[:200] + "..." if response else "",
+		}
+		print(f"API Error: {json.dumps(error_info, ensure_ascii=False)}")
+
+	@staticmethod
+	def _get_default_pagination_config(method: str) -> PaginationConfig:
+		"""获取分页参数默认配置"""
+		return {
+			"amount_key": "limit" if method == "GET" else "page_size",
+			"offset_key": "offset" if method == "GET" else "current_page",
+			"response_amount_key": "limit",
+			"response_offset_key": "offset",
+		}

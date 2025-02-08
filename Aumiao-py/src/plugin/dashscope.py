@@ -62,9 +62,9 @@ class Dashscope:
 
 		# 发送请求并返回响应
 		response = self.acquire.send_request(
-			url="https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions",
-			method="post",
-			data=data,
+			endpoint="https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions",
+			method="POST",
+			payload=data,
 			headers=self.HEADERS,
 		)
 		return response.json()

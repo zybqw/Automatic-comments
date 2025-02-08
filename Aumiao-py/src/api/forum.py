@@ -1,10 +1,8 @@
 from typing import Any, Literal
 
 from src.base import acquire
+from src.base.acquire import HTTPSTATUS
 from src.base.decorator import singleton
-
-CREATED_CODE = 201
-NO_CONTENT_CODE = 204
 
 
 @singleton
@@ -18,12 +16,12 @@ class Obtain:
 			params = {"ids": ids}
 		elif isinstance(ids, list):
 			params = {"ids": ",".join(map(str, ids))}
-		response = self.acquire.send_request(url="/web/forums/posts/all", method="get", params=params)
+		response = self.acquire.send_request(endpoint="/web/forums/posts/all", method="GET", params=params)
 		return response.json()
 
 	# 获取单个帖子信息
 	def get_single_post_details(self, ids: int) -> dict:
-		response = self.acquire.send_request(url=f"/web/forums/posts/{ids}/details", method="get")
+		response = self.acquire.send_request(endpoint=f"/web/forums/posts/{ids}/details", method="GET")
 		return response.json()
 
 	# 回帖会单独分配一个独立于被回复帖子的id
@@ -31,7 +29,7 @@ class Obtain:
 	def get_post_replies_posts(self, ids: int, sort: str = "-created_at", limit: int | None = 15) -> list[dict[Any, Any]]:
 		params = {"page": 1, "limit": 10, "sort": sort}
 		return self.acquire.fetch_data(
-			url=f"/web/forums/posts/{ids}/replies",
+			endpoint=f"/web/forums/posts/{ids}/replies",
 			params=params,
 			total_key="total",
 			data_key="items",
@@ -48,7 +46,7 @@ class Obtain:
 	) -> list[dict[Any, Any]]:
 		params = {"page": 1, "limit": 10}
 		return self.acquire.fetch_data(
-			url=f"/web/forums/replies/{post_id}/comments",
+			endpoint=f"/web/forums/replies/{post_id}/comments",
 			params=params,
 			data_key="items",
 			limit=limit,
@@ -60,7 +58,7 @@ class Obtain:
 	def get_post_mine_all(self, method: Literal["created", "replied"], limit: int | None = 10) -> list[dict[Any, Any]]:
 		params = {"page": 1, "limit": 10}
 		return self.acquire.fetch_data(
-			url=f"/web/forums/posts/mine/{method}",
+			endpoint=f"/web/forums/posts/mine/{method}",
 			params=params,
 			data_key="items",
 			pagination_method="page",
@@ -70,38 +68,38 @@ class Obtain:
 
 	# 获取论坛帖子各个栏目
 	def get_post_boards(self) -> dict:
-		response = self.acquire.send_request(url="/web/forums/boards/simples/all", method="get")
+		response = self.acquire.send_request(endpoint="/web/forums/boards/simples/all", method="GET")
 		return response.json()
 
 	# 获取论坛单个版块详细信息T
 	def get_board_details(self, board_id: int) -> dict:
-		response = self.acquire.send_request(url=f"/web/forums/boards/{board_id}", method="get")
+		response = self.acquire.send_request(endpoint=f"/web/forums/boards/{board_id}", method="GET")
 		return response.json()
 
 	# 获取社区所有热门帖子
 	def get_hot_posts(self) -> dict:
-		response = self.acquire.send_request(url="/web/forums/posts/hots/all", method="get")
+		response = self.acquire.send_request(endpoint="/web/forums/posts/hots/all", method="GET")
 		return response.json()
 
 	# 获取论坛顶部公告
 	def get_top_notice(self, limit: int = 4) -> dict:
 		params = {"limit": limit}
-		response = self.acquire.send_request(url="/web/forums/notice-boards", method="get", params=params)
+		response = self.acquire.send_request(endpoint="/web/forums/notice-boards", method="GET", params=params)
 		return response.json()
 
 	# 获取论坛本周精选帖子
 	# TODO@Aurzex: 待完善
 	def get_key_content(self, content_key: Literal["forum.index.top.recommend"], limit: int = 4) -> dict:
 		params = {"content_key": content_key, "limit": limit}
-		response = self.acquire.send_request(url="/web/contents/get-key", method="get", params=params)
+		response = self.acquire.send_request(endpoint="/web/contents/get-key", method="GET", params=params)
 		return response.json()
 
 	# 获取社区精品合集帖子
 	def get_selection_posts(self, limit: int = 20, offset: int = 0) -> dict:
 		params = {"limit": limit, "offset": offset}
 		response = self.acquire.send_request(
-			url="/web/forums/posts/selections",
-			method="get",
+			endpoint="/web/forums/posts/selections",
+			method="GET",
 			params=params,
 		)
 		return response.json()
@@ -110,22 +108,22 @@ class Obtain:
 	def get_help_posts(self, limit: int = 20, page: int = 1) -> dict:
 		params = {"limit": limit, "page": page}
 		response = self.acquire.send_request(
-			url="/web/forums/boards/posts/ask-help",
-			method="get",
+			endpoint="/web/forums/boards/posts/ask-help",
+			method="GET",
 			params=params,
 		)
 		return response.json()
 
 	# 获取论坛举报原因
 	def get_report_reasons(self) -> dict:
-		response = self.acquire.send_request(url="/web/reports/posts/reasons/all", method="get")
+		response = self.acquire.send_request(endpoint="/web/reports/posts/reasons/all", method="GET")
 		return response.json()
 
 	# 通过标题搜索帖子
 	def search_posts(self, title: str, limit: int | None = 20) -> list[dict[Any, Any]]:
 		params = {"title": title, "limit": 20, "page": 1}
 		return self.acquire.fetch_data(
-			url="/web/forums/posts/search",
+			endpoint="/web/forums/posts/search",
 			pagination_method="page",
 			params=params,
 			data_key="items",
@@ -149,33 +147,33 @@ class Motion:
 	) -> dict | bool:
 		data = {"content": content}
 		response = self.acquire.send_request(
-			url=f"/web/forums/posts/{post_id}/replies",
-			method="post",
-			data=data,
+			endpoint=f"/web/forums/posts/{post_id}/replies",
+			method="POST",
+			payload=data,
 		)
-		return response.json() if return_data else response.status_code == CREATED_CODE
+		return response.json() if return_data else response.status_code == HTTPSTATUS.CREATED
 
 	# 对某个回帖评论进行回复
 	def reply_comment(self, reply_id: int, parent_id: int, content: str, *, return_data: bool = False) -> dict | bool:
 		data = {"content": content, "parent_id": parent_id}
-		response = self.acquire.send_request(url=f"/web/forums/replies/{reply_id}/comments", method="post", data=data)
-		return response.json() if return_data else response.status_code == CREATED_CODE
+		response = self.acquire.send_request(endpoint=f"/web/forums/replies/{reply_id}/comments", method="POST", payload=data)
+		return response.json() if return_data else response.status_code == HTTPSTATUS.CREATED
 
 	# 点赞某个回帖或评论
 	def like_comment_or_reply(
 		self,
-		method: Literal["put", "delete"],
+		method: Literal["PUT", "DELETE"],
 		ids: int,
 		source: Literal["REPLY", "COMMENT"],
 	) -> bool:
 		# 每个回帖都有唯一id
 		params = {"source": source}
 		response = self.acquire.send_request(
-			url=f"/web/forums/comments/{ids}/liked",
+			endpoint=f"/web/forums/comments/{ids}/liked",
 			method=method,
 			params=params,
 		)
-		return response.status_code == NO_CONTENT_CODE
+		return response.status_code == HTTPSTATUS.NO_CONTENT
 
 	# 举报某个回帖
 	def report_reply_or_comment(
@@ -195,11 +193,11 @@ class Motion:
 			"source": source,
 		}
 		response = self.acquire.send_request(
-			url="/web/reports/posts/discussions",
-			method="post",
-			data=data,
+			endpoint="/web/reports/posts/discussions",
+			method="POST",
+			payload=data,
 		)
-		return response.json() if return_data else response.status_code == CREATED_CODE
+		return response.json() if return_data else response.status_code == HTTPSTATUS.CREATED
 
 	# 举报某个帖子
 	def report_post(
@@ -217,27 +215,27 @@ class Motion:
 			"post_id": post_id,
 		}
 		response = self.acquire.send_request(
-			url="/web/reports/posts",
-			method="post",
-			data=data,
+			endpoint="/web/reports/posts",
+			method="POST",
+			payload=data,
 		)
-		return response.json() if return_data else response.status_code == CREATED_CODE
+		return response.json() if return_data else response.status_code == HTTPSTATUS.CREATED
 
 	# 删除某个回帖或评论或帖子
 	def delete_comment_post_reply(self, ids: int, types: Literal["replies", "comments", "posts"]) -> bool:
 		response = self.acquire.send_request(
-			url=f"/web/forums/{types}/{ids}",
-			method="delete",
+			endpoint=f"/web/forums/{types}/{ids}",
+			method="DELETE",
 		)
-		return response.status_code == NO_CONTENT_CODE
+		return response.status_code == HTTPSTATUS.NO_CONTENT
 
 	# 置顶某个回帖
-	def top_comment(self, comment_id: int, method: Literal["put", "delete"]) -> bool:
+	def top_comment(self, comment_id: int, method: Literal["PUT", "DELETE"]) -> bool:
 		response = self.acquire.send_request(
-			url=f"/web/forums/replies/{comment_id}/top",
+			endpoint=f"/web/forums/replies/{comment_id}/top",
 			method=method,
 		)
-		return response.status_code == NO_CONTENT_CODE
+		return response.status_code == HTTPSTATUS.NO_CONTENT
 
 	# 发布帖子
 	def create_post(
@@ -257,8 +255,8 @@ class Motion:
 		elif method == "work_shop":
 			url = f"/web/works/subjects/{work_shop_id}/post"
 		response = self.acquire.send_request(
-			url=url,
-			method="post",
-			data=data,
+			endpoint=url,
+			method="POST",
+			payload=data,
 		)
-		return response.json() if return_data else response.status_code == CREATED_CODE
+		return response.json() if return_data else response.status_code == HTTPSTATUS.CREATED

@@ -11,7 +11,7 @@ class Login:
 
 	def login(self, phonenum: int, password: str) -> dict:
 		data = {"phonenum": phonenum, "password": password}
-		response = self.acquire.send_request(url="https://x.chatmindai.net/api/user/login", method="post", data=data)
+		response = self.acquire.send_request(endpoint="https://x.chatmindai.net/api/user/login", method="POST", payload=data)
 		return response.json()
 
 	def update_token(self, token: str) -> None:
@@ -25,17 +25,17 @@ class User:
 
 	def get_balance(self) -> dict:
 		response = self.acquire.send_request(
-			url="https://x.chatmindai.net/api/apiCount/query",
-			method="get",
+			endpoint="https://x.chatmindai.net/api/apiCount/query",
+			method="GET",
 			headers=HEADERS,
 		)
 		return response.json()
 
 	def get_details(self) -> dict:
 		response = self.acquire.send_request(
-			url="https://x.chatmindai.net/api/user/getUserSelfBigData",
-			method="post",
-			data={},
+			endpoint="https://x.chatmindai.net/api/user/getUserSelfBigData",
+			method="POST",
+			payload={},
 			headers=HEADERS,
 		)
 		return response.json()
@@ -64,9 +64,9 @@ class Explore:
 			},
 		}
 		response = self.acquire.send_request(
-			url="https://x.chatmindai.net/api/model/query",
-			method="post",
-			data=data,
+			endpoint="https://x.chatmindai.net/api/model/query",
+			method="POST",
+			payload=data,
 			headers=HEADERS,
 		)
 		return response.json()
@@ -82,7 +82,7 @@ class Explore:
 		else:
 			url = ""
 
-		response = self.acquire.send_request(url=url, method="post", data={}, headers=HEADERS)
+		response = self.acquire.send_request(endpoint=url, method="POST", payload={}, headers=HEADERS)
 		return response.json()
 
 
@@ -92,8 +92,8 @@ class Chat:
 
 	def get_chats(self) -> dict:
 		response = self.acquire.send_request(
-			url="https://x.chatmindai.net/api/chat/queryChats",
-			method="get",
+			endpoint="https://x.chatmindai.net/api/chat/queryChats",
+			method="GET",
 			headers=HEADERS,
 		)
 		return response.json()
@@ -106,9 +106,9 @@ class Chat:
 		}
 
 		response = self.acquire.send_request(
-			url="https://x.chatmindai.net/api/chat/queryPagesChatItems",
-			method="post",
-			data=data,
+			endpoint="https://x.chatmindai.net/api/chat/queryPagesChatItems",
+			method="POST",
+			payload=data,
 			headers=HEADERS,
 		)
 		return response.json()
@@ -123,9 +123,9 @@ class Chat:
 		}
 
 		response = self.acquire.send_request(
-			url="https://x.chatmindai.net/api/chat-process",
-			method="post",
-			data=data,
+			endpoint="https://x.chatmindai.net/api/chat-process",
+			method="POST",
+			payload=data,
 			headers=HEADERS,
 		)
 		return response.json()
@@ -149,9 +149,9 @@ class Chat:
 			"sensitive": False,  # 未知
 		}
 		response = self.acquire.send_request(
-			url="https://x.chatmindai.net/api/chat/saveConversation",
-			method="post",
-			data=data,
+			endpoint="https://x.chatmindai.net/api/chat/saveConversation",
+			method="POST",
+			payload=data,
 			headers=HEADERS,
 		)
 		return response.json()
@@ -163,9 +163,9 @@ class Model:
 
 	def get_model_details(self, ids: str) -> dict:
 		response = self.acquire.send_request(
-			url="https://x.chatmindai.net/api/model/getModelDetailsInfo",
-			method="post",
-			data={"roleId": ids},
+			endpoint="https://x.chatmindai.net/api/model/getModelDetailsInfo",
+			method="POST",
+			payload={"roleId": ids},
 			headers=HEADERS,
 		)
 		return response.json()

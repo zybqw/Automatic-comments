@@ -9,7 +9,7 @@ def login() -> None:
 		src.community.Login().login_token(identity=identity, password=password)
 		data = src.user.Obtain().get_data_details()
 		# 使用 update 方法更新字典中的数据
-		account_data_manager = src.data.CodeMaoDataManager()
+		account_data_manager = src.data.DataManager()
 		account_data_manager.update(
 			{
 				"ACCOUNT_DATA": {

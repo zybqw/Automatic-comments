@@ -27,14 +27,14 @@ OK_CODE = 200
 class Union:
 	def __init__(self) -> None:
 		self.acquire = acquire.CodeMaoClient()
-		self.cache = data.CodeMaoCacheManager().get_data()
+		self.cache = data.CacheManager().data
 		self.community_obtain = community.Obtain()
-		self.data = data.CodeMaoDataManager().get_data()
+		self.data = data.DataManager().data
 		self.edu_obtain = edu.Obtain()
 		self.file = file.CodeMaoFile()
 		self.forum_motion = forum.Motion()
 		self.forum_obtain = forum.Obtain()
-		self.setting = data.CodeMaoSettingManager().get_data()
+		self.setting = data.SettingManager().data
 		self.shop_motion = shop.Motion()
 		self.shop_obtain = shop.Obtain()
 		self.tool_process = tool.CodeMaoProcess()
@@ -52,7 +52,7 @@ ClassUnion = Union().__class__
 class Tool(ClassUnion):
 	def __init__(self) -> None:
 		super().__init__()
-		self.cache_manager = data.CodeMaoCacheManager()  # 添加这行
+		self.cache_manager = data.CacheManager()  # 添加这行
 
 	def message_report(self, user_id: str) -> None:
 		response = self.user_obtain.get_user_honor(user_id=user_id)
@@ -67,7 +67,7 @@ class Tool(ClassUnion):
 			"view": response["view_times"],
 			"timestamp": timestamp,
 		}
-		before_data = self.cache_manager.get_data()
+		before_data = self.cache_manager.data
 		if before_data != {}:
 			self.tool_routine.display_data_changes(
 				before_data=before_data,
@@ -139,18 +139,18 @@ class Obtain(ClassUnion):
 	def get_comments_detail_new(
 		self,
 		com_id: int,
-		source: Literal["work", "post", "shop"],
+		source: Literal["work", "POST", "shop"],
 		method: Literal["user_id", "comments", "comment_id"] = "user_id",
 	) -> list[int | dict | str]:
 		def _get_replies(source: str, comment: dict) -> list[dict]:
 			"""统一获取评论的回复"""
-			if source == "post":
+			if source == "POST":
 				return self.forum_obtain.get_reply_post_comments(post_id=comment["id"], limit=None)
 			return comment.get("replies", {}).get("items", [])
 
 		def _extract_reply_user_id(reply: dict, source: str) -> int:
 			"""统一提取回复用户ID"""
-			return reply["user"]["id"] if source == "post" else reply["reply_user"]["id"]
+			return reply["user"]["id"] if source == "POST" else reply["reply_user"]["id"]
 
 		def _handle_user_id(comments: list[dict], source: str) -> list[int]:
 			"""优化后的用户ID处理"""
@@ -189,7 +189,7 @@ class Obtain(ClassUnion):
 						"content": reply["content"],
 						"created_at": reply["created_at"],
 						"user_id": _extract_reply_user_id(reply, source),
-						"nickname": reply["user" if source == "post" else "reply_user"]["nickname"],
+						"nickname": reply["user" if source == "POST" else "reply_user"]["nickname"],
 					}
 					comment_data["replies"].append(reply_data)
 				detailed_comments.append(comment_data)
@@ -198,7 +198,7 @@ class Obtain(ClassUnion):
 		# 通过映射表处理不同来源的评论获取逻辑
 		source_methods = {
 			"work": (self.work_obtain.get_work_comments, "work_id"),
-			"post": (self.forum_obtain.get_post_replies_posts, "ids"),
+			"POST": (self.forum_obtain.get_post_replies_posts, "ids"),
 			"shop": (self.shop_obtain.get_shop_discussion, "shop_id"),
 		}
 		if source not in source_methods:
@@ -233,7 +233,7 @@ class Motion(ClassUnion):
 	# 将列表切片翻转是为了先删评论中的回复再删评论,防止在存在评论和回复都是待删项时,删除回复报错
 	def clear_comments(
 		self,
-		source: Literal["work", "post"],
+		source: Literal["work", "POST"],
 		action_type: Literal["ads", "duplicates", "blacklist"],
 	) -> bool:
 		"""清理指定来源的评论(广告/黑名单/刷屏)"""
@@ -246,10 +246,10 @@ class Motion(ClassUnion):
 					lambda _id: Obtain().get_comments_detail_new(_id, "work", "comments"),
 					self.work_motion.del_comment_work,
 				)
-			if source == "post":
+			if source == "POST":
 				return (
 					self.forum_obtain.get_post_mine_all("created", limit=None),
-					lambda _id: Obtain().get_comments_detail_new(_id, "post", "comments"),
+					lambda _id: Obtain().get_comments_detail_new(_id, "POST", "comments"),
 					lambda _id, comment_id, **_: self.forum_motion.delete_comment_post_reply(
 						comment_id,
 						"comments" if _.get("is_reply") else "replies",
@@ -269,7 +269,7 @@ class Motion(ClassUnion):
 		# 主处理逻辑
 		for item in items:
 			item_id = int(item["id"])
-			title = item["title" if source == "post" else "work_name"]
+			title = item["title" if source == "POST" else "work_name"]
 			comments = get_comments(item_id)
 
 			# 处理广告/黑名单
@@ -381,7 +381,7 @@ class Motion(ClassUnion):
 
 		def send_clear_request(url: str, params: dict) -> int:
 			"""发送标记已读请求"""
-			response = self.acquire.send_request(url=url, method="get", params=params)
+			response = self.acquire.send_request(endpoint=url, method="GET", params=params)
 			return response.status_code
 
 		offset = 0  # 分页偏移量
@@ -534,7 +534,7 @@ class Motion(ClassUnion):
 	) -> None:
 		"""统一执行回复操作(合并work/post处理逻辑)"""
 		business_id = message["business_id"]
-		source_type = "work" if reply_type.startswith("WORK") else "post"
+		source_type = "work" if reply_type.startswith("WORK") else "POST"
 
 		# 合并标识获取逻辑
 		if reply_type.endswith("_COMMENT"):

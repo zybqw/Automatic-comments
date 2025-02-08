@@ -1,12 +1,10 @@
 from typing import Any, Literal
 
 from src.base import acquire
+from src.base.acquire import HTTPSTATUS
 from src.base.decorator import singleton
 
 from . import community
-
-OK_CODE = 200
-NO_CONTENT_CODE = 204
 
 
 # sb编程猫,params中的{"_": time_stamp}可以替换为{"TIME": time_stamp}
@@ -20,16 +18,16 @@ class Motion:
 		time_stamp = community.Obtain().get_timestamp()["data"]
 		params = {"TIME": time_stamp, "userId": user_id, "realName": real_name}
 		response = self.acquire.send_request(
-			url="https://eduzone.codemao.cn/edu/zone/account/updateName",
-			method="get",
+			endpoint="https://eduzone.codemao.cn/edu/zone/account/updateName",
+			method="GET",
 			params=params,
 		)
-		return response.status_code == OK_CODE
+		return response.status_code == HTTPSTATUS.OK
 
 	# 创建班级
 	def create_class(self, name: str) -> dict:
 		data = {"name": name}
-		response = self.acquire.send_request(url="https://eduzone.codemao.cn/edu/zone/class", method="post", data=data)
+		response = self.acquire.send_request(endpoint="https://eduzone.codemao.cn/edu/zone/class", method="POST", payload=data)
 		return response.json()
 
 	# 删除班级
@@ -37,48 +35,48 @@ class Motion:
 		time_stamp = community.Obtain().get_timestamp()["data"]
 		params = {"TIME": time_stamp}
 		response = self.acquire.send_request(
-			url=f"https://eduzone.codemao.cn/edu/zone/class/{class_id}",
-			method="delete",
+			endpoint=f"https://eduzone.codemao.cn/edu/zone/class/{class_id}",
+			method="DELETE",
 			params=params,
 		)
-		return response.status_code == NO_CONTENT_CODE
+		return response.status_code == HTTPSTATUS.NO_CONTENT
 
 	# 班级内新建学生账号
 	def create_student(self, name: list[str], class_id: int) -> bool:
 		data = {"student_names": name}
 		response = self.acquire.send_request(
-			url=f"https://eduzone.codemao.cn/edu/zone/class/{class_id}/students",
-			method="post",
-			data=data,
+			endpoint=f"https://eduzone.codemao.cn/edu/zone/class/{class_id}/students",
+			method="POST",
+			payload=data,
 		)
-		return response.status_code == OK_CODE
+		return response.status_code == HTTPSTATUS.OK
 
 	# 重置密码
 	def reset_password(self, stu_id: list[int]) -> bool:
 		data = {"student_id": stu_id}
 		response = self.acquire.send_request(
-			url="https://eduzone.codemao.cn/edu/zone/students/password",
-			method="patch",
-			data=data,
+			endpoint="https://eduzone.codemao.cn/edu/zone/students/password",
+			method="PATCH",
+			payload=data,
 		)
-		return response.status_code == OK_CODE
+		return response.status_code == HTTPSTATUS.OK
 
 	# 删除班级内学生
 	def remove_student(self, stu_id: int) -> bool:
 		data = {}
 		response = self.acquire.send_request(
-			url=f"https://eduzone.codemao.cn/edu/zone/student/remove/{stu_id}",
-			method="post",
-			data=data,
+			endpoint=f"https://eduzone.codemao.cn/edu/zone/student/remove/{stu_id}",
+			method="POST",
+			payload=data,
 		)
-		return response.status_code == OK_CODE
+		return response.status_code == HTTPSTATUS.OK
 
 	# 添加、修改自定义备课包
 	# patch为修改信息,post用于创建备课包
-	def add_customized_package(self, method: Literal["post", "patch"], avatar_url: str, description: str, name: str, *, return_data: bool = True) -> dict | bool:
+	def add_customized_package(self, method: Literal["POST", "PATCH"], avatar_url: str, description: str, name: str, *, return_data: bool = True) -> dict | bool:
 		data = {"avatar_url": avatar_url, "description": description, "name": name}
-		response = self.acquire.send_request(url="https://eduzone.codemao.cn/edu/zone/lesson/customized/packages", method=method, data=data)
-		return response.json() if return_data else response.status_code == OK_CODE
+		response = self.acquire.send_request(endpoint="https://eduzone.codemao.cn/edu/zone/lesson/customized/packages", method=method, payload=data)
+		return response.json() if return_data else response.status_code == HTTPSTATUS.OK
 
 
 @singleton
@@ -90,7 +88,7 @@ class Obtain:
 	def get_data_details(self) -> dict:
 		time_stamp = community.Obtain().get_timestamp()["data"]
 		params = {"TIME": time_stamp}
-		response = self.acquire.send_request(url="https://eduzone.codemao.cn/edu/zone", method="get", params=params)
+		response = self.acquire.send_request(endpoint="https://eduzone.codemao.cn/edu/zone", method="GET", params=params)
 		return response.json()
 
 	# 猜测返回的role_id当值为20001时为学生账号,10002为教师账号
@@ -99,8 +97,8 @@ class Obtain:
 		time_stamp = community.Obtain().get_timestamp()["data"]
 		params = {"TIME": time_stamp}
 		response = self.acquire.send_request(
-			url="https://eduzone.codemao.cn/api/home/account",
-			method="get",
+			endpoint="https://eduzone.codemao.cn/api/home/account",
+			method="GET",
 			params=params,
 		)
 		return response.json()
@@ -110,8 +108,8 @@ class Obtain:
 		time_stamp = community.Obtain().get_timestamp()["data"]
 		params = {"TIME": time_stamp}
 		response = self.acquire.send_request(
-			url="https://eduzone.codemao.cn/edu/zone/system/message/unread/num",
-			method="get",
+			endpoint="https://eduzone.codemao.cn/edu/zone/system/message/unread/num",
+			method="GET",
 			params=params,
 		)
 		return response.json()
@@ -121,8 +119,8 @@ class Obtain:
 		time_stamp = community.Obtain().get_timestamp()["data"]
 		params = {"TIME": time_stamp}
 		response = self.acquire.send_request(
-			url="https://eduzone.codemao.cn/edu/zone/school/open/grade/list",
-			method="get",
+			endpoint="https://eduzone.codemao.cn/edu/zone/school/open/grade/list",
+			method="GET",
 			params=params,
 		)
 		return response.json()
@@ -131,8 +129,8 @@ class Obtain:
 	def get_classes(self, method: Literal["detail", "simple"] = "simple", limit: int | None = 20) -> dict | list[dict]:
 		if method == "simple":
 			classes = self.acquire.send_request(
-				url="https://eduzone.codemao.cn/edu/zone/classes/simple",
-				method="get",
+				endpoint="https://eduzone.codemao.cn/edu/zone/classes/simple",
+				method="GET",
 			).json()
 		elif method == "detail":
 			url = "https://eduzone.codemao.cn/edu/zone/classes/"
@@ -140,7 +138,7 @@ class Obtain:
 			params = {"page": 1, "TIME": time_stamp}
 
 			classes = self.acquire.fetch_data(
-				url=url,
+				endpoint=url,
 				params=params,
 				data_key="items",
 				pagination_method="page",
@@ -154,7 +152,7 @@ class Obtain:
 		time_stamp = community.Obtain().get_timestamp()["data"]
 		params = {"page": 1, "limit": 10, "TIME": time_stamp}
 		return self.acquire.fetch_data(
-			url="https://eduzone.codemao.cn/edu/zone/student/remove/record",
+			endpoint="https://eduzone.codemao.cn/edu/zone/student/remove/record",
 			params=params,
 			data_key="items",
 			pagination_method="page",
@@ -168,10 +166,10 @@ class Obtain:
 		data = {"invalid": invalid}
 		params = {"page": 1, "limit": 100}
 		return self.acquire.fetch_data(
-			url="https://eduzone.codemao.cn/edu/zone/students",
+			endpoint="https://eduzone.codemao.cn/edu/zone/students",
 			params=params,
-			data=data,
-			fetch_method="post",
+			payload=data,
+			fetch_method="POST",
 			data_key="items",
 			pagination_method="page",
 			args={"amount": "limit", "remove": "page"},
@@ -183,8 +181,8 @@ class Obtain:
 		time_stamp = community.Obtain().get_timestamp()["data"]
 		params = {"TIME": time_stamp}
 		response = self.acquire.send_request(
-			url="https://eduzone.codemao.cn/api/home/eduzone/menus",
-			method="get",
+			endpoint="https://eduzone.codemao.cn/api/home/eduzone/menus",
+			method="GET",
 			params=params,
 		)
 		return response.json()
@@ -194,8 +192,8 @@ class Obtain:
 		time_stamp = community.Obtain().get_timestamp()["data"]
 		params = {"TIME": time_stamp, "type_id": type_id}
 		response = self.acquire.send_request(
-			url="https://eduzone.codemao.cn/api/home/banners",
-			method="get",
+			endpoint="https://eduzone.codemao.cn/api/home/banners",
+			method="GET",
 			params=params,
 		)
 		return response.json()
@@ -205,8 +203,8 @@ class Obtain:
 		time_stamp = community.Obtain().get_timestamp()["data"]
 		params = {"TIME": time_stamp}
 		response = self.acquire.send_request(
-			url="https://eduzone.codemao.cn/edu/base/server/time",
-			method="get",
+			endpoint="https://eduzone.codemao.cn/edu/base/server/time",
+			method="GET",
 			params=params,
 		)
 		return response.json()
@@ -216,8 +214,8 @@ class Obtain:
 		time_stamp = community.Obtain().get_timestamp()["data"]
 		params = {"TIME": time_stamp}
 		response = self.acquire.send_request(
-			url="https://eduzone.codemao.cn/edu/zone/lessons/person/package/remind/status",
-			method="get",
+			endpoint="https://eduzone.codemao.cn/edu/zone/lessons/person/package/remind/status",
+			method="GET",
 			params=params,
 		)
 		return response.json()
@@ -227,8 +225,8 @@ class Obtain:
 		time_stamp = community.Obtain().get_timestamp()["data"]
 		params = {"TIME": time_stamp, "tag": tag}
 		response = self.acquire.send_request(
-			url="https://eduzone.codemao.cn/edu/base/general/conf",
-			method="get",
+			endpoint="https://eduzone.codemao.cn/edu/base/general/conf",
+			method="GET",
 			params=params,
 		)
 		return response.json()
@@ -238,8 +236,8 @@ class Obtain:
 		time_stamp = community.Obtain().get_timestamp()["data"]
 		params = {"TIME": time_stamp}
 		response = self.acquire.send_request(
-			url="https://eduzone.codemao.cn/edu/zone/user-extend/info",
-			method="get",
+			endpoint="https://eduzone.codemao.cn/edu/zone/user-extend/info",
+			method="GET",
 			params=params,
 		)
 		return response.json()
@@ -249,8 +247,8 @@ class Obtain:
 		time_stamp = community.Obtain().get_timestamp()["data"]
 		params = {"TIME": time_stamp}
 		response = self.acquire.send_request(
-			url="https://eduzone.codemao.cn/edu/zone/operation/records",
-			method="get",
+			endpoint="https://eduzone.codemao.cn/edu/zone/operation/records",
+			method="GET",
 			params=params,
 		)
 		return response.json()
@@ -260,8 +258,8 @@ class Obtain:
 		time_stamp = community.Obtain().get_timestamp()["data"]
 		params = {"TIME": time_stamp}
 		response = self.acquire.send_request(
-			url="https://eduzone.codemao.cn/edu/zone/teaching/class/remind",
-			method="get",
+			endpoint="https://eduzone.codemao.cn/edu/zone/teaching/class/remind",
+			method="GET",
 			params=params,
 		)
 		return response.json()
@@ -275,8 +273,8 @@ class Obtain:
 		time_stamp = community.Obtain().get_timestamp()["data"]
 		params = {"TIME": time_stamp}
 		response = self.acquire.send_request(
-			url="https://eduzone.codemao.cn/edu/zone/homepage/statistic",
-			method="get",
+			endpoint="https://eduzone.codemao.cn/edu/zone/homepage/statistic",
+			method="GET",
 			params=params,
 		)
 		return response.json()
@@ -286,8 +284,8 @@ class Obtain:
 		time_stamp = community.Obtain().get_timestamp()["data"]
 		params = {"TIME": time_stamp}
 		response = self.acquire.send_request(
-			url="https://eduzone.codemao.cn/edu/zone/homepage/menus",
-			method="get",
+			endpoint="https://eduzone.codemao.cn/edu/zone/homepage/menus",
+			method="GET",
 			params=params,
 		)
 		return response.json()
@@ -307,7 +305,7 @@ class Obtain:
 		time_stamp = community.Obtain().get_timestamp()["data"]
 		params = {"page": 1, "TIME": time_stamp}
 		return self.acquire.fetch_data(
-			url="https://eduzone.codemao.cn/edu/zone/work/manager/student/works",
+			endpoint="https://eduzone.codemao.cn/edu/zone/work/manager/student/works",
 			params=params,
 			data_key="items",
 			pagination_method="page",
@@ -322,8 +320,8 @@ class Obtain:
 		formatted_month = f"{month:02d}"
 		params = {"TIME": time_stamp, "year": year, "month": formatted_month, "class_id": class_id}
 		response = self.acquire.send_request(
-			url="https://eduzone.codemao.cn/edu/zone/work/manager/works/statistics",
-			method="get",
+			endpoint="https://eduzone.codemao.cn/edu/zone/work/manager/works/statistics",
+			method="GET",
 			params=params,
 		)
 		return response.json()
@@ -333,7 +331,7 @@ class Obtain:
 		time_stamp = community.Obtain().get_timestamp()["data"]
 		params = {"page": 1, "TIME": time_stamp, "limit": 10}
 		return self.acquire.fetch_data(
-			url="https://eduzone.codemao.cn/edu/zone/teaching/record/list",
+			endpoint="https://eduzone.codemao.cn/edu/zone/teaching/record/list",
 			params=params,
 			data_key="items",
 			pagination_method="page",
@@ -346,8 +344,8 @@ class Obtain:
 		time_stamp = community.Obtain().get_timestamp()["data"]
 		params = {"TIME": time_stamp}
 		response = self.acquire.send_request(
-			url="https://eduzone.codemao.cn/edu/zone/teaching/class/teacher/list",
-			method="get",
+			endpoint="https://eduzone.codemao.cn/edu/zone/teaching/class/teacher/list",
+			method="GET",
 			params=params,
 		)
 		return response.json()
@@ -357,8 +355,8 @@ class Obtain:
 		time_stamp = community.Obtain().get_timestamp()["data"]
 		params = {"TIME": time_stamp, "unitId": unit_id}
 		response = self.acquire.send_request(
-			url="https://eduzone.codemao.cn/edu/zone/school/info",
-			method="get",
+			endpoint="https://eduzone.codemao.cn/edu/zone/school/info",
+			method="GET",
 			params=params,
 		)
 		return response.json()
@@ -368,7 +366,7 @@ class Obtain:
 		time_stamp = community.Obtain().get_timestamp()["data"]
 		params = {"TIME": time_stamp, "pacakgeEntryType": 0, "topicType": "all", "topicId": "all", "tagId": "all", "page": 1, "limit": 150}
 		return self.acquire.fetch_data(
-			url="https://eduzone.codemao.cn/edu/zone/lesson/offical/packages",
+			endpoint="https://eduzone.codemao.cn/edu/zone/lesson/offical/packages",
 			params=params,
 			pagination_method="page",
 			args={"amount": "limit", "remove": "page"},
@@ -381,8 +379,8 @@ class Obtain:
 		time_stamp = community.Obtain().get_timestamp()["data"]
 		params = {"TIME": time_stamp, "pacakgeEntryType": 0, "topicType": "all"}
 		response = self.acquire.send_request(
-			url="https://eduzone.codemao.cn/edu/zone/lessons/official/packages/topics",
-			method="get",
+			endpoint="https://eduzone.codemao.cn/edu/zone/lessons/official/packages/topics",
+			method="GET",
 			params=params,
 		)
 		return response.json()
@@ -392,8 +390,8 @@ class Obtain:
 		time_stamp = community.Obtain().get_timestamp()["data"]
 		params = {"TIME": time_stamp, "pacakgeEntryType": 0, "topicType": "all"}
 		response = self.acquire.send_request(
-			url="https://eduzone.codemao.cn/edu/zone/lessons/official/packages/topics/all/tags",
-			method="get",
+			endpoint="https://eduzone.codemao.cn/edu/zone/lessons/official/packages/topics/all/tags",
+			method="GET",
 			params=params,
 		)
 		return response.json()
@@ -403,7 +401,7 @@ class Obtain:
 		time_stamp = community.Obtain().get_timestamp()["data"]
 		params = {"TIME": time_stamp, "page": 1, "limit": 100}
 		return self.acquire.fetch_data(
-			url="https://eduzone.codemao.cn/edu/zone/lesson/offical/packages",
+			endpoint="https://eduzone.codemao.cn/edu/zone/lesson/offical/packages",
 			params=params,
 			pagination_method="page",
 			args={"amount": "limit", "remove": "page"},
@@ -412,23 +410,23 @@ class Obtain:
 		)
 
 	# 获取自定义备课包信息/删除备课包
-	def get_customized_package_info(self, package_id: int, method: Literal["get", "delete"]) -> dict | bool:
+	def get_customized_package_info(self, package_id: int, method: Literal["GET", "DELETE"]) -> dict | bool:
 		time_stamp = community.Obtain().get_timestamp()["data"]
 		params = {"TIME": time_stamp}
 		response = self.acquire.send_request(
-			url=f"https://eduzone.codemao.cn/edu/zone/lesson/customized/packages/{package_id}",
+			endpoint=f"https://eduzone.codemao.cn/edu/zone/lesson/customized/packages/{package_id}",
 			method=method,
 			params=params,
 		)
-		return response.json() if method == "get" else response.status_code == OK_CODE
+		return response.json() if method == "GET" else response.status_code == HTTPSTATUS.OK
 
 	# 获取自定义备课包内容
 	def get_customized_package_lesson(self, package_id: int, limit: int) -> dict:
 		time_stamp = community.Obtain().get_timestamp()["data"]
 		params = {"TIME": time_stamp, "limit": limit, "package_id": package_id}
 		response = self.acquire.send_request(
-			url="https://eduzone.codemao.cn/edu/zone/lesson/customized/package/lessons",
-			method="get",
+			endpoint="https://eduzone.codemao.cn/edu/zone/lesson/customized/package/lessons",
+			method="GET",
 			params=params,
 		)
 		return response.json()

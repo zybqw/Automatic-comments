@@ -1,10 +1,10 @@
 from typing import Literal
 
 from src.base import acquire
+from src.base.acquire import HTTPSTATUS
 from src.base.decorator import singleton
 
-select = Literal["post", "delete"]
-OK_CODE = 200
+select = Literal["POST", "DELETE"]
 
 
 @singleton
@@ -14,17 +14,17 @@ class CartoonObtain:
 
 	# 获取全部漫画
 	def get_all_cartoon(self) -> dict:
-		response = self.acquire.send_request(url="/api/comic/list/all", method="get")
+		response = self.acquire.send_request(endpoint="/api/comic/list/all", method="GET")
 		return response.json()
 
 	# 获取漫画信息
 	def get_cartoon_info(self, comic_id: int) -> dict:
-		response = self.acquire.send_request(url=f"/api/comic/{comic_id}", method="get")
+		response = self.acquire.send_request(endpoint=f"/api/comic/{comic_id}", method="GET")
 		return response.json()
 
 	# 获取漫画某个章节信息(每个章节会分配一个唯一id)
 	def get_cartoon_chapters(self, chapter_id: int) -> dict:
-		response = self.acquire.send_request(url=f"/api/comic/page/list/{chapter_id}", method="get")
+		response = self.acquire.send_request(endpoint=f"/api/comic/page/list/{chapter_id}", method="GET")
 		return response.json()
 
 
@@ -35,7 +35,7 @@ class NovelObtain:
 
 	# 获取小说分类列表
 	def get_novel_categories(self) -> dict:
-		response = self.acquire.send_request(url="/api/fanfic/type", method="get")
+		response = self.acquire.send_request(endpoint="/api/fanfic/type", method="GET")
 		return response.json()
 
 	# 获取小说列表
@@ -62,29 +62,29 @@ class NovelObtain:
 			"limit": limit,
 		}
 		# params中的type_id与fanfic_type_id可互换
-		response = self.acquire.send_request(url=f"/api/fanfic/list/{method}", method="get", params=params)
+		response = self.acquire.send_request(endpoint=f"/api/fanfic/list/{method}", method="GET", params=params)
 		return response.json()
 
 	# 获取收藏的小说列表
 	def get_novel_collection(self, page: int = 1, limit: int = 10) -> dict:
 		params = {"page": page, "limit": limit}
 		response = self.acquire.send_request(
-			url="/web/fanfic/collection",
-			method="get",
+			endpoint="/web/fanfic/collection",
+			method="GET",
 			params=params,
 		)
 		return response.json()
 
 	# 获取小说详情
 	def get_novel_detail(self, novel_id: int) -> dict:
-		response = self.acquire.send_request(url=f"/api/fanfic/{novel_id}", method="get")
+		response = self.acquire.send_request(endpoint=f"/api/fanfic/{novel_id}", method="GET")
 		return response.json()
 
 	# 获取小说章节信息
 	def get_chapter_detail(self, chapter_id: int) -> dict:
 		response = self.acquire.send_request(
-			url=f"/api/fanfic/section/{chapter_id}",
-			method="get",
+			endpoint=f"/api/fanfic/section/{chapter_id}",
+			method="GET",
 		)
 		return response.json()
 
@@ -93,8 +93,8 @@ class NovelObtain:
 		# page从0开始
 		params = {"page": page, "limit": limit}
 		response = self.acquire.send_request(
-			url=f"/api/fanfic/comments/list/{novel_id}",
-			method="get",
+			endpoint=f"/api/fanfic/comments/list/{novel_id}",
+			method="GET",
 			params=params,
 		)
 		return response.json()
@@ -104,8 +104,8 @@ class NovelObtain:
 		# page从0开始
 		params = {"searchContent": keyword, "page": page, "limit": limit}
 		response = self.acquire.send_request(
-			url="/api/fanfic/list/search",
-			method="get",
+			endpoint="/api/fanfic/list/search",
+			method="GET",
 			params=params,
 		)
 		return response.json()
@@ -118,7 +118,7 @@ class NovelMotion:
 	# 收藏小说
 	def collect_novel(self, novel_id: int, method: select) -> dict:
 		response = self.acquire.send_request(
-			url=f"/web/fanfic/collect/{novel_id}",
+			endpoint=f"/web/fanfic/collect/{novel_id}",
 			method=method,
 		)
 		return response.json()
@@ -126,29 +126,29 @@ class NovelMotion:
 	# 评论小说
 	def comment_novel(self, comment: str, novel_id: int, *, return_data: bool = False) -> bool | dict:
 		response = self.acquire.send_request(
-			url=f"/api/fanfic/comments/{novel_id}",
-			method="post",
-			data={
+			endpoint=f"/api/fanfic/comments/{novel_id}",
+			method="POST",
+			payload={
 				"content": comment,
 			},
 		)
-		return response.json() if return_data else response.status_code == OK_CODE
+		return response.json() if return_data else response.status_code == HTTPSTATUS.OK
 
 	# 点赞小说评论
 	def like_comment(self, method: select, comment_id: int, *, return_data: bool = False) -> bool | dict:
 		response = self.acquire.send_request(
-			url=f"/api/fanfic/comments/praise/{comment_id}",
+			endpoint=f"/api/fanfic/comments/praise/{comment_id}",
 			method=method,
 		)
-		return response.json() if return_data else response.status_code == OK_CODE
+		return response.json() if return_data else response.status_code == HTTPSTATUS.OK
 
 	# 删除小说评论
 	def delete_comment(self, comment_id: int, *, return_data: bool = False) -> bool | dict:
 		response = self.acquire.send_request(
-			url=f"/api/fanfic/comments/{comment_id}",
-			method="delete",
+			endpoint=f"/api/fanfic/comments/{comment_id}",
+			method="DELETE",
 		)
-		return response.json() if return_data else response.status_code == OK_CODE
+		return response.json() if return_data else response.status_code == HTTPSTATUS.OK
 
 
 @singleton
@@ -158,12 +158,12 @@ class BookObtain:
 
 	# 获取全部图鉴
 	def get_all_book(self) -> dict:
-		response = self.acquire.send_request(url="/api/sprite/list/all", method="get")
+		response = self.acquire.send_request(endpoint="/api/sprite/list/all", method="GET")
 		return response.json()
 
 	# 获取所有属性
 	def get_all_attr(self) -> dict:
-		response = self.acquire.send_request(url="/api/sprite/factio", method="get")
+		response = self.acquire.send_request(endpoint="/api/sprite/factio", method="GET")
 		return response.json()
 
 	# 按星级获取图鉴
@@ -179,8 +179,8 @@ class BookObtain:
 	# 通用获取图鉴方法
 	def _get_book_by_params(self, params: dict) -> dict:
 		response = self.acquire.send_request(
-			url="/api/sprite/list/all",
-			method="get",
+			endpoint="/api/sprite/list/all",
+			method="GET",
 			params=params,
 		)
 		return response.json()
@@ -188,15 +188,15 @@ class BookObtain:
 	# 获取指定图鉴详情
 	def get_book_detail(self, book_id: int) -> dict:
 		response = self.acquire.send_request(
-			url=f"/api/sprite/{book_id}",
-			method="get",
+			endpoint=f"/api/sprite/{book_id}",
+			method="GET",
 		)
 		return response.json()
 
 	# 点赞图鉴
 	def like_book(self, method: select, book_id: int, *, return_data: bool = False) -> bool | dict:
 		response = self.acquire.send_request(
-			url=f"/api/sprite/praise/{book_id}",
+			endpoint=f"/api/sprite/praise/{book_id}",
 			method=method,
 		)
-		return response.json() if return_data else response.status_code == OK_CODE
+		return response.json() if return_data else response.status_code == HTTPSTATUS.OK

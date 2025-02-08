@@ -1,10 +1,8 @@
 from typing import Any, Literal, cast
 
 from src.base import acquire
+from src.base.acquire import HTTPSTATUS
 from src.base.decorator import singleton
-
-OK_CODE = 200
-NO_CONTENT_CODE = 204
 
 
 @singleton
@@ -14,15 +12,15 @@ class Obtain:
 
 	# 获取某人账号信息
 	def get_user_details(self, user_id: str) -> dict:
-		response = self.acquire.send_request(method="get", url=f"/api/user/info/detail/{user_id}")
+		response = self.acquire.send_request(method="GET", endpoint=f"/api/user/info/detail/{user_id}")
 		return response.json()
 
 	# 获取用户荣誉
 	def get_user_honor(self, user_id: str) -> dict:
 		params = {"user_id": user_id}
 		response = self.acquire.send_request(
-			url="/creation-tools/v1/user/center/honor",
-			method="get",
+			endpoint="/creation-tools/v1/user/center/honor",
+			method="GET",
 			params=params,
 		)
 
@@ -31,20 +29,20 @@ class Obtain:
 	# 获取用户精确数据
 	def get_user_business(self, user_id: str) -> dict:
 		params = {"user_id": user_id}
-		response = self.acquire.send_request(url="/nemo/v2/works/business/total", method="get", params=params)
+		response = self.acquire.send_request(endpoint="/nemo/v2/works/business/total", method="GET", params=params)
 		return response.json()
 
 	# 获取某人账号信息(简略)
 	def get_user_info(self, user_id: str) -> dict:
 		params = {"user_id": user_id}
-		response = self.acquire.send_request(method="get", url="/nemo/v2/user/dynamic/info", params=params)
+		response = self.acquire.send_request(method="GET", endpoint="/nemo/v2/user/dynamic/info", params=params)
 		return response.json()
 
 	# 获取账户信息(详细)
 	def get_data_details(self) -> dict:
 		response = self.acquire.send_request(
-			method="get",
-			url="/web/users/details",
+			method="GET",
+			endpoint="/web/users/details",
 		)
 		return response.json()
 
@@ -52,40 +50,40 @@ class Obtain:
 	# 获取账户信息(简略)
 	# def get_data_info(self) -> dict:
 	# 	response = self.acquire.send_request(
-	# 		method="get",
-	# 		url="/web/user/info",
+	# 		method="GET",
+	# 		endpoint="/web/user/info",
 	# 	)
 
 	# 	return response.json()
 
 	# 获取账户信息
 	def get_data_profile(self, method: Literal["web", "app"]) -> dict:
-		response = self.acquire.send_request(method="get", url=f"/tiger/v3/{method}/accounts/profile")
+		response = self.acquire.send_request(method="GET", endpoint=f"/tiger/v3/{method}/accounts/profile")
 		return response.json()
 
 	# 获取账户安全信息
 	def get_data_privacy(self) -> dict:
-		response = self.acquire.send_request(method="get", url="/tiger/v3/web/accounts/privacy")
+		response = self.acquire.send_request(method="GET", endpoint="/tiger/v3/web/accounts/privacy")
 		return response.json()
 
 	# 获取账户信息
 	def get_data_tiger(self) -> dict:
-		response = self.acquire.send_request(url="/tiger/user", method="get")
+		response = self.acquire.send_request(endpoint="/tiger/user", method="GET")
 		return response.json()
 
 	# 获取用户点赞,再创作,收藏分
 	def get_data_score(self) -> dict:
-		response = self.acquire.send_request(url="/nemo/v3/user/grade/details", method="get")
+		response = self.acquire.send_request(endpoint="/nemo/v3/user/grade/details", method="GET")
 		return response.json()
 
 	# 获取用户等级
 	def get_data_level(self) -> dict:
-		response = self.acquire.send_request(url="/nemo/v3/user/level/info", method="get")
+		response = self.acquire.send_request(endpoint="/nemo/v3/user/level/info", method="GET")
 		return response.json()
 
 	# 获取用户姓名
 	def get_data_name(self) -> dict:
-		response = self.acquire.send_request(url="/api/v2/pc/lesson/user/info", method="get")
+		response = self.acquire.send_request(endpoint="/api/v2/pc/lesson/user/info", method="GET")
 		return response.json()
 
 	# 获取个人作品列表的函数
@@ -97,7 +95,7 @@ class Obtain:
 			"limit": 5,
 		}
 		return self.acquire.fetch_data(
-			url="/creation-tools/v2/user/center/work-list",
+			endpoint="/creation-tools/v2/user/center/work-list",
 			params=params,
 			total_key="total",
 			data_key="items",
@@ -112,7 +110,7 @@ class Obtain:
 			"page": page,
 			"limit": limit,
 		}
-		response = self.acquire.send_request(url="tiger/nemo/user/works/search", method="get", params=params)
+		response = self.acquire.send_request(endpoint="tiger/nemo/user/works/search", method="GET", params=params)
 		return response.json()
 
 	# 获取用户云端作品
@@ -122,14 +120,14 @@ class Obtain:
 		elif types == "kitten":
 			work_type = 1
 		params = {"limit": limit, "offset": offset, "work_type": work_type}
-		response = self.acquire.send_request(url="/creation-tools/v1/works/list/user", params=params, method="get")
+		response = self.acquire.send_request(endpoint="/creation-tools/v1/works/list/user", params=params, method="GET")
 		return response.json()
 
 	# 获取用户nemo作品
 	def get_works_nemo_published(self, method: Literal["published"], limit: int | None = 15) -> list[dict[Any, Any]]:
 		params = {"limit": 15, "offset": 0}
 		return self.acquire.fetch_data(
-			url=f"/nemo/v2/works/list/user/{method}",
+			endpoint=f"/nemo/v2/works/list/user/{method}",
 			params=params,
 			data_key="items",
 			limit=limit,
@@ -156,7 +154,7 @@ class Obtain:
 		params = {"offset": 0, "limit": 15}
 		params = cast(dict, params)
 		params.update(extra_params or {})
-		return self.acquire.fetch_data(url=url, params=params, data_key="items", limit=limit)
+		return self.acquire.fetch_data(endpoint=url, params=params, data_key="items", limit=limit)
 
 	# 获取用户kitten作品列表
 	def get_works_kitten(
@@ -174,7 +172,7 @@ class Obtain:
 			"published_status": status,
 		}
 		return self.acquire.fetch_data(
-			url="https://api-creation.codemao.cn/kitten/common/work/list2",
+			endpoint="https://api-creation.codemao.cn/kitten/common/work/list2",
 			params=params,
 			data_key="items",
 			limit=limit,
@@ -184,7 +182,7 @@ class Obtain:
 	def get_works_nemo(self, status: Literal["PUBLISHED", "UNPUBLISHED", "all"], limit: int | None = 30) -> list[dict[Any, Any]]:
 		params = {"offset": 0, "limit": 30, "published_status": status}
 		return self.acquire.fetch_data(
-			url="/creation-tools/v1/works/list",
+			endpoint="/creation-tools/v1/works/list",
 			params=params,
 			data_key="items",
 			limit=limit,
@@ -206,7 +204,7 @@ class Obtain:
 			"published_status": status,
 		}
 		return self.acquire.fetch_data(
-			url="https://api-creation.codemao.cn/wood/comm/work/list",
+			endpoint="https://api-creation.codemao.cn/wood/comm/work/list",
 			params=params,
 			data_key="items",
 			limit=limit,
@@ -221,7 +219,7 @@ class Obtain:
 			"published_status": status,
 		}
 		return self.acquire.fetch_data(
-			url="https://api-creation.codemao.cn/box/v2/work/list",
+			endpoint="https://api-creation.codemao.cn/box/v2/work/list",
 			params=params,
 			data_key="items",
 			limit=limit,
@@ -231,7 +229,7 @@ class Obtain:
 	def get_works_fanfic(self, fiction_status: Literal["SHOW"] = "SHOW", limit: int | None = 30) -> list[dict[Any, Any]]:
 		params = {"offset": 0, "limit": 30, "fiction_status": fiction_status}
 		return self.acquire.fetch_data(
-			url="/web/fanfic/my/new",
+			endpoint="/web/fanfic/my/new",
 			params=params,
 			data_key="items",
 			limit=limit,
@@ -247,7 +245,7 @@ class Obtain:
 			"published": published,
 		}
 		return self.acquire.fetch_data(
-			url="https://api-creation.codemao.cn/coconut/web/work/list",
+			endpoint="https://api-creation.codemao.cn/coconut/web/work/list",
 			params=params,
 			data_key="data.items",
 			total_key="data.total",
@@ -262,7 +260,7 @@ class Obtain:
 			"limit": 15,
 		}
 		return self.acquire.fetch_data(
-			url="/creation-tools/v1/user/fans",
+			endpoint="/creation-tools/v1/user/fans",
 			params=params,
 			total_key="total",
 			data_key="items",
@@ -277,7 +275,7 @@ class Obtain:
 			"limit": 15,
 		}
 		return self.acquire.fetch_data(
-			url="/creation-tools/v1/user/followers",
+			endpoint="/creation-tools/v1/user/followers",
 			params=params,
 			total_key="total",
 			data_key="items",
@@ -292,7 +290,7 @@ class Obtain:
 			"limit": 5,
 		}
 		return self.acquire.fetch_data(
-			url="/creation-tools/v1/user/center/collect/list",
+			endpoint="/creation-tools/v1/user/center/collect/list",
 			params=params,
 			total_key="total",
 			data_key="items",
@@ -302,14 +300,14 @@ class Obtain:
 	# 获取用户头像框列表
 	def get_user_avatar_frame(self) -> dict:
 		response = self.acquire.send_request(
-			url="/creation-tools/v1/user/avatar-frame/list",
-			method="get",
+			endpoint="/creation-tools/v1/user/avatar-frame/list",
+			method="GET",
 		)
 		return response.json()
 
 	# 获取用户是否为新用户
 	def get_is_new_user(self) -> dict:
-		response = self.acquire.send_request(url="https://api-creation.codemao.cn/neko/works/isNewUser", method="get")
+		response = self.acquire.send_request(endpoint="https://api-creation.codemao.cn/neko/works/isNewUser", method="GET")
 		return response.json()
 
 
@@ -320,22 +318,22 @@ class Motion:
 
 	# 设置正在做的事
 	def set_data_doing(self, doing: str) -> bool:
-		response = self.acquire.send_request(url="/nemo/v2/user/basic", method="put", data={"doing": doing})
-		return response.status_code == OK_CODE
+		response = self.acquire.send_request(endpoint="/nemo/v2/user/basic", method="PUT", payload={"doing": doing})
+		return response.status_code == HTTPSTATUS.OK
 
 	# 设置登录用户名(实验性功能)
 	def set_data_username(self, username: str) -> bool:
 		response = self.acquire.send_request(
-			url="/tiger/v3/web/accounts/username",
-			method="patch",
-			data={"username": username},
+			endpoint="/tiger/v3/web/accounts/username",
+			method="PATCH",
+			payload={"username": username},
 		)
-		return response.status_code == NO_CONTENT_CODE
+		return response.status_code == HTTPSTATUS.NO_CONTENT
 
 	# 验证手机号
 	def verify_phone(self, phone_num: int) -> dict:
 		params = {"phone_number": phone_num}
-		response = self.acquire.send_request(url="/web/users/phone_number/is_consistent", method="get", params=params)
+		response = self.acquire.send_request(endpoint="/web/users/phone_number/is_consistent", method="GET", params=params)
 		return response.json()
 
 	# 修改密码
@@ -346,29 +344,29 @@ class Motion:
 			"confirm_password": new_password,
 		}
 		response = self.acquire.send_request(
-			url="/tiger/v3/web/accounts/password",
-			method="patch",
-			data=data,
+			endpoint="/tiger/v3/web/accounts/password",
+			method="PATCH",
+			payload=data,
 		)
-		return response.status_code == NO_CONTENT_CODE
+		return response.status_code == HTTPSTATUS.NO_CONTENT
 
 	# 修改手机号(获取验证码)
 	def modify_phonenum_captcha(self, old_phonenum: int, new_phonenum: int) -> bool:
 		data = {"phone_number": new_phonenum, "old_phone_number": old_phonenum}
 		response = self.acquire.send_request(
-			url="/tiger/v3/web/accounts/captcha/phone/change",
-			method="post",
-			data=data,
+			endpoint="/tiger/v3/web/accounts/captcha/phone/change",
+			method="POST",
+			payload=data,
 		)
-		return response.status_code == NO_CONTENT_CODE
+		return response.status_code == HTTPSTATUS.NO_CONTENT
 
 	# 修改手机号
 	def modify_phonenum(self, captcha: int, phonenum: int) -> bool:
 		data = {"phone_number": phonenum, "captcha": captcha}
 		response = self.acquire.send_request(
-			url="/tiger/v3/web/accounts/phone/change",
-			method="patch",
-			data=data,
+			endpoint="/tiger/v3/web/accounts/phone/change",
+			method="PATCH",
+			payload=data,
 		)
 		return response.json()
 
@@ -378,25 +376,25 @@ class Motion:
 		if not data:
 			msg = "至少需要传入一个参数"
 			raise ValueError(msg)
-		response = self.acquire.send_request(url="/nemo/v2/user/basic", method="put", data=data)
-		return response.status_code == OK_CODE
+		response = self.acquire.send_request(endpoint="/nemo/v2/user/basic", method="PUT", payload=data)
+		return response.status_code == HTTPSTATUS.OK
 
 	# 取消设置头像框
 	def cancel_avatar_frame(self) -> bool:
 		response = self.acquire.send_request(
-			url="/creation-tools/v1/user/avatar-frame/cancel",
-			method="put",
+			endpoint="/creation-tools/v1/user/avatar-frame/cancel",
+			method="PUT",
 		)
-		return response.status_code == OK_CODE
+		return response.status_code == HTTPSTATUS.OK
 
 	# 设置头像框
 	# id 2,3,4 代表Lv2,3,4头像框
 	def set_avatar_frame(self, frame_id: Literal[2, 3, 4]) -> bool:
 		response = self.acquire.send_request(
-			url=f"/creation-tools/v1/user/avatar-frame/{frame_id}",
-			method="put",
+			endpoint=f"/creation-tools/v1/user/avatar-frame/{frame_id}",
+			method="PUT",
 		)
-		return response.status_code == OK_CODE
+		return response.status_code == HTTPSTATUS.OK
 
 	# 设置info
 	# birthday值为timestamp
@@ -422,8 +420,8 @@ class Motion:
 			"sex": sex,
 		}
 		response = self.acquire.send_request(
-			url="/tiger/v3/web/accounts/info",
-			method="patch",
-			data=data,
+			endpoint="/tiger/v3/web/accounts/info",
+			method="PATCH",
+			payload=data,
 		)
-		return response.status_code == NO_CONTENT_CODE
+		return response.status_code == HTTPSTATUS.NO_CONTENT

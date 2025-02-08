@@ -1,14 +1,16 @@
 import json
-from collections.abc import Callable
-from dataclasses import asdict, dataclass, field, is_dataclass, replace
+from collections.abc import Mapping
+from dataclasses import asdict, dataclass, field, fields, is_dataclass, replace
 from pathlib import Path
-from typing import Generic, TypeVar, cast, get_args, get_origin, get_type_hints
+from typing import Any, Generic, TypeVar, cast, get_args, get_origin, get_type_hints
 
 from src.base.decorator import singleton
 
-T = TypeVar("T")
+# 添加 DataclassInstance 定义
 
-# 定义常量
+T = TypeVar("T")
+DataclassInstance = T
+# 常量定义
 DATA_DIR = Path.cwd() / "data"
 DATA_FILE_PATH = DATA_DIR / "data.json"
 CACHE_FILE_PATH = DATA_DIR / "cache.json"
@@ -19,7 +21,7 @@ DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 
 # --------------------------
-# 数据类定义 (保持与之前相同)
+# 增强型数据类定义
 # --------------------------
 @dataclass
 class AccountData:
@@ -51,153 +53,162 @@ class UserData:
 
 @dataclass
 class CodeMaoData:
-	INFO: dict[str, str]
+	INFO: dict[str, str] = field(default_factory=dict)
 	ACCOUNT_DATA: AccountData = field(default_factory=AccountData)
 	USER_DATA: UserData = field(default_factory=UserData)
 
 
 @dataclass
 class DefaultAction:
-	action: str
-	name: str
+	action: str = ""
+	name: str = ""
 
 
 @dataclass
 class Parameter:
-	all_read_type: list[str]
-	clear_ad_exclude_top: bool
-	cookie_check_url: str
-	get_works_method: str
-	password_login_method: str
-	spam_max: int
+	all_read_type: list[str] = field(default_factory=list)
+	clear_ad_exclude_top: bool = False
+	cookie_check_url: str = ""
+	get_works_method: str = ""
+	password_login_method: str = ""
+	spam_max: int = 0
 
 
 @dataclass
 class ExtraBody:
-	enable_search: bool
+	enable_search: bool = False
 
 
 @dataclass
 class More:
-	extra_body: ExtraBody
-	stream: bool
+	extra_body: ExtraBody = field(default_factory=ExtraBody)
+	stream: bool = False
 
 
 @dataclass
 class DashscopePlugin:
-	model: str
-	more: More
+	model: str = ""
+	more: More = field(default_factory=More)
 
 
 @dataclass
 class Plugin:
-	DASHSCOPE: DashscopePlugin
-	prompt: str
+	DASHSCOPE: DashscopePlugin = field(default_factory=DashscopePlugin)
+	prompt: str = ""
 
 
 @dataclass
 class Program:
-	AUTHOR: str
-	HEADERS: dict[str, str]
-	MEMBER: str
-	SLOGAN: str
-	TEAM: str
-	VERSION: str
+	AUTHOR: str = ""
+	HEADERS: dict[str, str] = field(default_factory=dict)
+	MEMBER: str = ""
+	SLOGAN: str = ""
+	TEAM: str = ""
+	VERSION: str = ""
 
 
 @dataclass
 class CodeMaoCache:
-	collected: int
-	fans: int
-	level: int
-	liked: int
-	nickname: str
-	timestamp: int
-	user_id: int
-	view: int
+	collected: int = 0
+	fans: int = 0
+	level: int = 0
+	liked: int = 0
+	nickname: str = ""
+	timestamp: int = 0
+	user_id: int = 0
+	view: int = 0
 
 
 @dataclass
 class CodeMaoSetting:
 	DEFAULT: list[DefaultAction] = field(default_factory=list)
-	PARAMETER: Parameter = field(default_factory=cast(Callable[[], Parameter], Parameter))
-	PLUGIN: Plugin = field(default_factory=cast(Callable[[], Plugin], Plugin))
-	PROGRAM: Program = field(default_factory=cast(Callable[[], Program], Program))
-
-
-# ... 其他数据类定义保持与之前相同 ...
+	PARAMETER: Parameter = field(default_factory=Parameter)
+	PLUGIN: Plugin = field(default_factory=Plugin)
+	PROGRAM: Program = field(default_factory=Program)
 
 
 # --------------------------
-# 核心转换工具函数
+# 增强型转换工具
 # --------------------------
-# 修改后的核心工具函数
-def dict_to_dataclass(cls: type[T], data: dict) -> T:
-	"""类型安全的字典到数据类转换"""
+def dict_to_dataclass(cls: type[T], data: Mapping[str, Any]) -> T:
+	"""安全类型转换字典到数据类，支持嵌套结构和泛型"""
 	if not (is_dataclass(cls) and isinstance(cls, type)):
-		msg = f"{cls.__name__} must be a dataclass type"
-		raise ValueError(msg)
+		raise ValueError(f"{cls.__name__} must be a dataclass type")
 
 	field_types = get_type_hints(cls)
 	kwargs = {}
 
 	for field_name, field_type in field_types.items():
-		value = data.get(field_name)
-		if value is None:
+		if field_name not in data:
 			continue
 
-		# 处理嵌套数据类(显式类型断言)
-		if is_dataclass(field_type):
-			field_type = cast(type, field_type)
-			kwargs[field_name] = dict_to_dataclass(field_type, value)
+		value = data[field_name]
+		origin_type = get_origin(field_type)
+		type_args = get_args(field_type)
 
-		# 处理列表中的嵌套数据类(精确类型解析)
-		elif (_origin := get_origin(field_type)) is list:
-			item_type = get_args(field_type)[0]
+		# 处理嵌套数据类（添加类型断言）
+		if is_dataclass(field_type):
+			kwargs[field_name] = dict_to_dataclass(cast(type, field_type), value)
+		# 处理泛型容器（添加类型断言）
+		elif origin_type is list and type_args:
+			item_type = type_args[0]
 			if is_dataclass(item_type):
-				item_type = cast(type, item_type)
-				kwargs[field_name] = [dict_to_dataclass(item_type, item) for item in value]
+				kwargs[field_name] = [
+					dict_to_dataclass(cast(type, item_type), item)  # 类型断言
+					for item in value
+				]
 			else:
 				kwargs[field_name] = value
-
+		elif origin_type is dict and type_args:
+			key_type, val_type = type_args
+			kwargs[field_name] = {key_type(k): val_type(v) for k, v in value.items()}
 		else:
-			kwargs[field_name] = value
+			try:
+				kwargs[field_name] = field_type(value)
+			except TypeError:
+				kwargs[field_name] = value
 
 	return cls(**kwargs)
 
 
 # --------------------------
-# 文件操作工具函数
+# 增强型文件操作
 # --------------------------
 def load_json_file(path: Path, data_class: type[T]) -> T:
-	"""加载JSON文件并转换为指定数据类"""
-	if not path.exists():
-		return data_class()  # 返回默认实例
-
+	"""安全加载JSON文件，增强错误处理"""
 	try:
-		data = json.loads(path.read_text(encoding="utf-8"))
-		return dict_to_dataclass(data_class, data)
+		if not path.exists():
+			return data_class()
+
+		with path.open(encoding="utf-8") as f:
+			data = json.load(f)
+			return dict_to_dataclass(data_class, data)
 	except (json.JSONDecodeError, KeyError, TypeError) as e:
 		print(f"Error loading {path.name}: {e!s}")
 		return data_class()
+	except Exception as e:
+		print(f"Unexpected error loading {path.name}: {e!s}")
+		return data_class()
 
 
-def save_json_file(path: Path, data: object) -> None:
-	"""将数据类实例保存为JSON文件"""
-	if not (is_dataclass(data) and not isinstance(data, type)):  # 严格检查是实例不是类
-		msg = "Only dataclass instances can be saved"
-		raise ValueError(msg)
-
-	path.parent.mkdir(parents=True, exist_ok=True)
-	serialized = asdict(data)  # type: ignore[arg-type]
-	path.write_text(json.dumps(serialized, ensure_ascii=False, indent=4), encoding="utf-8")
+def save_json_file(path: Path, data: Any) -> None:
+	"""原子化写入JSON文件，防止数据损坏"""
+	if not is_dataclass(data) or isinstance(data, type):
+		raise ValueError("Only dataclass instances can be saved")
+	temp_file = path.with_suffix(".tmp")
+	try:
+		serialized = asdict(data)
+		with temp_file.open("w", encoding="utf-8") as f:
+			json.dump(serialized, f, ensure_ascii=False, indent=4)
+		temp_file.replace(path)
+	except Exception as e:
+		temp_file.unlink(missing_ok=True)
+		raise RuntimeError(f"Failed to save {path.name}: {e!s}") from e
 
 
 # --------------------------
-# 单例管理器(修改加载方式)
+# 统一管理器基类
 # --------------------------
-
-
 class BaseManager(Generic[T]):
 	_data: T
 	_file_path: Path
@@ -206,52 +217,67 @@ class BaseManager(Generic[T]):
 		self._data = load_json_file(file_path, data_class)
 		self._file_path = file_path
 
-	def get_data(self) -> T:
+	@property
+	def data(self) -> T:
+		"""明确返回类型为泛型 T"""
 		return self._data
 
-	def update(self, new_data: dict[str, object]) -> None:
+	def update(self, new_data: dict[str, Any]) -> None:
+		"""类型安全的深度更新"""
 		for key, value in new_data.items():
-			if hasattr(self._data, key):
-				current_value = getattr(self._data, key)
-				if is_dataclass(current_value) or (isinstance(current_value, type) and is_dataclass(current_value)):
-					if isinstance(value, dict):
-						updated_value = current_value(**value) if isinstance(current_value, type) else replace(current_value, **value)
-						setattr(self._data, key, updated_value)
-					else:
-						print(f"Warning: Expected a dict for {key}, got {type(value).__name__}.")
-				else:
-					setattr(self._data, key, value)
-		self.save_data()
+			if not hasattr(self._data, key):
+				continue
+			current = getattr(self._data, key)
 
-	def delete(self, *keys: str) -> None:
-		for key in keys:
-			if hasattr(self._data, key):
-				current_value = getattr(self._data, key)
-				if is_dataclass(current_value):
-					setattr(self._data, key, type(current_value)())
-				elif isinstance(current_value, type) and is_dataclass(current_value):
-					setattr(self._data, key, current_value())
-				else:
-					setattr(self._data, key, None)
-		self.save_data()
+			# 确保 current 是实例
+			if isinstance(current, type) and is_dataclass(current):
+				current = current()
 
-	def save_data(self) -> None:
+			if is_dataclass(current):
+				if not isinstance(value, dict):
+					raise TypeError(f"Expected dict for {key}, got {type(value).__name__}")
+
+				# 使用 cast 来确保类型检查器知道 current 是一个数据类实例
+				current = cast(DataclassInstance, current)
+
+				# 创建一个新的字典，只包含数据类字段中存在的键
+				valid_fields = {f.name for f in fields(current)}
+				filtered_value = {k: v for k, v in value.items() if k in valid_fields}
+				updated_value = replace(current, **filtered_value)
+				setattr(self._data, key, updated_value)
+			else:
+				setattr(self._data, key, value)
+
+		self.save()
+
+	def reset(self, *fields: str) -> None:
+		"""重置指定字段到默认值"""
+		for field_name in fields:
+			if hasattr(self._data, field_name):
+				default_value = self._data.__annotations__[field_name]()
+				setattr(self._data, field_name, default_value)
+		self.save()
+
+	def save(self) -> None:
 		save_json_file(self._file_path, self._data)
 
 
+# --------------------------
+# 单例管理器
+# --------------------------
 @singleton
-class CodeMaoDataManager(BaseManager[CodeMaoData]):
+class DataManager(BaseManager[CodeMaoData]):
 	def __init__(self) -> None:
 		super().__init__(DATA_FILE_PATH, CodeMaoData)
 
 
 @singleton
-class CodeMaoCacheManager(BaseManager[CodeMaoCache]):
+class CacheManager(BaseManager[CodeMaoCache]):
 	def __init__(self) -> None:
 		super().__init__(CACHE_FILE_PATH, CodeMaoCache)
 
 
 @singleton
-class CodeMaoSettingManager(BaseManager[CodeMaoSetting]):
+class SettingManager(BaseManager[CodeMaoSetting]):
 	def __init__(self) -> None:
 		super().__init__(SETTING_FILE_PATH, CodeMaoSetting)

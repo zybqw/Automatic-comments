@@ -1,8 +1,6 @@
-
 from src.base import acquire
+from src.base.acquire import HTTPSTATUS
 from src.base.decorator import singleton
-
-OK_CODE = 200
 
 
 @singleton
@@ -12,5 +10,5 @@ class PickDuck:
 
 	def cookie_out(self, cookies: str) -> bool:
 		data = {"cookie": cookies, "do": "apply"}
-		response = self.acquire.send_request(url="https://shequ.pgaot.com/?mod=bcmcookieout", method="post", data=data)
-		return response.status_code == OK_CODE
+		response = self.acquire.send_request(endpoint="https://shequ.pgaot.com/?mod=bcmcookieout", method="POST", payload=data)
+		return response.status_code == HTTPSTATUS.OK
