@@ -33,7 +33,6 @@ class Obtain:
 			endpoint=f"/web/forums/posts/{ids}/replies",
 			params=params,
 			total_key="total",
-			data_key="items",
 			pagination_method="page",
 			args={"amount": "limit", "remove": "page"},
 			limit=limit,
@@ -49,7 +48,6 @@ class Obtain:
 		return self.acquire.fetch_data(
 			endpoint=f"/web/forums/replies/{post_id}/comments",
 			params=params,
-			data_key="items",
 			limit=limit,
 			pagination_method="page",
 			args={"amount": "limit", "remove": "page"},
@@ -61,7 +59,6 @@ class Obtain:
 		return self.acquire.fetch_data(
 			endpoint=f"/web/forums/posts/mine/{method}",
 			params=params,
-			data_key="items",
 			pagination_method="page",
 			args={"amount": "limit", "remove": "page"},
 			limit=limit,
@@ -127,7 +124,6 @@ class Obtain:
 			endpoint="/web/forums/posts/search",
 			pagination_method="page",
 			params=params,
-			data_key="items",
 			limit=limit,
 			args={"amount": "limit", "remove": "page"},
 		)

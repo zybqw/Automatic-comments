@@ -141,7 +141,6 @@ class Obtain:
 			classes = self.acquire.fetch_data(
 				endpoint=url,
 				params=params,
-				data_key="items",
 				pagination_method="page",
 				args={"remove": "page", "res_amount_key": "limit"},
 				limit=limit,
@@ -155,7 +154,6 @@ class Obtain:
 		return self.acquire.fetch_data(
 			endpoint="https://eduzone.codemao.cn/edu/zone/student/remove/record",
 			params=params,
-			data_key="items",
 			pagination_method="page",
 			args={"amount": "limit", "remove": "page"},
 			limit=limit,
@@ -171,7 +169,6 @@ class Obtain:
 			params=params,
 			payload=data,
 			fetch_method="POST",
-			data_key="items",
 			pagination_method="page",
 			args={"amount": "limit", "remove": "page"},
 			limit=limit,
@@ -308,7 +305,6 @@ class Obtain:
 		return self.acquire.fetch_data(
 			endpoint="https://eduzone.codemao.cn/edu/zone/work/manager/student/works",
 			params=params,
-			data_key="items",
 			pagination_method="page",
 			args={"remove": "page", "res_amount_key": "limit"},
 			limit=limit,
@@ -334,7 +330,6 @@ class Obtain:
 		return self.acquire.fetch_data(
 			endpoint="https://eduzone.codemao.cn/edu/zone/teaching/record/list",
 			params=params,
-			data_key="items",
 			pagination_method="page",
 			args={"remove": "page", "amount": "limit"},
 			limit=limit,
@@ -371,7 +366,6 @@ class Obtain:
 			params=params,
 			pagination_method="page",
 			args={"amount": "limit", "remove": "page"},
-			data_key="items",
 			limit=limit,
 		)
 
@@ -406,7 +400,6 @@ class Obtain:
 			params=params,
 			pagination_method="page",
 			args={"amount": "limit", "remove": "page"},
-			data_key="items",
 			limit=limit,
 		)
 

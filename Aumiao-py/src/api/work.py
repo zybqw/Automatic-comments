@@ -377,7 +377,6 @@ class Obtain:
 			endpoint=f"/creation-tools/v1/works/{work_id}/comments",
 			params=params,
 			total_key="page_total",
-			data_key="items",
 			limit=limit,
 			args={},
 		)
@@ -622,7 +621,6 @@ class Obtain:
 		}
 		return self.acquire.fetch_data(
 			endpoint="https://api-creation.codemao.cn/tiger/work/recycle/list",
-			data_key="items",
 			params=params,
 			limit=limit,
 		)
@@ -639,7 +637,6 @@ class Obtain:
 		return self.acquire.fetch_data(
 			endpoint="https://api-creation.codemao.cn/wood/comm/work/list",
 			params=params,
-			data_key="items",
 			limit=limit,
 		)
 
@@ -666,7 +663,6 @@ class Obtain:
 		return self.acquire.fetch_data(
 			endpoint="/web/fanfic/my/new",
 			params=params,
-			data_key="items",
 			limit=limit,
 		)
 
@@ -682,7 +678,6 @@ class Obtain:
 		return self.acquire.fetch_data(
 			endpoint="https://api-creation.codemao.cn/neko/works/v2/list/user",
 			params=params,
-			data_key="items",
 			limit=limit,
 		)
 
@@ -698,7 +693,6 @@ class Obtain:
 		return self.acquire.fetch_data(
 			endpoint="https://api-creation.codemao.cn/neko/works/v2/list/user",
 			params=params,
-			data_key="items",
 			limit=limit,
 		)
 
@@ -713,7 +707,6 @@ class Obtain:
 		return self.acquire.fetch_data(
 			endpoint="https://api-creation.codemao.cn/neko/works/list/user/published",
 			params=params,
-			data_key="items",
 			limit=limit,
 		)
 

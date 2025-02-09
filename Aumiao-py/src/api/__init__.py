@@ -3,7 +3,7 @@ import importlib
 from types import ModuleType
 
 # 模块白名单
-_MODULE_NAMES: list[str] = ["community", "edu", "forum", "library", "pickduck", "shop", "user", "work"]
+_MODULE_NAMES: list[str] = ["community", "edu", "forum", "library", "pickduck", "shop", "user", "work", "whale"]
 
 # 模块缓存字典
 _loaded_modules: dict[str, ModuleType] = {}

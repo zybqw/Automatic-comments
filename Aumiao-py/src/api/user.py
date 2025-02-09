@@ -99,7 +99,6 @@ class Obtain:
 			endpoint="/creation-tools/v2/user/center/work-list",
 			params=params,
 			total_key="total",
-			data_key="items",
 			limit=limit,
 		)
 
@@ -130,7 +129,6 @@ class Obtain:
 		return self.acquire.fetch_data(
 			endpoint=f"/nemo/v2/works/list/user/{method}",
 			params=params,
-			data_key="items",
 			limit=limit,
 		)
 
@@ -155,7 +153,7 @@ class Obtain:
 		params = {"offset": 0, "limit": 15}
 		params = cast(dict, params)
 		params.update(extra_params or {})
-		return self.acquire.fetch_data(endpoint=url, params=params, data_key="items", limit=limit)
+		return self.acquire.fetch_data(endpoint=url, params=params, limit=limit)
 
 	# 获取用户kitten作品列表
 	def get_works_kitten(
@@ -175,7 +173,6 @@ class Obtain:
 		return self.acquire.fetch_data(
 			endpoint="https://api-creation.codemao.cn/kitten/common/work/list2",
 			params=params,
-			data_key="items",
 			limit=limit,
 		)
 
@@ -185,7 +182,6 @@ class Obtain:
 		return self.acquire.fetch_data(
 			endpoint="/creation-tools/v1/works/list",
 			params=params,
-			data_key="items",
 			limit=limit,
 		)
 
@@ -207,7 +203,6 @@ class Obtain:
 		return self.acquire.fetch_data(
 			endpoint="https://api-creation.codemao.cn/wood/comm/work/list",
 			params=params,
-			data_key="items",
 			limit=limit,
 		)
 
@@ -222,7 +217,6 @@ class Obtain:
 		return self.acquire.fetch_data(
 			endpoint="https://api-creation.codemao.cn/box/v2/work/list",
 			params=params,
-			data_key="items",
 			limit=limit,
 		)
 
@@ -232,7 +226,6 @@ class Obtain:
 		return self.acquire.fetch_data(
 			endpoint="/web/fanfic/my/new",
 			params=params,
-			data_key="items",
 			limit=limit,
 		)
 
@@ -264,7 +257,6 @@ class Obtain:
 			endpoint="/creation-tools/v1/user/fans",
 			params=params,
 			total_key="total",
-			data_key="items",
 			limit=limit,
 		)
 
@@ -279,7 +271,6 @@ class Obtain:
 			endpoint="/creation-tools/v1/user/followers",
 			params=params,
 			total_key="total",
-			data_key="items",
 			limit=limit,
 		)
 
@@ -294,7 +285,6 @@ class Obtain:
 			endpoint="/creation-tools/v1/user/center/collect/list",
 			params=params,
 			total_key="total",
-			data_key="items",
 			limit=limit,
 		)
 

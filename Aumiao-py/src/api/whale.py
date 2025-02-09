@@ -1,0 +1,81 @@
+from collections.abc import Generator
+from typing import Literal
+
+from src.utils import acquire, tool
+from src.utils.acquire import HTTPSTATUS
+from src.utils.decorator import singleton
+
+
+@singleton
+class Routine:
+	def __init__(self) -> None:
+		self.acquire = acquire.CodeMaoClient()
+		self.tool_process = tool.CodeMaoProcess()
+
+	def login(self, username: str, password: str, key: int, code: str) -> None:
+		data = {"username": username, "password": password, "key": key, "code": code}
+		response = self.acquire.send_request(endpoint="https://api-whale.codemao.cn/admins/login", method="POST", payload=data)
+		self.acquire.update_cookies(response.cookies)
+
+	def logout(self) -> bool:
+		response = self.acquire.send_request(endpoint="https://api-whale.codemao.cn/admins/logout", method="DELETE", payload={})
+		return response.status_code == HTTPSTATUS.NO_CONTENT
+
+	def get_data_info(self) -> dict:
+		response = self.acquire.send_request(endpoint="https://api-whale.codemao.cn/admins/info", method="GET")
+		return response.json()
+
+
+@singleton
+class Obtain:
+	def __init__(self) -> None:
+		self.acquire = acquire.CodeMaoClient()
+		self.tool_process = tool.CodeMaoProcess()
+
+	# 获取编程作品举报
+	def get_work_report(
+		self,
+		types: Literal["KITTEN", "BOX2", "ALL"],
+		status: Literal["TOBEDONE", "DONE", "ALL"],
+		target_id: int,
+		method: Literal["admin_id", "work_user_id", "work_id"],
+		limit: int | None = 15,
+	) -> Generator:
+		params = {"type": types, "status": status, method: target_id, "offset": 0, "limit": limit}
+		return self.acquire.fetch_data(endpoint="https://api-whale.codemao.cn/reports/works/search", params=params, limit=limit)
+
+	# 获取评论举报
+	def get_comment_report(
+		self,
+		types: Literal["ALL", "KITTEN", "BOX2", "FICTION", "COMIC", "WORK_SUBJECT"],
+		status: Literal["TOBEDONE", "DONE", "ALL"],
+		target_id: int,
+		method: Literal["admin_id", "comment_user_id", "comment_id"],
+		limit: int | None = 15,
+	) -> Generator:
+		params = {"source": types, "status": status, method: target_id, "offset": 0, "limit": limit}
+		# url可以为https://api-whale.codemao.cn/reports/comments/search
+		# 或者https://api-whale.codemao.cn/reports/comments
+		return self.acquire.fetch_data(endpoint="https://api-whale.codemao.cn/reports/comments/search", params=params, limit=limit)
+
+	# 获取帖子举报
+	def get_post_report(
+		self,
+		status: Literal["TOBEDONE", "DONE", "ALL"],
+		target_id: int,
+		method: Literal["post_id"],
+		limit: int | None = 15,
+	) -> Generator:
+		params = {"status": status, method: target_id, "offset": 0, "limit": limit}
+		return self.acquire.fetch_data(endpoint="https://api-whale.codemao.cn/reports/posts", params=params, limit=limit)
+
+	# 获取回复与评论举报
+	def get_reply_report(
+		self,
+		status: Literal["TOBEDONE", "DONE", "ALL"],
+		target_id: int,
+		method: Literal["post_id"],
+		limit: int | None = 15,
+	) -> Generator:
+		params = {"status": status, method: target_id, "offset": 0, "limit": limit}
+		return self.acquire.fetch_data(endpoint="https://api-whale.codemao.cn/reports/posts/discussions", params=params, limit=limit)

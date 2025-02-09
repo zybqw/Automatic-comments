@@ -362,7 +362,6 @@ class Obtain:
 		return self.acquire.fetch_data(
 			endpoint="/creation-tools/v1/course/package/list",
 			params=params,
-			data_key="items",
 			limit=limit,
 		)
 
@@ -386,7 +385,7 @@ class Obtain:
 	# TODO @Aurzex: 未知
 	def get_teaching_plan(self, limit: int = 100) -> Generator:
 		params = {"limit": limit, "offset": 0}
-		return self.acquire.fetch_data(endpoint="https://api-creation.codemao.cn/neko/teaching-plan/list/team", params=params, limit=limit, data_key="items")
+		return self.acquire.fetch_data(endpoint="https://api-creation.codemao.cn/neko/teaching-plan/list/team", params=params, limit=limit)
 
 
 @singleton

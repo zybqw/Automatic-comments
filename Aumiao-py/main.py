@@ -1,4 +1,4 @@
-import src
+from src import *  # noqa: F403
 
 
 def login() -> None:
@@ -6,20 +6,20 @@ def login() -> None:
 		identity = input("请输入用户名: ")
 		password = input("请输入密码: ")
 		# 登录并获取数据
-		src.community.Login().login_token(identity=identity, password=password)
-		data = src.user.Obtain().get_data_details()
+		community.Login().login_token(identity=identity, password=password)  # noqa: F405
+		_data = user.Obtain().get_data_details()  # noqa: F405
 		# 使用 update 方法更新字典中的数据
-		account_data_manager = src.data.DataManager()
+		account_data_manager = data.DataManager()  # noqa: F405
 		account_data_manager.update(
 			{
 				"ACCOUNT_DATA": {
 					"identity": identity,
 					"password": "******",  # 不建议存储密码
-					"id": data["id"],
-					"nickname": data["nickname"],
-					"create_time": data["create_time"],
-					"description": data["description"],
-					"author_level": data["author_level"],
+					"id": _data["id"],
+					"nickname": _data["nickname"],
+					"create_time": _data["create_time"],
+					"description": _data["description"],
+					"author_level": _data["author_level"],
 				},
 			},
 		)
@@ -34,7 +34,7 @@ def clear_comments() -> None:
 		if source not in ["work", "post"] or action_type not in ["ads", "duplicates", "blacklist"]:
 			print("无效的输入")
 			return
-		src.client.Motion().clear_comments(source=source, action_type=action_type)  # type: ignore  # noqa: PGH003
+		client.Motion().clear_comments(source=source, action_type=action_type)  # type: ignore  # noqa: F405, PGH003
 	except Exception as e:
 		print(f"清除评论失败: {e}")
 
@@ -45,14 +45,14 @@ def clear_red_point() -> None:
 		if method not in ["nemo", "web"]:
 			print("无效的输入")
 			return
-		src.client.Motion().clear_red_point(method=method)  # type: ignore  # noqa: PGH003
+		client.Motion().clear_red_point(method=method)  # type: ignore  # noqa: F405, PGH003
 	except Exception as e:
 		print(f"清除邮箱红点失败: {e}")
 
 
 def reply_work() -> None:
 	try:
-		src.client.Motion().reply_work()
+		client.Motion().reply_work()  # noqa: F405
 	except Exception as e:
 		print(f"自动回复失败: {e}")
 
@@ -63,13 +63,13 @@ def logout() -> None:
 		if method != "web":
 			print("无效的输入")
 			return
-		src.community.Login().logout(method=method)
+		community.Login().logout(method=method)  # noqa: F405
 	except Exception as e:
 		print(f"登出失败: {e}")
 
 
 def main() -> None:
-	src.client.Index().index()
+	client.Index().index()  # noqa: F405
 	while True:
 		print("\n请选择操作:")
 		print("1. 登录")

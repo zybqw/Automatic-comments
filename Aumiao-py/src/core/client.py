@@ -5,7 +5,7 @@ from json import loads
 from random import choice
 from typing import Any, Literal, TypedDict, cast, overload
 
-from src.api import community, edu, forum, shop, user, work
+from src.api import community, edu, forum, shop, user, whale, work
 from src.utils import acquire, data, decorator, file, tool
 
 
@@ -42,6 +42,8 @@ class Union:
 		self.tool_routine = tool.CodeMaoRoutine()
 		self.user_motion = user.Motion()
 		self.user_obtain = user.Obtain()
+		self.whale_obtain = whale.Obtain()
+		self.whale_routine = whale.Routine()
 		self.work_motion = work.Motion()
 		self.work_obtain = work.Obtain()
 

@@ -1,66 +1,54 @@
 import importlib
+from sys import argv
 from types import ModuleType
-from typing import Any
+from typing import TYPE_CHECKING
 
-from . import import_all
+# Nuitka 编译兼容性处理 --------------------------------------------------------
+# 以下代码仅在编译时执行,用于确保 Nuitka 能正确打包子模块
+_is_compiling = any("nuitka" in arg.lower() for arg in argv)
 
-__all__ = [import_all]  # type: ignore  # noqa: PGH003, PLE0604
-# 导入显式导入模块
+# 类型检查时显式导入 (仅供 IDE 识别)
+if TYPE_CHECKING or _is_compiling:
+	from .api import community, edu, forum, library, pickduck, shop, user, whale, work
+	from .core import client
+	from .utils import data, decorator
 
-# 定义需要延迟加载的模块
-_API_MODULES: list[str] = ["community", "edu", "forum", "library", "pickduck", "shop", "user", "work"]
+# 修改后的 __all__ 列表,确保包含你需要的模块
+__all__ = ["client", "community", "data", "decorator", "edu", "forum", "library", "pickduck", "shop", "user", "whale", "work"]
 
-# 定义直接导入的核心模块和工具
-_CORE_MODULES = {"client": ".core.client", "data": ".utils.data"}
+# 已加载的模块缓存字典
+__loaded_modules: dict[str, ModuleType] = {}
 
-# 模块缓存
-_loaded_modules: dict[str, ModuleType] = {}
+# 定义模块导入映射
+_module_paths = {
+	"client": ".core.client",
+	"data": ".utils.data",
+	"decorator": ".utils.decorator",
+	"community": ".api.community",
+	"edu": ".api.edu",
+	"forum": ".api.forum",
+	"library": ".api.library",
+	"pickduck": ".api.pickduck",
+	"shop": ".api.shop",
+	"user": ".api.user",
+	"whale": ".api.whale",
+	"work": ".api.work",
+}
 
-# 导出的属性列表
-__all__: list[str] = _API_MODULES + list(_CORE_MODULES.keys())  # type: ignore  # noqa: PGH003, PLE0605
 
-# 版本信息
-__version__ = "2.0.0"
-__author__ = "Aurzex"
-__team__ = "Aumiao Team"
-__team_members__ = "Aurzex, MoonLeaaaf, Nomen, MiTao"
-
-
-def __getattr__(name: str) -> ModuleType | Any:  # noqa: ANN401
-	"""实现模块的延迟加载"""
-	# 处理 API 模块
-	if name in _API_MODULES:
-		if name not in _loaded_modules:
-			module = importlib.import_module(f".api.{name}", __package__)
-			# 可选:执行模块初始化
-			if hasattr(module, "__init_extension__"):
-				module.__init_extension__()
-			_loaded_modules[name] = module
-		return _loaded_modules[name]
-
-	# 处理核心模块和工具
-	if name in _CORE_MODULES:
-		if name not in _loaded_modules:
-			module = importlib.import_module(_CORE_MODULES[name], __package__)
-			_loaded_modules[name] = module
-		return _loaded_modules[name]
-
+def __getattr__(name: str) -> ModuleType:
+	"""实现动态延迟加载"""
+	if name in __all__:
+		if name not in __loaded_modules:
+			# 动态导入模块 (实际运行时加载)
+			module = importlib.import_module(_module_paths[name], __package__) if name in _module_paths else importlib.import_module(f".{name}", __package__)
+			__loaded_modules[name] = module
+		return __loaded_modules[name]
+	# 如果没有找到相应的模块,抛出 AttributeError
 	msg = f"module {__name__!r} has no attribute {name!r}"
 	raise AttributeError(msg)
 
 
 def __dir__() -> list[str]:
 	"""增强 IDE 自动补全支持"""
-	return sorted([*list(__all__), "__version__", "__author__", "__team__", "__team_members__"])
-
-
-# 可选:预加载所有模块
-def preload_all() -> None:
-	"""预加载所有模块"""
-	for module_name in _API_MODULES:
-		if module_name not in _loaded_modules:
-			__getattr__(module_name)
-
-	for module_name in _CORE_MODULES:
-		if module_name not in _loaded_modules:
-			__getattr__(module_name)
+	return sorted([*__all__, "__version__"])
