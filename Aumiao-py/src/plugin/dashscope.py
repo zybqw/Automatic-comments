@@ -1,8 +1,8 @@
-from src.base import acquire
-from src.base.decorator import singleton
+from src.utils import acquire
+from src.utils.decorator import singleton
 
 version = "2024.8.6"
-HEADERS = acquire.CodeMaoClient().HEADERS
+HEADERS = acquire.CodeMaoClient().headers
 docs = "https://help.aliyun.com/zh/model-studio/developer-reference/use-qwen-by-calling-api"
 qwq = "https://bailian.console.aliyun.com/#/model-market/detail/qwen2.5-3b-instruct?tabKey=sdk"
 

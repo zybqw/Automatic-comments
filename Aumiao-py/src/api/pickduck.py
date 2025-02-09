@@ -1,6 +1,6 @@
-from src.base import acquire
-from src.base.acquire import HTTPSTATUS
-from src.base.decorator import singleton
+from src.utils import acquire
+from src.utils.acquire import HTTPSTATUS
+from src.utils.decorator import singleton
 
 
 @singleton

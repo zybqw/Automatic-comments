@@ -6,7 +6,7 @@ from random import choice
 from typing import Any, Literal, TypedDict, cast, overload
 
 from src.api import community, edu, forum, shop, user, work
-from src.base import acquire, data, decorator, file, tool
+from src.utils import acquire, data, decorator, file, tool
 
 
 class FormattedAnswer(TypedDict):

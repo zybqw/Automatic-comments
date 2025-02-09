@@ -63,7 +63,7 @@ jobs:
         run: |
           python -m venv .venv
           .\.venv\Scripts\activate
-          uv pip install --system -r ./Aumiao-py/project/requirements.txt
+          uv pip install --system -r ./Aumiao-py/src/project/requirements.txt
         shell: pwsh
 
       - name: Get Version Info
@@ -86,7 +86,7 @@ jobs:
           file-description: "Build: ${{ steps.version.outputs.BUILD_DATE }} (${{ steps.version.outputs.GIT_SHA }})"
           copyright: "Copyright © 2025 喵鱼a. All rights reserved."
           windows-console-mode: force
-          windows-icon-from-ico: "./Aumiao-py/project/favicon.ico"
+          windows-icon-from-ico: "./Aumiao-py/src/project/favicon.ico"
           remove-output: true
           lto: "yes"
           jobs: ${{ runner.os == 'Windows' && 4 || 2 }}

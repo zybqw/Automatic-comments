@@ -1,9 +1,9 @@
 from collections.abc import Generator
 from typing import Any, Literal
 
-from src.base import acquire, data, tool
-from src.base.acquire import HTTPSTATUS
-from src.base.decorator import singleton
+from src.utils import acquire, data, tool
+from src.utils.acquire import HTTPSTATUS
+from src.utils.decorator import singleton
 
 
 # 编程猫所有api中若包含v2等字样,表示第几版本,同样比它低的版本也可使用

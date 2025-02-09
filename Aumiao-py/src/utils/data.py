@@ -4,8 +4,7 @@ from dataclasses import asdict, dataclass, field, fields, is_dataclass, replace
 from pathlib import Path
 from typing import Any, Generic, TypeVar, cast, get_args, get_origin, get_type_hints
 
-from src.base import decorator
-from src.base.decorator import singleton
+from . import decorator
 
 # 添加 DataclassInstance 定义
 
@@ -270,19 +269,19 @@ class BaseManager(Generic[T]):
 # --------------------------
 # 单例管理器
 # --------------------------
-@singleton
+@decorator.singleton
 class DataManager(BaseManager[CodeMaoData]):
 	def __init__(self) -> None:
 		super().__init__(DATA_FILE_PATH, CodeMaoData)
 
 
-@singleton
+@decorator.singleton
 class CacheManager(BaseManager[CodeMaoCache]):
 	def __init__(self) -> None:
 		super().__init__(CACHE_FILE_PATH, CodeMaoCache)
 
 
-@singleton
+@decorator.singleton
 class SettingManager(BaseManager[CodeMaoSetting]):
 	def __init__(self) -> None:
 		super().__init__(SETTING_FILE_PATH, CodeMaoSetting)

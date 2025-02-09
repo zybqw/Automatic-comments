@@ -3,7 +3,7 @@ import importlib
 from types import ModuleType
 
 # 模块白名单
-_MODULE_NAMES: list[str] = ["chatmindai", "dashscope"]
+_MODULE_NAMES: list[str] = ["client"]
 
 # 模块缓存字典
 _loaded_modules: dict[str, ModuleType] = {}
