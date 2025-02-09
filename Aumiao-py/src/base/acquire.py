@@ -1,5 +1,6 @@
 import json
 import time
+from collections.abc import Generator
 from enum import Enum
 from pathlib import Path
 from typing import Literal, Protocol, TypedDict, cast
@@ -108,66 +109,53 @@ class CodeMaoClient:
 			Literal["amount", "remove", "res_amount_key", "res_remove_key"],
 			Literal["limit", "offset", "page", "current_page", "page_size"],
 		] = {},
-	) -> list[dict]:
-		"""分页获取数据.
-		:param endpoint: 请求的 URL.
-		:param params: URL 参数.
-		:param data: 请求体数据.
-		:param limit: 获取数据的最大数量.
-		:param fetch_method: 获取数据的方法,如 "get" 或 "post".
-		:param total_key: 总数据量的键.
-		:param data_key: 数据项的键.
-		:param method: 分页方法,如 "offset" 或 "page".
-		:param args: 分页参数的键.
-		:return: 数据列表.
-		"""
-
+	) -> Generator[dict]:
+		"""分页获取数据生成器版本"""
 		# 设置默认分页参数
 		args.setdefault("amount", "limit")
 		args.setdefault("remove", "offset")
 		args.setdefault("res_amount_key", "limit")
 		args.setdefault("res_remove_key", "offset")
 
-		# 第一次请求获取数据和总项数
-		initial_response = self.send_request(endpoint=endpoint, method=fetch_method, params=params, payload=payload)
+		# 初始化计数器
+		yielded_count = 0
+
+		# 第一次请求
+		initial_response = self.send_request(endpoint, fetch_method, params, payload)
 		if not initial_response:
-			return []
+			return
 
-		# 获取数据并解析总项数
 		initial_json = initial_response.json()
-		_data = self.tool_process.get_nested_value(initial_json, data_key)
+		first_page_data = self.tool_process.get_nested_value(initial_json, data_key)
 		total_items = int(cast(str, self.tool_process.get_nested_value(initial_json, total_key)))
-
-		# 每次获取多少个
 		items_per_page = params.get(args["amount"], initial_json.get(args["res_amount_key"], 0))
 
-		# 计算总页数
-		total_pages = (total_items + items_per_page - 1) // items_per_page  # 向下取整
-		all_data = []
-		all_data.extend(_data)  # 已经包含第一页数据
-		fetch_count = len(_data)  # 初始获取的数据数量
+		# 处理第一页数据
+		for item in first_page_data:
+			yield item
+			yielded_count += 1
+			if limit and yielded_count >= limit:
+				return
 
-		# 如果有更多数据,继续分页请求
-		for page in range(1, total_pages):  # 从第二页开始获取
+		# 计算总请求次数(从第二页开始)
+		total_pages = (total_items + items_per_page - 1) // items_per_page
+		for page in range(1, total_pages):
+			# 更新分页参数
 			if pagination_method == "offset":
 				params[args["remove"]] = page * items_per_page
 			elif pagination_method == "page":
 				params[args["remove"]] = page + 1
 
-			# 请求分页数据
-			response = self.send_request(endpoint=endpoint, method=fetch_method, params=params)
+			response = self.send_request(endpoint, fetch_method, params)
 			if not response:
 				continue
 
-			_data = self.tool_process.get_nested_value(response.json(), data_key)
-			all_data.extend(_data)
-			fetch_count += len(_data)
-
-			# 如果已经达到 limit,提前结束
-			if limit and fetch_count >= limit:
-				return all_data[:limit]
-
-		return all_data
+			page_data = self.tool_process.get_nested_value(response.json(), data_key)
+			for item in page_data:
+				yield item
+				yielded_count += 1
+				if limit and yielded_count >= limit:  # 达到限制立即停止
+					return
 
 	def update_cookies(self, cookies: RequestsCookieJar | dict) -> None:
 		"""类型安全的Cookie更新方法"""

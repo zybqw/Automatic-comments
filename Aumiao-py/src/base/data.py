@@ -4,6 +4,7 @@ from dataclasses import asdict, dataclass, field, fields, is_dataclass, replace
 from pathlib import Path
 from typing import Any, Generic, TypeVar, cast, get_args, get_origin, get_type_hints
 
+from src.base import decorator
 from src.base.decorator import singleton
 
 # 添加 DataclassInstance 定义
@@ -220,7 +221,7 @@ class BaseManager(Generic[T]):
 		self._data = load_json_file(file_path, data_class)
 		self._file_path = file_path
 
-	@property
+	@decorator.lazy_property
 	def data(self) -> T:
 		"""明确返回类型为泛型 T"""
 		return self._data

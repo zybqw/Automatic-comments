@@ -1,4 +1,4 @@
-from collections.abc import Callable
+from collections.abc import Callable, Generator
 from functools import wraps
 from locale import Error
 from time import sleep
@@ -51,5 +51,30 @@ def skip_on_error(func):  # noqa: ANN001, ANN201
 		except Exception as e:
 			print(f"Error occurred: {e}. Skipping this iteration.")
 			return None  # 继续执行下一个循环
+
+	return wrapper
+
+
+def generator(chunk_size: int = 1000) -> Callable:
+	def decorator(func: Callable) -> Callable:
+		def wrapper(*args, **kwargs) -> Generator:  # noqa: ANN002, ANN003
+			result = func(*args, **kwargs)
+			for i in range(0, len(result), chunk_size):
+				yield result[i : i + chunk_size]
+
+		return wrapper
+
+	return decorator
+
+
+def lazy_property(func: Callable) -> property:
+	attr_name = "_lazy_" + func.__name__
+
+	@property
+	@wraps(func)
+	def wrapper(self) -> object:  # noqa: ANN001
+		if not hasattr(self, attr_name):
+			setattr(self, attr_name, func(self))
+		return getattr(self, attr_name)
 
 	return wrapper

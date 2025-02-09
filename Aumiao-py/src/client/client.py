@@ -1,4 +1,5 @@
 from collections import defaultdict
+from collections.abc import Generator
 from enum import Enum
 from json import loads
 from random import choice
@@ -142,7 +143,7 @@ class Obtain(ClassUnion):
 		source: Literal["work", "POST", "shop"],
 		method: Literal["user_id", "comments", "comment_id"] = "user_id",
 	) -> list[int | dict | str]:
-		def _get_replies(source: str, comment: dict) -> list[dict]:
+		def _get_replies(source: str, comment: dict) -> Generator[dict]:
 			"""统一获取评论的回复"""
 			if source == "POST":
 				return self.forum_obtain.get_reply_post_comments(post_id=comment["id"], limit=None)
@@ -246,7 +247,7 @@ class Motion(ClassUnion):
 					lambda _id: Obtain().get_comments_detail_new(_id, "work", "comments"),
 					self.work_motion.del_comment_work,
 				)
-			if source == "POST":
+			if source == "post":
 				return (
 					self.forum_obtain.get_post_mine_all("created", limit=None),
 					lambda _id: Obtain().get_comments_detail_new(_id, "POST", "comments"),
@@ -269,7 +270,7 @@ class Motion(ClassUnion):
 		# 主处理逻辑
 		for item in items:
 			item_id = int(item["id"])
-			title = item["title" if source == "POST" else "work_name"]
+			title = item["title" if source == "post" else "work_name"]
 			comments = get_comments(item_id)
 
 			# 处理广告/黑名单
@@ -312,6 +313,7 @@ class Motion(ClassUnion):
 						lists["duplicates"].extend(ids)
 
 		# 执行删除操作
+		@decorator.skip_on_error
 		def execute_deletion(target_list: list, label: str) -> bool:
 			if not target_list:
 				print(f"未发现{label}")
@@ -525,6 +527,7 @@ class Motion(ClassUnion):
 
 		return True
 
+	@decorator.skip_on_error
 	def _execute_reply(
 		self,
 		reply_type: str,

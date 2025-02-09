@@ -1,4 +1,5 @@
-from typing import Any, Literal
+from collections.abc import Generator
+from typing import Literal
 
 from src.base import acquire
 from src.base.acquire import HTTPSTATUS
@@ -52,7 +53,7 @@ class Obtain:
 		return response.json()
 
 	# 获取工作室成员
-	def get_shops_members(self, shop_id: int, limit: int | None = 40) -> list[dict[Any, Any]]:
+	def get_shops_members(self, shop_id: int, limit: int | None = 40) -> Generator:
 		params = {"limit": 40, "offset": 0}
 		return self.acquire.fetch_data(
 			endpoint=f"/web/shops/{shop_id}/users",
@@ -86,12 +87,12 @@ class Obtain:
 		return response.json()
 
 	# 获取工作室讨论
-	def get_shop_discussion(self, shop_id: int, source: Literal["WORK_SHOP"] = "WORK_SHOP", sort: Literal["-created_at"] = "-created_at", limit: int | None = 15) -> list[dict]:
+	def get_shop_discussion(self, shop_id: int, source: Literal["WORK_SHOP"] = "WORK_SHOP", sort: Literal["-created_at"] = "-created_at", limit: int | None = 15) -> Generator:
 		params = {"source": source, "sort": sort, "limit": 20, "offset": 0}
 		return self.acquire.fetch_data(endpoint=f"/web/discussions/{shop_id}/comments", params=params, limit=limit, data_key="items")
 
 	# 获取工作室投稿作品
-	def get_shop_works(self, shop_id: int, user_id: int, sort: str = "-created_at,-id", limit: int | None = 20) -> list[dict[Any, Any]]:
+	def get_shop_works(self, shop_id: int, user_id: int, sort: str = "-created_at,-id", limit: int | None = 20) -> Generator:
 		params = {"limit": 20, "offset": 0, "sort": sort, "user_id": user_id, "work_subject_id": shop_id}
 		return self.acquire.fetch_data(endpoint=f"/web/works/subjects/{shop_id}/works", params=params, data_key="items", limit=limit)
 
@@ -102,7 +103,7 @@ class Obtain:
 		return response.json()
 
 	# 获取工作室讨论区的帖子
-	def get_shop_posts(self, label_id: int, limit: int | None = 20) -> list[dict]:
+	def get_shop_posts(self, label_id: int, limit: int | None = 20) -> Generator:
 		params = {"limit": 20, "offset": 0}
 		return self.acquire.fetch_data(endpoint=f"/web/works/subjects/labels/{label_id}/posts", params=params, data_key="items", limit=limit)
 
