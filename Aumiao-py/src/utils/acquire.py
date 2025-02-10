@@ -126,7 +126,7 @@ class CodeMaoClient:
 			return
 
 		initial_json = initial_response.json()
-		first_page_data = self.tool_process.get_nested_value(initial_json, data_key)
+		first_page_data: list = self.tool_process.get_nested_value(initial_json, data_key)  # type: ignore  # noqa: PGH003
 		total_items = int(cast(str, self.tool_process.get_nested_value(initial_json, total_key)))
 		items_per_page = params.get(args["amount"], initial_json.get(args["res_amount_key"], 0))
 
@@ -150,7 +150,7 @@ class CodeMaoClient:
 			if not response:
 				continue
 
-			page_data = self.tool_process.get_nested_value(response.json(), data_key)
+			page_data: list = self.tool_process.get_nested_value(response.json(), data_key)  # type: ignore  # noqa: PGH003
 			for item in page_data:
 				yield item
 				yielded_count += 1

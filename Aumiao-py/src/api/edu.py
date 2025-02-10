@@ -127,7 +127,7 @@ class Obtain:
 		return response.json()
 
 	# 获取所有班级
-	def get_classes(self, method: Literal["detail", "simple"] = "simple", limit: int | None = 20) -> dict | Generator:
+	def get_classes(self, method: Literal["detail", "simple"] = "simple", limit: int | None = 20) -> dict | Generator[dict]:
 		if method == "simple":
 			classes = self.acquire.send_request(
 				endpoint="https://eduzone.codemao.cn/edu/zone/classes/simple",
@@ -148,7 +148,7 @@ class Obtain:
 		return classes
 
 	# 获取删除学生记录
-	def get_record_del(self, limit: int | None = 20) -> Generator:
+	def get_record_del(self, limit: int | None = 20) -> Generator[dict]:
 		time_stamp = community.Obtain().get_timestamp()["data"]
 		params = {"page": 1, "limit": 10, "TIME": time_stamp}
 		return self.acquire.fetch_data(
@@ -160,7 +160,7 @@ class Obtain:
 		)
 
 	# 获取班级内全部学生
-	def get_students(self, invalid: int = 1, limit: int | None = 50) -> Generator:
+	def get_students(self, invalid: int = 1, limit: int | None = 50) -> Generator[dict]:
 		# invalid为1时为已加入班级学生,为0则反之
 		data = {"invalid": invalid}
 		params = {"page": 1, "limit": 100}
@@ -299,7 +299,7 @@ class Obtain:
 	# version用于区分源码编辑器4.0和源码编辑器,在请求中,源码编辑器4.0的version为4,源码编辑器不填
 	# 返回数据中的praise_times为点赞量
 	# 返回数据中的language_type貌似用来区分海龟编辑器2.0(c++)与海龟编辑器,海龟编辑器的language_type为3
-	def get_all_works(self, limit: int | None = 50) -> Generator:
+	def get_all_works(self, limit: int | None = 50) -> Generator[dict]:
 		time_stamp = community.Obtain().get_timestamp()["data"]
 		params = {"page": 1, "TIME": time_stamp}
 		return self.acquire.fetch_data(
@@ -324,7 +324,7 @@ class Obtain:
 		return response.json()
 
 	# 获取上课记录
-	def get_teaching_record(self, limit: int | None = 10) -> Generator:
+	def get_teaching_record(self, limit: int | None = 10) -> Generator[dict]:
 		time_stamp = community.Obtain().get_timestamp()["data"]
 		params = {"page": 1, "TIME": time_stamp, "limit": 10}
 		return self.acquire.fetch_data(
@@ -358,7 +358,7 @@ class Obtain:
 		return response.json()
 
 	# 获取官方课程包
-	def get_official_package(self, limit: int | None = 150) -> Generator:
+	def get_official_package(self, limit: int | None = 150) -> Generator[dict]:
 		time_stamp = community.Obtain().get_timestamp()["data"]
 		params = {"TIME": time_stamp, "pacakgeEntryType": 0, "topicType": "all", "topicId": "all", "tagId": "all", "page": 1, "limit": 150}
 		return self.acquire.fetch_data(
@@ -392,7 +392,7 @@ class Obtain:
 		return response.json()
 
 	# 获取我的备课包(需要教师号)
-	def get_customized_package(self, limit: int | None = 100) -> Generator:
+	def get_customized_package(self, limit: int | None = 100) -> Generator[dict]:
 		time_stamp = community.Obtain().get_timestamp()["data"]
 		params = {"TIME": time_stamp, "page": 1, "limit": 100}
 		return self.acquire.fetch_data(

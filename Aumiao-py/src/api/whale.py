@@ -37,10 +37,10 @@ class Obtain:
 		self,
 		types: Literal["KITTEN", "BOX2", "ALL"],
 		status: Literal["TOBEDONE", "DONE", "ALL"],
-		target_id: int,
-		method: Literal["admin_id", "work_user_id", "work_id"],
+		method: Literal["admin_id", "work_user_id", "work_id"] | None = None,
+		target_id: int | None = None,
 		limit: int | None = 15,
-	) -> Generator:
+	) -> Generator[dict]:
 		params = {"type": types, "status": status, method: target_id, "offset": 0, "limit": limit}
 		return self.acquire.fetch_data(endpoint="https://api-whale.codemao.cn/reports/works/search", params=params, limit=limit)
 
@@ -49,10 +49,10 @@ class Obtain:
 		self,
 		types: Literal["ALL", "KITTEN", "BOX2", "FICTION", "COMIC", "WORK_SUBJECT"],
 		status: Literal["TOBEDONE", "DONE", "ALL"],
-		target_id: int,
-		method: Literal["admin_id", "comment_user_id", "comment_id"],
+		method: Literal["admin_id", "comment_user_id", "comment_id"] | None = None,
+		target_id: int | None = None,
 		limit: int | None = 15,
-	) -> Generator:
+	) -> Generator[dict]:
 		params = {"source": types, "status": status, method: target_id, "offset": 0, "limit": limit}
 		# url可以为https://api-whale.codemao.cn/reports/comments/search
 		# 或者https://api-whale.codemao.cn/reports/comments
@@ -62,20 +62,20 @@ class Obtain:
 	def get_post_report(
 		self,
 		status: Literal["TOBEDONE", "DONE", "ALL"],
-		target_id: int,
-		method: Literal["post_id"],
+		method: Literal["post_id"] | None = None,
+		target_id: int | None = None,
 		limit: int | None = 15,
-	) -> Generator:
+	) -> Generator[dict]:
 		params = {"status": status, method: target_id, "offset": 0, "limit": limit}
 		return self.acquire.fetch_data(endpoint="https://api-whale.codemao.cn/reports/posts", params=params, limit=limit)
 
 	# 获取回复与评论举报
-	def get_reply_report(
+	def get_discussion_report(
 		self,
 		status: Literal["TOBEDONE", "DONE", "ALL"],
-		target_id: int,
-		method: Literal["post_id"],
+		method: Literal["post_id"] | None = None,
+		target_id: int | None = None,
 		limit: int | None = 15,
-	) -> Generator:
+	) -> Generator[dict]:
 		params = {"status": status, method: target_id, "offset": 0, "limit": limit}
 		return self.acquire.fetch_data(endpoint="https://api-whale.codemao.cn/reports/posts/discussions", params=params, limit=limit)

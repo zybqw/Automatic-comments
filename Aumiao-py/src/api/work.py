@@ -371,7 +371,7 @@ class Obtain:
 		self.tool = tool.CodeMaoProcess()
 
 	# 获取评论区评论
-	def get_work_comments(self, work_id: int, limit: int = 15) -> Generator:
+	def get_work_comments(self, work_id: int, limit: int = 15) -> Generator[dict]:
 		params = {"limit": 15, "offset": 0}
 		return self.acquire.fetch_data(
 			endpoint=f"/creation-tools/v1/works/{work_id}/comments",
@@ -566,7 +566,7 @@ class Obtain:
 		return response.json()
 
 	# 获取协作者列表
-	def get_coll_list(self, work_id: int, limit: int | None = 100) -> Generator:
+	def get_coll_list(self, work_id: int, limit: int | None = 100) -> Generator[dict]:
 		params = {"current_page": 1, "page_size": 100}
 		return self.acquire.fetch_data(
 			endpoint=f"https://socketcoll.codemao.cn/coll/kitten/collaborator/{work_id}",
@@ -612,7 +612,7 @@ class Obtain:
 		return response.json()
 
 	# 获取回收站作品列表
-	def get_recycle_kitten_works(self, version_no: Literal["KITTEN_V3", "KITTEN_V4"], work_status: str = "CYCLED", limit: int | None = 30) -> Generator:
+	def get_recycle_kitten_works(self, version_no: Literal["KITTEN_V3", "KITTEN_V4"], work_status: str = "CYCLED", limit: int | None = 30) -> Generator[dict]:
 		params = {
 			"limit": 30,
 			"offset": 0,
@@ -626,7 +626,7 @@ class Obtain:
 		)
 
 	# 获取回收站海龟编辑器作品列表
-	def get_recycle_wood_works(self, language_type: int = 0, work_status: str = "CYCLED", published_status: str = "undefined", limit: int | None = 30) -> Generator:
+	def get_recycle_wood_works(self, language_type: int = 0, work_status: str = "CYCLED", published_status: str = "undefined", limit: int | None = 30) -> Generator[dict]:
 		params = {
 			"limit": 30,
 			"offset": 0,
@@ -641,7 +641,7 @@ class Obtain:
 		)
 
 	# 获取代码岛回收站作品列表
-	def get_recycle_box_works(self, work_status: str = "CYCLED", limit: int | None = 30) -> Generator:
+	def get_recycle_box_works(self, work_status: str = "CYCLED", limit: int | None = 30) -> Generator[dict]:
 		params = {
 			"limit": 30,
 			"offset": 0,
@@ -654,7 +654,7 @@ class Obtain:
 		)
 
 	# 获取回收站小说列表
-	def get_recycle_fanfic_works(self, fiction_status: str = "CYCLED", limit: int | None = 30) -> Generator:
+	def get_recycle_fanfic_works(self, fiction_status: str = "CYCLED", limit: int | None = 30) -> Generator[dict]:
 		params = {
 			"limit": 30,
 			"offset": 0,
@@ -667,7 +667,7 @@ class Obtain:
 		)
 
 	# 获取回收站KN作品列表
-	def get_recycle_kn_works(self, name: str = "", work_business_classify: int = 1, limit: int | None = 24) -> Generator:
+	def get_recycle_kn_works(self, name: str = "", work_business_classify: int = 1, limit: int | None = 24) -> Generator[dict]:
 		params = {
 			"name": name,
 			"limit": 24,
@@ -682,7 +682,7 @@ class Obtain:
 		)
 
 	# 按关键词搜索KN全部作品
-	def search_works_kn(self, name: str, status: int = 1, work_business_classify: int = 1, limit: int | None = 24) -> Generator:
+	def search_works_kn(self, name: str, status: int = 1, work_business_classify: int = 1, limit: int | None = 24) -> Generator[dict]:
 		params = {
 			"name": name,
 			"limit": 24,
@@ -697,7 +697,7 @@ class Obtain:
 		)
 
 	# 按关键词搜索KN已发布作品
-	def search_works_kn_published(self, name: str, work_business_classify: int = 1, limit: int | None = 24) -> Generator:
+	def search_works_kn_published(self, name: str, work_business_classify: int = 1, limit: int | None = 24) -> Generator[dict]:
 		params = {
 			"name": name,
 			"limit": 24,
