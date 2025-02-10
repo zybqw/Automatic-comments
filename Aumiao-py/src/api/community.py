@@ -10,16 +10,16 @@ from src.utils.decorator import singleton
 @singleton
 class Login:
 	"""
-	概述：用户登录
+	概述:用户登录
 
-	参数：
+	参数:
 
 	`identity (str)`: 用户身份标识。
 	`password (str)`: 用户密码。
-	`pid (str = "65edCTyg")`: 请求的 PID，用于标识请求来源。
-	返回值：
+	`pid (str = "65edCTyg")`: 请求的 PID,用于标识请求来源。
+	返回值:
 
-	str | None: 函数返回一个字符串，表示登录请求的响应结果。如果请求失败，则返回 None。"""
+	str | None: 函数返回一个字符串,表示登录请求的响应结果。如果请求失败,则返回 None。"""
 
 	def __init__(self) -> None:
 		# 初始化CodeMaoClient和CodeMaoProcess对象
@@ -106,7 +106,7 @@ class Login:
 
 	# 退出登录
 	def logout(self, method: Literal["web", "app"]) -> bool:
-		# 发送请求，请求路径为/tiger/v3/{method}/accounts/logout，请求方法为POST，请求体为空
+		# 发送请求,请求路径为/tiger/v3/{method}/accounts/logout,请求方法为POST,请求体为空
 		response = self.acquire.send_request(
 			endpoint=f"/tiger/v3/{method}/accounts/logout",
 			method="POST",
@@ -124,7 +124,7 @@ class Login:
 		pid: str = "65edCTyg",
 		agreement_ids: list = [-1],
 	) -> dict:
-		# 创建一个字典，包含用户名、密码、pid和agreement_ids
+		# 创建一个字典,包含用户名、密码、pid和agreement_ids
 		data = {
 			"identity": identity,
 			"password": password,
@@ -132,7 +132,7 @@ class Login:
 			"agreement_ids": agreement_ids,
 		}
 
-		# 发送POST请求，获取登录安全信息
+		# 发送POST请求,获取登录安全信息
 		response = self.acquire.send_request(
 			endpoint="/tiger/v3/web/accounts/login/security",
 			method="POST",
@@ -184,7 +184,7 @@ class Obtain:
 
 	# 获取随机昵称
 	def get_name_random(self) -> str:
-		# 发送GET请求，获取随机昵称
+		# 发送GET请求,获取随机昵称
 		response = self.acquire.send_request(
 			method="GET",
 			endpoint="/api/user/random/nickname",
@@ -202,7 +202,7 @@ class Obtain:
 		else:
 			msg = "不支持的方法"
 			raise ValueError(msg)
-		# 发送GET请求，获取新消息数量
+		# 发送GET请求,获取新消息数量
 		record = self.acquire.send_request(
 			endpoint=url,
 			method="GET",

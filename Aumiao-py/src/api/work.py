@@ -11,7 +11,7 @@ select = Literal["POST", "DELETE"]
 @singleton
 class Motion:
 	def __init__(self) -> None:
-		# 初始化Motion类，创建一个CodeMaoClient实例
+		# 初始化Motion类,创建一个CodeMaoClient实例
 		self.acquire = acquire.CodeMaoClient()
 
 	# 新建kitten作品

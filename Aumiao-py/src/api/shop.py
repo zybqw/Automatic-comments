@@ -121,7 +121,7 @@ class Motion:
 
 	# 更新工作室简介
 	def update_shop_details(self, description: str, shop_id: str, name: str, preview_url: str) -> bool:
-		# 发送请求，更新工作室简介
+		# 发送请求,更新工作室简介
 		response = self.acquire.send_request(
 			endpoint="/web/work_shops/update",
 			method="POST",
@@ -137,7 +137,7 @@ class Motion:
 
 	# 创建工作室
 	def create_shop(self, name: str, description: str, preview_url: str) -> dict:
-		# 发送请求，创建工作室
+		# 发送请求,创建工作室
 		response = self.acquire.send_request(
 			endpoint="/web/work_shops/create",
 			method="POST",
@@ -152,7 +152,7 @@ class Motion:
 
 	# 解散工作室
 	def dissolve_shop(self, shop_id: int) -> bool:
-		# 发送请求，解散工作室
+		# 发送请求,解散工作室
 		response = self.acquire.send_request(
 			endpoint="/web/work_shops/dissolve",
 			method="POST",
@@ -163,7 +163,7 @@ class Motion:
 
 	# 在指定工作室投稿作品
 	def contribute_work(self, shop_id: int, work_id: int) -> bool:
-		# 发送请求，在指定工作室投稿作品
+		# 发送请求,在指定工作室投稿作品
 		response = self.acquire.send_request(
 			endpoint="/web/work_shops/works/contribute",
 			method="POST",
@@ -174,7 +174,7 @@ class Motion:
 
 	# 在指定工作室删除作品
 	def remove_work(self, shop_id: int, work_id: int) -> bool:
-		# 发送请求，在指定工作室删除作品
+		# 发送请求,在指定工作室删除作品
 		response = self.acquire.send_request(
 			endpoint="/web/work_shops/works/remove",
 			method="POST",
@@ -196,7 +196,7 @@ class Motion:
 
 	# 审核已经申请加入工作室的用户
 	def audit_join(self, shop_id: int, status: Literal["UNACCEPTED", "ACCEPTED"], user_id: int) -> bool:
-		# 发送请求，审核已经申请加入工作室的用户
+		# 发送请求,审核已经申请加入工作室的用户
 		response = self.acquire.send_request(
 			endpoint="/web/work_shops/users/audit",
 			method="POST",

@@ -39,7 +39,7 @@ def clear_comments() -> None:
 		if source not in ["work", "post"] or action_type not in ["ads", "duplicates", "blacklist"]:
 			print("无效的输入")
 			return
-		# 调用Motion类的clear_comments方法，清除评论
+		# 调用Motion类的clear_comments方法,清除评论
 		client.Motion().clear_comments(source=source, action_type=action_type)  # type: ignore  # noqa: F405, PGH003
 	except Exception as e:
 		print(f"清除评论失败: {e}")
@@ -53,10 +53,10 @@ def clear_red_point() -> None:
 		if method not in ["nemo", "web"]:
 			print("无效的输入")
 			return
-		# 调用Motion类的clear_red_point方法，传入方法参数
+		# 调用Motion类的clear_red_point方法,传入方法参数
 		client.Motion().clear_red_point(method=method)  # type: ignore  # noqa: F405, PGH003
 	except Exception as e:
-		# 如果出现异常，则输出清除邮箱红点失败的信息
+		# 如果出现异常,则输出清除邮箱红点失败的信息
 		print(f"清除邮箱红点失败: {e}")
 
 
@@ -68,6 +68,26 @@ def reply_work() -> None:
 		print(f"自动回复失败: {e}")
 
 
+def handle_report() -> None:
+	"""尝试执行处理举报操作"""
+	try:
+		token = input("请输入Authorization")
+		whale.Routine().set_token(token=token)  # noqa: F405
+		admin_id = int(input("请输入管理员ID: "))
+		client.Motion().handle_report(admin_id=admin_id)  # noqa: F405
+	except Exception as e:
+		print(f"处理举报失败: {e}")
+
+
+def check_account_status() -> None:
+	"""尝试查看账户状态"""
+	try:
+		status = client.Motion().get_account_status()  # noqa: F405
+		print(f"账户状态: {status}")
+	except Exception as e:
+		print(f"获取账户状态失败: {e}")
+
+
 def logout() -> None:
 	"""尝试执行登出操作"""
 	try:
@@ -75,9 +95,9 @@ def logout() -> None:
 		if method != "web":
 			print("无效的输入")
 			return
-		# 调用community.Login().logout()方法，传入method参数
+		# 调用community.Login().logout()方法,传入method参数
 		community.Login().logout(method=method)  # noqa: F405
-	# 捕获异常，并输出错误信息
+	# 捕获异常,并输出错误信息
 	except Exception as e:
 		print(f"登出失败: {e}")
 
@@ -92,9 +112,13 @@ def main() -> None:
 		print("3. 清除邮箱红点")
 		print("4. 自动回复")
 		print("5. 登出")
-		print("6. 退出")
-		choice = input("请输入选择 (1-6): ")
+		print("6. 处理举报")
+		print("7. 查看账户状态")
+		print("8. 退出")
+
+		choice = input("请输入选择 (1-8): ")
 		print("*" * 50)
+
 		if choice == "1":
 			login()
 		elif choice == "2":
@@ -106,6 +130,10 @@ def main() -> None:
 		elif choice == "5":
 			logout()
 		elif choice == "6":
+			handle_report()
+		elif choice == "7":
+			check_account_status()
+		elif choice == "8":
 			break
 		else:
 			print("无效的选择, 请重新输入")

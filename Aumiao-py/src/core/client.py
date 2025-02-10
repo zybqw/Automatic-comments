@@ -67,6 +67,7 @@ class Tool(ClassUnion):
 
 	def message_report(self, user_id: str) -> None:
 		# 获取用户荣誉信息
+
 		response = self.user_obtain.get_user_honor(user_id=user_id)
 		# 获取当前时间戳
 		timestamp = self.community_obtain.get_timestamp()["data"]
@@ -83,7 +84,7 @@ class Tool(ClassUnion):
 		}
 		# 获取缓存数据
 		before_data = self.cache_manager.data
-		# 如果缓存数据不为空，则显示数据变化
+		# 如果缓存数据不为空,则显示数据变化
 		if before_data != {}:
 			self.tool_routine.display_data_changes(
 				before_data=before_data,
@@ -130,7 +131,7 @@ class Index(ClassUnion):
 		print("2025编程猫拜年祭活动 https://shequ.codemao.cn/community/1619855")
 		# 打印数据标题
 		print("*" * 22 + " 数据 " + "*" * 22)
-		# 调用Tool类的message_report方法，传入用户id
+		# 调用Tool类的message_report方法,传入用户id
 		Tool().message_report(user_id=self.data.ACCOUNT_DATA.id)
 		# 打印分隔线
 		print("*" * 50)
@@ -150,10 +151,10 @@ class Obtain(ClassUnion):
 		_list = []
 		# 获取新回复数量
 		reply_num = self.community_obtain.get_message_count(method="web")[0]["count"]
-		# 如果新回复数量为0且limit也为0，则返回空列表
+		# 如果新回复数量为0且limit也为0,则返回空列表
 		if reply_num == limit == 0:
 			return [{}]
-		# 如果limit为0，则获取新回复数量个回复，否则获取limit个回复
+		# 如果limit为0,则获取新回复数量个回复,否则获取limit个回复
 		result_num = reply_num if limit == 0 else limit
 		offset = 0
 		# 循环获取新回复
@@ -170,13 +171,29 @@ class Obtain(ClassUnion):
 			offset += limit
 		return _list
 
+	@overload
+	def get_comments_detail_new(
+		self,
+		com_id: int,
+		source: Literal["work", "post", "shop"],
+		method: Literal["user_id", "comment_id"],
+	) -> list[str]: ...
+
+	@overload
+	def get_comments_detail_new(
+		self,
+		com_id: int,
+		source: Literal["work", "post", "shop"],
+		method: Literal["comments"],
+	) -> list[dict]: ...
+
 	# 获取评论区信息
 	def get_comments_detail_new(
 		self,
 		com_id: int,
 		source: Literal["work", "post", "shop"],
 		method: Literal["user_id", "comments", "comment_id"] = "user_id",
-	) -> list[int | dict | str]:
+	) -> list[dict] | list[str]:
 		def _get_replies(source: str, comment: dict) -> Generator[dict]:
 			"""统一获取评论的回复"""
 			if source == "post":
@@ -240,7 +257,7 @@ class Obtain(ClassUnion):
 			msg = "不支持的来源类型"
 			raise ValueError(msg)
 		method_func, arg_key = source_methods[source]
-		comments = method_func(**{arg_key: com_id, "limit": 500})
+		comments = method_func(**{arg_key: com_id, "limit": 200})
 
 		# 处理方法映射表
 		method_handlers = {
@@ -657,73 +674,78 @@ class Motion(ClassUnion):
 	# 处理举报
 	# 需要风纪权限
 	def handle_report(self, admin_id: int) -> None:  # noqa: PLR0915
+		def process_report(item: dict, item_type: str, handle_func: ...) -> None:
+			print("=" * 50)
+			print(f"举报ID: {item['id']}")
+			print(f"举报内容: {item[f'{item_type}_content']}")
+			print(f"所属板块: {item[f'{item_type}_source_object_name'] if item_type == 'comment' else item['board_name']}")
+			print(f"被举报人: {item[f'{item_type}_user_nickname']}")
+			print(f"举报原因: {item['reason_content']}")
+			print(f"举报时间: {item['created_at']}")
+			print("-" * 50)
+
+			while True:
+				choice = input("选择操作: D:删除评论, S:禁言7天, P:通过, C:查看, F:检查违规").upper()
+				if choice == "D":
+					handle_func(report_id=item["id"], status="DELETE", admin_id=admin_id)
+					break
+				if choice == "S":
+					handle_func(report_id=item["id"], status="MUTE_SEVEN_DAYS", admin_id=admin_id)
+					break
+				if choice == "P":
+					handle_func(report_id=item["id"], status="PASS", admin_id=admin_id)
+					break
+				if choice == "C":
+					if item_type == "comment":
+						print(f"违规板块ID: https://shequ.codemao.cn/work_shop/{item['comment_source_object_id']}")
+						print(f"违规用户ID: https://shequ.codemao.cn/user/{item['comment_user_id']}")
+					elif item_type == "post":
+						print(f"违规帖子ID: https://shequ.codemao.cn/community/{item['post_id']}")
+						print(f"违规用户ID: https://shequ.codemao.cn/user/{item['post_user_id']}")
+					elif item_type == "discussion":
+						print(f"所属帖子标题: {item['discussion_title']}")
+						print(f"所属帖子帖主ID: https://shequ.codemao.cn/user/{item['post_user_id']}")
+						print(f"所属帖子帖主: https://shequ.codemao.cn/user/{item['post_user_nick_name']}")
+						print(f"所属帖子ID: https://shequ.codemao.cn/community/{item['discussion_id']}")
+						print(f"违规用户ID: https://shequ.codemao.cn/user/{item['discussion_user_id']}")
+					continue
+				if choice == "F" and item_type == "comment" and item["comment_source"] == "WORK_SHOP":
+					_check_violations(item)
+				else:
+					print("无效输入")
+
+		def _check_violations(item: dict) -> None:
+			comments = Obtain().get_comments_detail_new(com_id=int(item["comment_source_object_id"]), source="shop", method="comments")
+			user_comments = self.tool_process.filter_items_by_values(data=comments, id_path="user_id", values=item["comment_user_id"])
+			content_map = defaultdict(list)
+			for user_single_comment in user_comments:
+				content = user_single_comment["content"].lower()
+				if any(ad in content for ad in self.data.USER_DATA.ads):
+					print(f"广告回复: {content}")
+
+				self._track_duplicates(user_single_comment, item["comment_source_object_id"], content_map)
+				for reply in user_single_comment["replies"]:
+					self._track_duplicates(reply, item["comment_source_object_id"], content_map, is_reply=True)
+					content = reply["content"].lower()
+					if any(ad in content for ad in self.data.USER_DATA.ads):
+						print(f"广告回复: {content}")
+
+			for (_uid, content), ids in content_map.items():
+				if len(ids) >= self.setting.PARAMETER.spam_max:
+					print(f"发现刷屏评论:{content}")
+
 		comments_list = self.whale_obtain.get_comment_report(types="ALL", status="TOBEDONE", limit=None)
 		posts_list = self.whale_obtain.get_post_report(status="TOBEDONE", limit=None)
 		discussions_list = self.whale_obtain.get_discussion_report(status="TOBEDONE", limit=None)
+
 		for item in comments_list:
-			print("=" * 50)
-			print(f"举报ID:{item['id']}")
-			print(f"举报内容:{item['comment_content']}")
-			print(f"所属板块:{item['comment_source_object_name']}")
-			print(f"被举报人:{item['comment_user_nickname']}")
-			print(f"举报原因:{item['reason_content']}")
-			print(f"举报时间:{item['created_at']}")
-			print("-" * 50)
-			while True:
-				choice = input("选择操作: D:删除评论, S:禁言7天, P:通过")
-				if choice == "D":
-					self.whale_motion.handle_comment_report(report_id=item["id"], status="DELETE", admin_id=admin_id)
-					break
-				if choice == "S":
-					self.whale_motion.handle_comment_report(report_id=item["id"], status="MUTE_SEVEN_DAYS", admin_id=admin_id)
-					break
-				if choice == "P":
-					self.whale_motion.handle_comment_report(report_id=item["id"], status="PASS", admin_id=admin_id)
-					break
-				print("无效输入")
+			process_report(item, "comment", self.whale_motion.handle_comment_report)
+
 		for item in posts_list:
-			print("=" * 50)
-			print(f"举报ID:{item['report_id']}")
-			print(f"举报内容:{item['post_title']}")
-			print(f"所属板块:{item['board_name']}")
-			print(f"被举报人:{item['post_user_nick_name']}")
-			print(f"举报原因:{item['reason_content']}")
-			print(f"举报线索:{item['description']}")
-			print(f"举报时间:{item['created_at']}")
-			print("-" * 50)
-			while True:
-				choice = input("选择操作: D:删除评论, S:禁言7天, P:通过")
-				if choice == "D":
-					self.whale_motion.handle_post_report(report_id=item["report_id"], status="DELETE", admin_id=admin_id)
-					break
-				if choice == "S":
-					self.whale_motion.handle_post_report(report_id=item["report_id"], status="MUTE_SEVEN_DAYS", admin_id=admin_id)
-					break
-				if choice == "P":
-					self.whale_motion.handle_post_report(report_id=item["report_id"], status="PASS", admin_id=admin_id)
-					break
-				print("无效输入")
+			process_report(item, "post", self.whale_motion.handle_post_report)
+
 		for item in discussions_list:
-			print("=" * 50)
-			print(f"举报ID:{item['report_id']}")
-			print(f"举报内容:{item['discussion_content']}")
-			print(f"所属板块:{item['board_name']}")
-			print(f"被举报人:{item['discussion_user_nickname']}")
-			print(f"举报原因:{item['reason_content']}")
-			print(f"举报时间:{item['created_at']}")
-			print("-" * 50)
-			while True:
-				choice = input("选择操作: D:删除评论, S:禁言7天, P:通过")
-				if choice == "D":
-					self.whale_motion.handle_discussion_report(report_id=item["report_id"], status="DELETE", admin_id=admin_id)
-					break
-				if choice == "S":
-					self.whale_motion.handle_discussion_report(report_id=item["report_id"], status="MUTE_SEVEN_DAYS", admin_id=admin_id)
-					break
-				if choice == "P":
-					self.whale_motion.handle_discussion_report(report_id=item["report_id"], status="PASS", admin_id=admin_id)
-					break
-				print("无效输入")
+			process_report(item, "discussion", self.whale_motion.handle_discussion_report)
 
 
 # "POST_COMMENT",
