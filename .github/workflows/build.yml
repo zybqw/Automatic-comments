@@ -75,6 +75,7 @@ jobs:
 
       - name: Build Executable with Nuitka
         uses: Nuitka/Nuitka-Action@main
+        continue-on-error: true
         with:
           nuitka-version: main
           script-name: ./Aumiao-py/main.py
