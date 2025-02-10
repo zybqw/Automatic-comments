@@ -170,13 +170,29 @@ class Obtain(ClassUnion):
 			offset += limit
 		return _list
 
+	@overload
+	def get_comments_detail_new(
+		self,
+		com_id: int,
+		source: Literal["work", "post", "shop"],
+		method: Literal["user_id", "comment_id"],
+	) -> list[str]: ...
+
+	@overload
+	def get_comments_detail_new(
+		self,
+		com_id: int,
+		source: Literal["work", "post", "shop"],
+		method: Literal["comments"],
+	) -> list[dict]: ...
+
 	# 获取评论区信息
 	def get_comments_detail_new(
 		self,
 		com_id: int,
 		source: Literal["work", "post", "shop"],
 		method: Literal["user_id", "comments", "comment_id"] = "user_id",
-	) -> list[int | dict | str]:
+	) -> list[dict] | list[str]:
 		def _get_replies(source: str, comment: dict) -> Generator[dict]:
 			"""统一获取评论的回复"""
 			if source == "post":
