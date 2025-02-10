@@ -35,8 +35,8 @@ class Loggable(Protocol):
 	def file_write(self, path: Path, content: str, method: str) -> None: ...
 
 
-type HttpMethod = Literal["GET", "POST", "DELETE", "PATCH", "PUT"]
-type FetchMethod = Literal["GET", "POST"]
+HttpMethod = Literal["GET", "POST", "DELETE", "PATCH", "PUT"]
+FetchMethod = Literal["GET", "POST"]
 
 
 @singleton
