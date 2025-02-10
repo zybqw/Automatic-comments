@@ -85,6 +85,8 @@ class Motion:
 	def __init__(self) -> None:
 		self.acquire = acquire.CodeMaoClient()
 
+	# created_at是举报时间,updated_at是处理时间
+
 	# 处理帖子举报
 	def handle_post_report(self, report_id: int, admin_id: int, status: Literal["PASS", "DELETE", "MUTE_SEVEN_DAYS", "MUTE_THREE_MONTHS"]) -> bool:
 		response = self.acquire.send_request(
