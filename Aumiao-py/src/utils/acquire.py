@@ -60,7 +60,7 @@ class CodeMaoClient:
 		params: dict | None = None,
 		payload: dict | None = None,
 		headers: dict | None = None,
-		retries: int = 3,
+		retries: int = 1,
 		backoff_factor: float = 0.3,
 		timeout: float = 10.0,
 		*,
@@ -69,7 +69,6 @@ class CodeMaoClient:
 		"""增强型请求方法,支持重试机制和更安全的超时处理"""
 		url = endpoint if endpoint.startswith("http") else f"{self.base_url}{endpoint}"
 		merged_headers = {**self.headers, **(headers or {})}
-
 		for attempt in range(retries):
 			try:
 				response = self._session.request(method=method, url=url, headers=merged_headers, params=params, json=payload, timeout=timeout)
@@ -89,9 +88,12 @@ class CodeMaoClient:
 			except RequestException as e:
 				print(f"Request failed: {type(e).__name__} - {e}")
 				break
+			except Exception as e:
+				print(e)
 			else:
 				if log:
 					self._log_request(response)
+				# self.update_cookies(response.cookies)
 				return response
 		return cast(requests.Response, None)
 
@@ -116,7 +118,6 @@ class CodeMaoClient:
 		args.setdefault("remove", "offset")
 		args.setdefault("res_amount_key", "limit")
 		args.setdefault("res_remove_key", "offset")
-
 		# 初始化计数器
 		yielded_count = 0
 
@@ -128,6 +129,7 @@ class CodeMaoClient:
 		initial_json = initial_response.json()
 		first_page_data: list = self.tool_process.get_nested_value(initial_json, data_key)  # type: ignore  # noqa: PGH003
 		total_items = int(cast(str, self.tool_process.get_nested_value(initial_json, total_key)))
+
 		items_per_page = params.get(args["amount"], initial_json.get(args["res_amount_key"], 0))
 
 		# 处理第一页数据
@@ -178,7 +180,7 @@ class CodeMaoClient:
 			"status": response.status_code,
 			"request_headers": dict(response.request.headers),
 			"response_headers": dict(response.headers),
-			"response_size": len(response.content),
+			"response": response.text,
 		}
 
 		self._file.file_write(path=LOG_FILE_PATH, content=json.dumps(log_entry, ensure_ascii=False) + "\n", method="a")

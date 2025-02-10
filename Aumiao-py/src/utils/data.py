@@ -220,7 +220,7 @@ class BaseManager(Generic[T]):
 		self._data = load_json_file(file_path, data_class)
 		self._file_path = file_path
 
-	@decorator.lazy_property
+	@property
 	def data(self) -> T:
 		"""明确返回类型为泛型 T"""
 		return self._data

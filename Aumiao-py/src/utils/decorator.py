@@ -82,7 +82,7 @@ def generator(chunk_size: int = 1000) -> Callable:
 	return decorator
 
 
-def lazy_property(func: Callable) -> property:
+def lazy_property(func: Callable) -> ...:
 	# 定义一个属性名,用于存储函数的返回值
 	attr_name = "_lazy_" + func.__name__
 

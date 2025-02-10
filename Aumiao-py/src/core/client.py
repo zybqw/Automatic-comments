@@ -67,6 +67,7 @@ class Tool(ClassUnion):
 
 	def message_report(self, user_id: str) -> None:
 		# 获取用户荣誉信息
+
 		response = self.user_obtain.get_user_honor(user_id=user_id)
 		# 获取当前时间戳
 		timestamp = self.community_obtain.get_timestamp()["data"]
@@ -256,7 +257,7 @@ class Obtain(ClassUnion):
 			msg = "不支持的来源类型"
 			raise ValueError(msg)
 		method_func, arg_key = source_methods[source]
-		comments = method_func(**{arg_key: com_id, "limit": 500})
+		comments = method_func(**{arg_key: com_id, "limit": 200})
 
 		# 处理方法映射表
 		method_handlers = {
@@ -672,10 +673,11 @@ class Motion(ClassUnion):
 
 	# 处理举报
 	# 需要风纪权限
-	def handle_report(self, admin_id: int) -> None:  # noqa: PLR0915
+	def handle_report(self, admin_id: int) -> None:  # noqa: PLR0912, PLR0915
 		comments_list = self.whale_obtain.get_comment_report(types="ALL", status="TOBEDONE", limit=None)
 		posts_list = self.whale_obtain.get_post_report(status="TOBEDONE", limit=None)
 		discussions_list = self.whale_obtain.get_discussion_report(status="TOBEDONE", limit=None)
+
 		for item in comments_list:
 			print("=" * 50)
 			print(f"举报ID:{item['id']}")
@@ -686,7 +688,7 @@ class Motion(ClassUnion):
 			print(f"举报时间:{item['created_at']}")
 			print("-" * 50)
 			while True:
-				choice = input("选择操作: D:删除评论, S:禁言7天, P:通过")
+				choice = input("选择操作: D:删除评论, S:禁言7天, P:通过, C:查看, F:检查违规").upper()
 				if choice == "D":
 					self.whale_motion.handle_comment_report(report_id=item["id"], status="DELETE", admin_id=admin_id)
 					break
@@ -696,10 +698,31 @@ class Motion(ClassUnion):
 				if choice == "P":
 					self.whale_motion.handle_comment_report(report_id=item["id"], status="PASS", admin_id=admin_id)
 					break
-				print("无效输入")
+				if choice == "C":
+					print(f"违规板块ID: https://shequ.codemao.cn/work_shop/{item['comment_source_object_id']}")
+					print(f"违规用户ID: https://shequ.codemao.cn/user/{item['comment_user_id']}")
+				if choice == "F" and item["comment_source"] == "WORK_SHOP":
+					comments = Obtain().get_comments_detail_new(com_id=int(item["comment_source_object_id"]), source="shop", method="comments")
+					user_comments = self.tool_process.filter_items_by_values(data=comments, id_path="user_id", values=item["comment_user_id"])
+					content_map = defaultdict(list)
+					for user_single_comment in user_comments:
+						content = user_single_comment["content"].lower()
+						if any(ad in content for ad in self.data.USER_DATA.ads):
+							print(f"广告回复: {content}")
+
+						self._track_duplicates(user_single_comment, item["comment_source_object_id"], content_map)
+						for reply in user_single_comment["replies"]:
+							self._track_duplicates(reply, item["comment_source_object_id"], content_map, is_reply=True)
+							content = reply["content"].lower()
+							if any(ad in content for ad in self.data.USER_DATA.ads):
+								print(f"广告回复: {content}")
+
+					for (_uid, content), ids in content_map.items():
+						if len(ids) >= self.setting.PARAMETER.spam_max:
+							print(f"发现刷屏评论:{content}")
 		for item in posts_list:
 			print("=" * 50)
-			print(f"举报ID:{item['report_id']}")
+			print(f"举报ID:{item['id']}")
 			print(f"举报内容:{item['post_title']}")
 			print(f"所属板块:{item['board_name']}")
 			print(f"被举报人:{item['post_user_nick_name']}")
@@ -708,20 +731,24 @@ class Motion(ClassUnion):
 			print(f"举报时间:{item['created_at']}")
 			print("-" * 50)
 			while True:
-				choice = input("选择操作: D:删除评论, S:禁言7天, P:通过")
+				choice = input("选择操作: D:删除评论, S:禁言7天, P:通过, C:查看").upper()
 				if choice == "D":
-					self.whale_motion.handle_post_report(report_id=item["report_id"], status="DELETE", admin_id=admin_id)
+					self.whale_motion.handle_post_report(report_id=item["id"], status="DELETE", admin_id=admin_id)
 					break
 				if choice == "S":
-					self.whale_motion.handle_post_report(report_id=item["report_id"], status="MUTE_SEVEN_DAYS", admin_id=admin_id)
+					self.whale_motion.handle_post_report(report_id=item["id"], status="MUTE_SEVEN_DAYS", admin_id=admin_id)
 					break
 				if choice == "P":
-					self.whale_motion.handle_post_report(report_id=item["report_id"], status="PASS", admin_id=admin_id)
+					self.whale_motion.handle_post_report(report_id=item["id"], status="PASS", admin_id=admin_id)
 					break
+				if choice == "C":
+					print(f"违规帖子ID: https://shequ.codemao.cn/community/{item['post_id']}")
+					print(f"违规用户ID: https://shequ.codemao.cn/user/{item['post_user_id']}")
 				print("无效输入")
+
 		for item in discussions_list:
 			print("=" * 50)
-			print(f"举报ID:{item['report_id']}")
+			print(f"举报ID:{item['id']}")
 			print(f"举报内容:{item['discussion_content']}")
 			print(f"所属板块:{item['board_name']}")
 			print(f"被举报人:{item['discussion_user_nickname']}")
@@ -729,16 +756,22 @@ class Motion(ClassUnion):
 			print(f"举报时间:{item['created_at']}")
 			print("-" * 50)
 			while True:
-				choice = input("选择操作: D:删除评论, S:禁言7天, P:通过")
+				choice = input("选择操作: D:删除评论, S:禁言7天, P:通过, C:查看").upper()
 				if choice == "D":
-					self.whale_motion.handle_discussion_report(report_id=item["report_id"], status="DELETE", admin_id=admin_id)
+					self.whale_motion.handle_discussion_report(report_id=item["id"], status="DELETE", admin_id=admin_id)
 					break
 				if choice == "S":
-					self.whale_motion.handle_discussion_report(report_id=item["report_id"], status="MUTE_SEVEN_DAYS", admin_id=admin_id)
+					self.whale_motion.handle_discussion_report(report_id=item["id"], status="MUTE_SEVEN_DAYS", admin_id=admin_id)
 					break
 				if choice == "P":
-					self.whale_motion.handle_discussion_report(report_id=item["report_id"], status="PASS", admin_id=admin_id)
+					self.whale_motion.handle_discussion_report(report_id=item["id"], status="PASS", admin_id=admin_id)
 					break
+				if choice == "C":
+					print(f"所属帖子标题: {item['discussion_title']}")
+					print(f"所属帖子帖主ID: https://shequ.codemao.cn/user/{item['post_user_id']}")
+					print(f"所属帖子帖主: https://shequ.codemao.cn/user/{item['post_user_nick_name']}")
+					print(f"所属帖子ID: https://shequ.codemao.cn/community/{item['discussion_id']}")
+					print(f"违规用户ID: https://shequ.codemao.cn/user/{item['discussion_user_id']}")
 				print("无效输入")
 
 

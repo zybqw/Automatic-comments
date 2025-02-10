@@ -29,6 +29,9 @@ class Routine:
 		response = self.acquire.send_request(endpoint="https://api-whale.codemao.cn/admins/info", method="GET")
 		return response.json()
 
+	def set_token(self, token: str) -> None:
+		self.acquire.headers["Authorization"] = f"Bearer {token}"
+
 
 @singleton
 class Obtain:
@@ -48,7 +51,7 @@ class Obtain:
 		limit: int | None = 15,
 	) -> Generator:
 		# 构造请求参数
-		params = {"type": types, "status": status, method: target_id, "offset": 0, "limit": limit}
+		params = {"type": types, "status": status, method: target_id, "offset": 0, "limit": 15}
 		# 获取数据
 		return self.acquire.fetch_data(endpoint="https://api-whale.codemao.cn/reports/works/search", params=params, limit=limit)
 
@@ -61,7 +64,7 @@ class Obtain:
 		target_id: int | None = None,
 		limit: int | None = 15,
 	) -> Generator[dict]:
-		params = {"source": types, "status": status, method: target_id, "offset": 0, "limit": limit}
+		params = {"source": types, "status": status, method: target_id, "offset": 0, "limit": 15}
 		# url可以为https://api-whale.codemao.cn/reports/comments/search
 		# 或者https://api-whale.codemao.cn/reports/comments
 		return self.acquire.fetch_data(endpoint="https://api-whale.codemao.cn/reports/comments/search", params=params, limit=limit)
@@ -74,7 +77,7 @@ class Obtain:
 		target_id: int | None = None,
 		limit: int | None = 15,
 	) -> Generator[dict]:
-		params = {"status": status, method: target_id, "offset": 0, "limit": limit}
+		params = {"status": status, method: target_id, "offset": 0, "limit": 15}
 		return self.acquire.fetch_data(endpoint="https://api-whale.codemao.cn/reports/posts", params=params, limit=limit)
 
 	# 获取讨论区举报
@@ -85,7 +88,7 @@ class Obtain:
 		target_id: int | None = None,
 		limit: int | None = 15,
 	) -> Generator[dict]:
-		params = {"status": status, method: target_id, "offset": 0, "limit": limit}
+		params = {"status": status, method: target_id, "offset": 0, "limit": 15}
 		return self.acquire.fetch_data(endpoint="https://api-whale.codemao.cn/reports/posts/discussions", params=params, limit=limit)
 
 
