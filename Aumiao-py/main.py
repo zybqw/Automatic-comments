@@ -68,6 +68,26 @@ def reply_work() -> None:
 		print(f"自动回复失败: {e}")
 
 
+def handle_report() -> None:
+	"""尝试执行处理举报操作"""
+	try:
+		token = input("请输入Authorization")
+		whale.Routine().set_token(token=token)  # noqa: F405
+		admin_id = int(input("请输入管理员ID: "))
+		client.Motion().handle_report(admin_id=admin_id)  # noqa: F405
+	except Exception as e:
+		print(f"处理举报失败: {e}")
+
+
+def check_account_status() -> None:
+	"""尝试查看账户状态"""
+	try:
+		status = client.Motion().get_account_status()  # noqa: F405
+		print(f"账户状态: {status}")
+	except Exception as e:
+		print(f"获取账户状态失败: {e}")
+
+
 def logout() -> None:
 	"""尝试执行登出操作"""
 	try:
@@ -92,9 +112,13 @@ def main() -> None:
 		print("3. 清除邮箱红点")
 		print("4. 自动回复")
 		print("5. 登出")
-		print("6. 退出")
-		choice = input("请输入选择 (1-6): ")
+		print("6. 处理举报")
+		print("7. 查看账户状态")
+		print("8. 退出")
+
+		choice = input("请输入选择 (1-8): ")
 		print("*" * 50)
+
 		if choice == "1":
 			login()
 		elif choice == "2":
@@ -106,6 +130,10 @@ def main() -> None:
 		elif choice == "5":
 			logout()
 		elif choice == "6":
+			handle_report()
+		elif choice == "7":
+			check_account_status()
+		elif choice == "8":
 			break
 		else:
 			print("无效的选择, 请重新输入")
