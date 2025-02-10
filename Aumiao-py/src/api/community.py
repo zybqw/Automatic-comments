@@ -10,16 +10,17 @@ from src.utils.decorator import singleton
 @singleton
 class Login:
 	"""
-概述：用户登录
+	概述：用户登录
 
-参数：
+	参数：
 
-`identity (str)`: 用户身份标识。
-`password (str)`: 用户密码。
-`pid (str = "65edCTyg")`: 请求的 PID，用于标识请求来源。
-返回值：
+	`identity (str)`: 用户身份标识。
+	`password (str)`: 用户密码。
+	`pid (str = "65edCTyg")`: 请求的 PID，用于标识请求来源。
+	返回值：
 
-str | None: 函数返回一个字符串，表示登录请求的响应结果。如果请求失败，则返回 None。"""
+	str | None: 函数返回一个字符串，表示登录请求的响应结果。如果请求失败，则返回 None。"""
+
 	def __init__(self) -> None:
 		# 初始化CodeMaoClient和CodeMaoProcess对象
 		self.acquire = acquire.CodeMaoClient()
@@ -97,11 +98,11 @@ str | None: 函数返回一个字符串，表示登录请求的响应结果。�
 		# token_ca = {"authorization": token, "__ca_uid_key__": str(uuid_ca)}
 		# 无上面这两句会缺少__ca_uid_key__
 		token_ca = {"authorization": token}
-		cookie_str = self.tool_process.convert_cookie_to_str(token_ca) #  将cookie转换为字符串
-		headers = {**self.acquire.headers, "cookie": cookie_str} #  添加cookie到headers中
-		response = self.acquire.send_request(method="GET", endpoint="/web/users/details", headers=headers) #  发送请求获取用户详情
-		_auth = response.cookies.get_dict() #  获取cookie
-		return {**token_ca, **_auth} #  返回完整cookie
+		cookie_str = self.tool_process.convert_cookie_to_str(token_ca)  #  将cookie转换为字符串
+		headers = {**self.acquire.headers, "cookie": cookie_str}  #  添加cookie到headers中
+		response = self.acquire.send_request(method="GET", endpoint="/web/users/details", headers=headers)  #  发送请求获取用户详情
+		_auth = response.cookies.get_dict()  #  获取cookie
+		return {**token_ca, **_auth}  #  返回完整cookie
 
 	# 退出登录
 	def logout(self, method: Literal["web", "app"]) -> bool:

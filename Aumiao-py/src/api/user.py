@@ -311,30 +311,34 @@ class Obtain:
 @singleton
 class Motion:
 	def __init__(self) -> None:
+		# 初始化acquire对象
 		self.acquire = acquire.CodeMaoClient()
 
-	# 设置正在做的事
 	def set_data_doing(self, doing: str) -> bool:
+		"""发送PUT请求，设置正在做的事"""
 		response = self.acquire.send_request(endpoint="/nemo/v2/user/basic", method="PUT", payload={"doing": doing})
+		# 返回请求状态码是否为200
 		return response.status_code == HTTPSTATUS.OK
 
-	# 设置登录用户名(实验性功能)
 	def set_data_username(self, username: str) -> bool:
+		"""发送PATCH请求，设置登录用户名(实验性功能)"""
 		response = self.acquire.send_request(
 			endpoint="/tiger/v3/web/accounts/username",
 			method="PATCH",
 			payload={"username": username},
 		)
+		# 返回请求状态码是否为204
 		return response.status_code == HTTPSTATUS.NO_CONTENT
 
-	# 验证手机号
 	def verify_phone(self, phone_num: int) -> dict:
+		"""发送GET请求，验证手机号"""
 		params = {"phone_number": phone_num}
 		response = self.acquire.send_request(endpoint="/web/users/phone_number/is_consistent", method="GET", params=params)
+		# 返回请求结果
 		return response.json()
 
-	# 修改密码
 	def modify_password(self, old_password: str, new_password: str) -> bool:
+		"""发送PATCH请求，修改密码"""
 		data = {
 			"old_password": old_password,
 			"password": new_password,
@@ -345,52 +349,58 @@ class Motion:
 			method="PATCH",
 			payload=data,
 		)
+		# 返回请求状态码是否为204
 		return response.status_code == HTTPSTATUS.NO_CONTENT
 
-	# 修改手机号(获取验证码)
 	def modify_phonenum_captcha(self, old_phonenum: int, new_phonenum: int) -> bool:
+		"""发送POST请求，修改手机号(获取验证码)"""
 		data = {"phone_number": new_phonenum, "old_phone_number": old_phonenum}
 		response = self.acquire.send_request(
 			endpoint="/tiger/v3/web/accounts/captcha/phone/change",
 			method="POST",
 			payload=data,
 		)
+		# 返回请求状态码是否为204
 		return response.status_code == HTTPSTATUS.NO_CONTENT
 
-	# 修改手机号
 	def modify_phonenum(self, captcha: int, phonenum: int) -> bool:
+		"""发送PATCH请求，修改手机号"""
 		data = {"phone_number": phonenum, "captcha": captcha}
 		response = self.acquire.send_request(
 			endpoint="/tiger/v3/web/accounts/phone/change",
 			method="PATCH",
 			payload=data,
 		)
+		# 返回请求结果
 		return response.json()
 
-	# 设置nemo头像,昵称,个性签名
 	def set_nemo_basic(self, nickname: str, description: str) -> bool:
+		"""设置nemo头像,昵称,个性签名"""
 		data = {key: value for key, value in [("nickname", nickname), ("description", description)] if value is not None}
 		if not data:
 			msg = "至少需要传入一个参数"
 			raise ValueError(msg)
 		response = self.acquire.send_request(endpoint="/nemo/v2/user/basic", method="PUT", payload=data)
+		# 返回请求状态码是否为200
 		return response.status_code == HTTPSTATUS.OK
 
-	# 取消设置头像框
 	def cancel_avatar_frame(self) -> bool:
+		"""取消设置头像框"""
 		response = self.acquire.send_request(
 			endpoint="/creation-tools/v1/user/avatar-frame/cancel",
 			method="PUT",
 		)
+		# 返回请求状态码是否为200
 		return response.status_code == HTTPSTATUS.OK
 
-	# 设置头像框
 	# id 2,3,4 代表Lv2,3,4头像框
 	def set_avatar_frame(self, frame_id: Literal[2, 3, 4]) -> bool:
+		"""设置头像框"""
 		response = self.acquire.send_request(
 			endpoint=f"/creation-tools/v1/user/avatar-frame/{frame_id}",
 			method="PUT",
 		)
+		# 返回请求状态码是否为200
 		return response.status_code == HTTPSTATUS.OK
 
 	# 设置info
@@ -407,6 +417,7 @@ class Motion:
 		qq: str,
 		sex: Literal[0, 1],
 	) -> bool:
+		# 发送PATCH请求，设置info
 		data = {
 			"avatar_url": avatar_url,
 			"nickname": nickname,
@@ -421,4 +432,5 @@ class Motion:
 			method="PATCH",
 			payload=data,
 		)
+		# 返回请求状态码是否为204
 		return response.status_code == HTTPSTATUS.NO_CONTENT

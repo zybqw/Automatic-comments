@@ -87,6 +87,7 @@ class CodeMaoProcess:
 
 class CodeMaoRoutine:
 	def __init__(self) -> None:
+		# 初始化CodeMaoProcess类
 		self.process = CodeMaoProcess()
 
 	@staticmethod
@@ -104,6 +105,7 @@ class CodeMaoRoutine:
 		"""改进的数据变化展示"""
 
 		def to_dict(data: dict[str, Any] | T) -> dict[str, Any]:
+			# 将数据转换为字典
 			if isinstance(data, dict):
 				return data
 			if hasattr(data, "__dict__"):

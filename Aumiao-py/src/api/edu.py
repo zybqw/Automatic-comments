@@ -83,7 +83,7 @@ class Motion:
 	def remove_student(self, stu_id: int) -> bool:
 		data = {}
 		response = self.acquire.send_request(
-		# 发送请求
+			# 发送请求
 			endpoint=f"https://eduzone.codemao.cn/edu/zone/student/remove/{stu_id}",
 			method="POST",
 			payload=data,

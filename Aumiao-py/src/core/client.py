@@ -26,12 +26,19 @@ OK_CODE = 200
 
 @decorator.singleton
 class Union:
+	# 初始化Union类
 	def __init__(self) -> None:
+		# 获取CodeMaoClient对象
 		self.acquire = acquire.CodeMaoClient()
+		# 获取CacheManager对象
 		self.cache = data.CacheManager().data
+		# 获取Obtain对象
 		self.community_obtain = community.Obtain()
+		# 获取DataManager对象
 		self.data = data.DataManager().data
+		# 获取Obtain对象
 		self.edu_obtain = edu.Obtain()
+		# 获取CodeMaoFile对象
 		self.file = file.CodeMaoFile()
 		self.forum_motion = forum.Motion()
 		self.forum_obtain = forum.Obtain()
@@ -58,8 +65,11 @@ class Tool(ClassUnion):
 		self.cache_manager = data.CacheManager()  # 添加这行
 
 	def message_report(self, user_id: str) -> None:
+		# 获取用户荣誉信息
 		response = self.user_obtain.get_user_honor(user_id=user_id)
+		# 获取当前时间戳
 		timestamp = self.community_obtain.get_timestamp()["data"]
+		# 构造用户数据字典
 		user_data = {
 			"user_id": response["user_id"],
 			"nickname": response["nickname"],
@@ -70,7 +80,9 @@ class Tool(ClassUnion):
 			"view": response["view_times"],
 			"timestamp": timestamp,
 		}
+		# 获取缓存数据
 		before_data = self.cache_manager.data
+		# 如果缓存数据不为空，则显示数据变化
 		if before_data != {}:
 			self.tool_routine.display_data_changes(
 				before_data=before_data,
@@ -83,10 +95,12 @@ class Tool(ClassUnion):
 				},
 				date_field="timestamp",
 			)
+		# 更新缓存数据
 		self.cache_manager.update(user_data)  # 使用管理器的 update 方法
 
 	# 猜测手机号码(暴力枚举)
 	def guess_phonenum(self, phonenum: str) -> int | None:
+		# 枚举10000个四位数
 		for i in range(10000):
 			guess = f"{i:04d}"  # 格式化为四位数,前面补零
 			test_string = int(phonenum.replace("****", guess))
@@ -103,13 +117,21 @@ class Index(ClassUnion):
 
 	# 打印slogan
 	def index(self) -> None:
+		# 打印slogan
 		print(self.setting.PROGRAM.SLOGAN)
+		# 打印版本号
 		print(f"版本号: {self.setting.PROGRAM.VERSION}")
+		# 打印公告标题
 		print("*" * 22 + " 公告 " + "*" * 22)
+		# 打印编程猫社区行为守则链接
 		print("编程猫社区行为守则 https://shequ.codemao.cn/community/1619098")
+		# 打印2025编程猫拜年祭活动链接
 		print("2025编程猫拜年祭活动 https://shequ.codemao.cn/community/1619855")
+		# 打印数据标题
 		print("*" * 22 + " 数据 " + "*" * 22)
+		# 调用Tool类的message_report方法，传入用户id
 		Tool().message_report(user_id=self.data.ACCOUNT_DATA.id)
+		# 打印分隔线
 		print("*" * 50)
 
 
@@ -125,16 +147,25 @@ class Obtain(ClassUnion):
 		type_item: Literal["LIKE_FORK", "COMMENT_REPLY", "SYSTEM"] = "COMMENT_REPLY",
 	) -> list[dict[str, str | int | dict]]:
 		_list = []
+		# 获取新回复数量
 		reply_num = self.community_obtain.get_message_count(method="web")[0]["count"]
+		# 如果新回复数量为0且limit也为0，则返回空列表
 		if reply_num == limit == 0:
 			return [{}]
+		# 如果limit为0，则获取新回复数量个回复，否则获取limit个回复
 		result_num = reply_num if limit == 0 else limit
 		offset = 0
+		# 循环获取新回复
 		while result_num >= 0:
+			# 每次获取5个或剩余回复数量或200个回复
 			limit = sorted([5, result_num, 200])[1]
+			# 获取回复
 			response = self.community_obtain.get_replies(types=type_item, limit=limit, offset=offset)
+			# 将回复添加到列表中
 			_list.extend(response["items"][:result_num])
+			# 更新剩余回复数量
 			result_num -= limit
+			# 更新偏移量
 			offset += limit
 		return _list
 
