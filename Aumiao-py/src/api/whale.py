@@ -69,7 +69,7 @@ class Obtain:
 		params = {"status": status, method: target_id, "offset": 0, "limit": limit}
 		return self.acquire.fetch_data(endpoint="https://api-whale.codemao.cn/reports/posts", params=params, limit=limit)
 
-	# 获取回复与评论举报
+	# 获取讨论区举报
 	def get_discussion_report(
 		self,
 		status: Literal["TOBEDONE", "DONE", "ALL"],
@@ -79,3 +79,44 @@ class Obtain:
 	) -> Generator[dict]:
 		params = {"status": status, method: target_id, "offset": 0, "limit": limit}
 		return self.acquire.fetch_data(endpoint="https://api-whale.codemao.cn/reports/posts/discussions", params=params, limit=limit)
+
+
+class Motion:
+	def __init__(self) -> None:
+		self.acquire = acquire.CodeMaoClient()
+
+	# 处理帖子举报
+	def handle_post_report(self, report_id: int, admin_id: int, status: Literal["PASS", "DELETE", "MUTE_SEVEN_DAYS", "MUTE_THREE_MONTHS"]) -> bool:
+		response = self.acquire.send_request(
+			endpoint=f"https://api-whale.codemao.cn/reports/posts/{report_id}",
+			method="PATCH",
+			payload={"admin_id": admin_id, "status": status},
+		)
+		return response.status_code == HTTPSTATUS.NO_CONTENT
+
+	# 处理讨论区举报
+	def handle_discussion_report(self, report_id: int, admin_id: int, status: Literal["PASS", "DELETE", "MUTE_SEVEN_DAYS", "MUTE_THREE_MONTHS"]) -> bool:
+		response = self.acquire.send_request(
+			endpoint=f"https://api-whale.codemao.cn/reports/posts/discussions/{report_id}",
+			method="PATCH",
+			payload={"admin_id": admin_id, "status": status},
+		)
+		return response.status_code == HTTPSTATUS.NO_CONTENT
+
+	# 处理评论举报
+	def handle_comment_report(self, report_id: int, admin_id: int, status: Literal["PASS", "DELETE", "MUTE_SEVEN_DAYS", "MUTE_THREE_MONTHS"]) -> bool:
+		response = self.acquire.send_request(
+			endpoint=f"https://api-whale.codemao.cn/reports/comments/{report_id}",
+			method="PATCH",
+			payload={"admin_id": admin_id, "status": status},
+		)
+		return response.status_code == HTTPSTATUS.NO_CONTENT
+
+	# 处理作品举报
+	def handle_work_report(self, report_id: int, admin_id: int, status: Literal["PASS", "DELETE", "UNLOAD"]) -> bool:
+		response = self.acquire.send_request(
+			endpoint=f"https://api-whale.codemao.cn/reports/works/{report_id}",
+			method="PATCH",
+			payload={"admin_id": admin_id, "status": status},
+		)
+		return response.status_code == HTTPSTATUS.NO_CONTENT
