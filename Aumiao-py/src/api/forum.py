@@ -16,10 +16,10 @@ class Obtain:
 	def get_posts_details(self, ids: int | list[int]) -> dict:
 		# 判断传入的ids类型
 		if isinstance(ids, int):
-			# 如果是单个id，则直接传入
+			# 如果是单个id,则直接传入
 			params = {"ids": ids}
 		elif isinstance(ids, list):
-			# 如果是多个id，则将id列表转换为字符串
+			# 如果是多个id,则将id列表转换为字符串
 			params = {"ids": ",".join(map(str, ids))}
 		# 发送请求获取帖子信息
 		response = self.acquire.send_request(endpoint="/web/forums/posts/all", method="GET", params=params)
@@ -141,7 +141,7 @@ class Obtain:
 @singleton
 class Motion:
 	def __init__(self) -> None:
-		# 初始化acquire对象，用于发送请求
+		# 初始化acquire对象,用于发送请求
 		self.acquire = acquire.CodeMaoClient()
 
 	# 对某个帖子回帖

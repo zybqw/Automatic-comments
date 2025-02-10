@@ -6,11 +6,11 @@ HEADERS = acquire.CodeMaoClient().headers
 
 
 class Login:
-	# 初始化Login类，创建一个CodeMaoClient对象
+	# 初始化Login类,创建一个CodeMaoClient对象
 	def __init__(self) -> None:
 		self.acquire = acquire.CodeMaoClient()
 
-	# 登录函数，接收手机号和密码，返回登录结果
+	# 登录函数,接收手机号和密码,返回登录结果
 	def login(self, phonenum: int, password: str) -> dict:
 		# 构造请求数据
 		data = {"phonenum": phonenum, "password": password}
@@ -19,20 +19,20 @@ class Login:
 		# 返回响应结果
 		return response.json()
 
-	# 更新token函数，接收token，更新全局变量HEADERS中的Authorization字段
+	# 更新token函数,接收token,更新全局变量HEADERS中的Authorization字段
 	def update_token(self, token: str) -> None:
 		global HEADERS  # noqa: PLW0602
 		HEADERS["Authorization"] = f"Bearer {token}"
 
 
 class User:
-	# 初始化User类，创建一个CodeMaoClient对象
+	# 初始化User类,创建一个CodeMaoClient对象
 	def __init__(self) -> None:
 		self.acquire = acquire.CodeMaoClient()
 
 	# 获取用户余额
 	def get_balance(self) -> dict:
-		# 发送GET请求，获取用户余额
+		# 发送GET请求,获取用户余额
 		response = self.acquire.send_request(
 			endpoint="https://x.chatmindai.net/api/apiCount/query",
 			method="GET",
@@ -43,7 +43,7 @@ class User:
 
 	# 获取用户详细信息
 	def get_details(self) -> dict:
-		# 发送POST请求，获取用户详细信息
+		# 发送POST请求,获取用户详细信息
 		response = self.acquire.send_request(
 			endpoint="https://x.chatmindai.net/api/user/getUserSelfBigData",
 			method="POST",
@@ -55,7 +55,7 @@ class User:
 
 
 class Explore:
-	# 初始化Explore类，创建一个CodeMaoClient对象
+	# 初始化Explore类,创建一个CodeMaoClient对象
 	def __init__(self) -> None:
 		self.acquire = acquire.CodeMaoClient()
 
@@ -68,7 +68,7 @@ class Explore:
 		originpage: str = "",
 		searchValue: str = "",  # noqa: N803
 	) -> dict:
-		# 如果originpage不为空，则使用originpage，否则使用category
+		# 如果originpage不为空,则使用originpage,否则使用category
 		originpage = originpage if originpage != "" else category
 		# 构造请求数据
 		data = {
@@ -92,7 +92,7 @@ class Explore:
 
 	# 获取排行榜
 	def get_rank(self, method: str) -> dict:
-		# 根据method参数，设置不同的url
+		# 根据method参数,设置不同的url
 		if method == "user":
 			url = "https://x.chatmindai.net/api/market/userRank"
 
@@ -110,13 +110,13 @@ class Explore:
 
 
 class Chat:
-	# 初始化Chat类，创建一个CodeMaoClient对象
+	# 初始化Chat类,创建一个CodeMaoClient对象
 	def __init__(self) -> None:
 		self.acquire = acquire.CodeMaoClient()
 
 	# 获取聊天记录
 	def get_chats(self) -> dict:
-		# 发送GET请求，获取聊天记录
+		# 发送GET请求,获取聊天记录
 		response = self.acquire.send_request(
 			endpoint="https://x.chatmindai.net/api/chat/queryChats",
 			method="GET",
@@ -133,7 +133,7 @@ class Chat:
 			"pageSize": limit,
 		}
 
-		# 发送POST请求，获取聊天历史记录
+		# 发送POST请求,获取聊天历史记录
 		response = self.acquire.send_request(
 			endpoint="https://x.chatmindai.net/api/chat/queryPagesChatItems",
 			method="POST",
@@ -152,7 +152,7 @@ class Chat:
 			"isContextEnabled": context_analyse,
 		}
 
-		# 发送POST请求，发送聊天消息
+		# 发送POST请求,发送聊天消息
 		response = self.acquire.send_request(
 			endpoint="https://x.chatmindai.net/api/chat-process",
 			method="POST",
@@ -181,7 +181,7 @@ class Chat:
 			"roleId": "bmi5aruzldsb1za2m5d1718161196283",  # 每个角色被赋予唯一id
 			"sensitive": False,  # 未知
 		}
-		# 发送POST请求，保存聊天记录
+		# 发送POST请求,保存聊天记录
 		response = self.acquire.send_request(
 			endpoint="https://x.chatmindai.net/api/chat/saveConversation",
 			method="POST",
@@ -192,13 +192,13 @@ class Chat:
 
 
 class Model:
-	# 初始化函数，创建一个CodeMaoClient对象
+	# 初始化函数,创建一个CodeMaoClient对象
 	def __init__(self) -> None:
 		self.acquire = acquire.CodeMaoClient()
 
 	# 根据id获取模型详情
 	def get_model_details(self, ids: str) -> dict:
-		# 发送请求，获取模型详情
+		# 发送请求,获取模型详情
 		response = self.acquire.send_request(
 			endpoint="https://x.chatmindai.net/api/model/getModelDetailsInfo",
 			method="POST",

@@ -315,13 +315,13 @@ class Motion:
 		self.acquire = acquire.CodeMaoClient()
 
 	def set_data_doing(self, doing: str) -> bool:
-		"""发送PUT请求，设置正在做的事"""
+		"""发送PUT请求,设置正在做的事"""
 		response = self.acquire.send_request(endpoint="/nemo/v2/user/basic", method="PUT", payload={"doing": doing})
 		# 返回请求状态码是否为200
 		return response.status_code == HTTPSTATUS.OK
 
 	def set_data_username(self, username: str) -> bool:
-		"""发送PATCH请求，设置登录用户名(实验性功能)"""
+		"""发送PATCH请求,设置登录用户名(实验性功能)"""
 		response = self.acquire.send_request(
 			endpoint="/tiger/v3/web/accounts/username",
 			method="PATCH",
@@ -331,14 +331,14 @@ class Motion:
 		return response.status_code == HTTPSTATUS.NO_CONTENT
 
 	def verify_phone(self, phone_num: int) -> dict:
-		"""发送GET请求，验证手机号"""
+		"""发送GET请求,验证手机号"""
 		params = {"phone_number": phone_num}
 		response = self.acquire.send_request(endpoint="/web/users/phone_number/is_consistent", method="GET", params=params)
 		# 返回请求结果
 		return response.json()
 
 	def modify_password(self, old_password: str, new_password: str) -> bool:
-		"""发送PATCH请求，修改密码"""
+		"""发送PATCH请求,修改密码"""
 		data = {
 			"old_password": old_password,
 			"password": new_password,
@@ -353,7 +353,7 @@ class Motion:
 		return response.status_code == HTTPSTATUS.NO_CONTENT
 
 	def modify_phonenum_captcha(self, old_phonenum: int, new_phonenum: int) -> bool:
-		"""发送POST请求，修改手机号(获取验证码)"""
+		"""发送POST请求,修改手机号(获取验证码)"""
 		data = {"phone_number": new_phonenum, "old_phone_number": old_phonenum}
 		response = self.acquire.send_request(
 			endpoint="/tiger/v3/web/accounts/captcha/phone/change",
@@ -364,7 +364,7 @@ class Motion:
 		return response.status_code == HTTPSTATUS.NO_CONTENT
 
 	def modify_phonenum(self, captcha: int, phonenum: int) -> bool:
-		"""发送PATCH请求，修改手机号"""
+		"""发送PATCH请求,修改手机号"""
 		data = {"phone_number": phonenum, "captcha": captcha}
 		response = self.acquire.send_request(
 			endpoint="/tiger/v3/web/accounts/phone/change",
@@ -417,7 +417,7 @@ class Motion:
 		qq: str,
 		sex: Literal[0, 1],
 	) -> bool:
-		# 发送PATCH请求，设置info
+		# 发送PATCH请求,设置info
 		data = {
 			"avatar_url": avatar_url,
 			"nickname": nickname,

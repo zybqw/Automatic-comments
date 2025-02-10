@@ -8,23 +8,23 @@ from src.utils.decorator import singleton
 
 @singleton
 class Routine:
-	# 初始化方法，创建CodeMaoClient和CodeMaoProcess对象
+	# 初始化方法,创建CodeMaoClient和CodeMaoProcess对象
 	def __init__(self) -> None:
 		self.acquire = acquire.CodeMaoClient()
 		self.tool_process = tool.CodeMaoProcess()
 
-	# 登录方法，传入用户名、密码、key和code，发送POST请求，更新cookies
+	# 登录方法,传入用户名、密码、key和code,发送POST请求,更新cookies
 	def login(self, username: str, password: str, key: int, code: str) -> None:
 		data = {"username": username, "password": password, "key": key, "code": code}
 		response = self.acquire.send_request(endpoint="https://api-whale.codemao.cn/admins/login", method="POST", payload=data)
 		self.acquire.update_cookies(response.cookies)
 
-	# 登出方法，发送DELETE请求，返回状态码是否为204
+	# 登出方法,发送DELETE请求,返回状态码是否为204
 	def logout(self) -> bool:
 		response = self.acquire.send_request(endpoint="https://api-whale.codemao.cn/admins/logout", method="DELETE", payload={})
 		return response.status_code == HTTPSTATUS.NO_CONTENT
 
-	# 获取数据信息方法，发送GET请求，返回json数据
+	# 获取数据信息方法,发送GET请求,返回json数据
 	def get_data_info(self) -> dict:
 		response = self.acquire.send_request(endpoint="https://api-whale.codemao.cn/admins/info", method="GET")
 		return response.json()

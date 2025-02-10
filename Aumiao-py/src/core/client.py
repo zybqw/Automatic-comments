@@ -83,7 +83,7 @@ class Tool(ClassUnion):
 		}
 		# 获取缓存数据
 		before_data = self.cache_manager.data
-		# 如果缓存数据不为空，则显示数据变化
+		# 如果缓存数据不为空,则显示数据变化
 		if before_data != {}:
 			self.tool_routine.display_data_changes(
 				before_data=before_data,
@@ -130,7 +130,7 @@ class Index(ClassUnion):
 		print("2025编程猫拜年祭活动 https://shequ.codemao.cn/community/1619855")
 		# 打印数据标题
 		print("*" * 22 + " 数据 " + "*" * 22)
-		# 调用Tool类的message_report方法，传入用户id
+		# 调用Tool类的message_report方法,传入用户id
 		Tool().message_report(user_id=self.data.ACCOUNT_DATA.id)
 		# 打印分隔线
 		print("*" * 50)
@@ -150,10 +150,10 @@ class Obtain(ClassUnion):
 		_list = []
 		# 获取新回复数量
 		reply_num = self.community_obtain.get_message_count(method="web")[0]["count"]
-		# 如果新回复数量为0且limit也为0，则返回空列表
+		# 如果新回复数量为0且limit也为0,则返回空列表
 		if reply_num == limit == 0:
 			return [{}]
-		# 如果limit为0，则获取新回复数量个回复，否则获取limit个回复
+		# 如果limit为0,则获取新回复数量个回复,否则获取limit个回复
 		result_num = reply_num if limit == 0 else limit
 		offset = 0
 		# 循环获取新回复
