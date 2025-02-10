@@ -110,10 +110,12 @@ class Obtain:
 @singleton
 class Motion:
 	def __init__(self) -> None:
+		# 初始化 acquire 对象
 		self.acquire = acquire.CodeMaoClient()
 
 	# 更新工作室简介
 	def update_shop_details(self, description: str, shop_id: str, name: str, preview_url: str) -> bool:
+		# 发送请求，更新工作室简介
 		response = self.acquire.send_request(
 			endpoint="/web/work_shops/update",
 			method="POST",
@@ -124,10 +126,12 @@ class Motion:
 				"preview_url": preview_url,
 			},
 		)
+		# 返回请求状态码是否为 HTTPSTATUS.OK
 		return response.status_code == HTTPSTATUS.OK
 
 	# 创建工作室
 	def create_shop(self, name: str, description: str, preview_url: str) -> dict:
+		# 发送请求，创建工作室
 		response = self.acquire.send_request(
 			endpoint="/web/work_shops/create",
 			method="POST",
@@ -137,51 +141,62 @@ class Motion:
 				"preview_url": preview_url,
 			},
 		)
+		# 返回请求的 json 数据
 		return response.json()
 
 	# 解散工作室
 	def dissolve_shop(self, shop_id: int) -> bool:
+		# 发送请求，解散工作室
 		response = self.acquire.send_request(
 			endpoint="/web/work_shops/dissolve",
 			method="POST",
 			payload={"id": shop_id},
 		)
+		# 返回请求状态码是否为 HTTPSTATUS.OK
 		return response.status_code == HTTPSTATUS.OK
 
 	# 在指定工作室投稿作品
 	def contribute_work(self, shop_id: int, work_id: int) -> bool:
+		# 发送请求，在指定工作室投稿作品
 		response = self.acquire.send_request(
 			endpoint="/web/work_shops/works/contribute",
 			method="POST",
 			payload={"id": shop_id, "work_id": work_id},
 		)
+		# 返回请求状态码是否为 HTTPSTATUS.OK
 		return response.status_code == HTTPSTATUS.OK
 
 	# 在指定工作室删除作品
 	def remove_work(self, shop_id: int, work_id: int) -> bool:
+		# 发送请求，在指定工作室删除作品
 		response = self.acquire.send_request(
 			endpoint="/web/work_shops/works/remove",
 			method="POST",
 			payload={"id": shop_id, "work_id": work_id},
 		)
+		# 返回请求状态码是否为 HTTPSTATUS.OK
 		return response.status_code == HTTPSTATUS.OK
 
 	# 申请加入工作室
 	def apply_join(self, shop_id: int, qq: str | None = None) -> bool:
+		# 发送请求申请加入工作室
 		response = self.acquire.send_request(
 			endpoint="/web/work_shops/users/apply/join",
 			method="POST",
 			payload={"id": shop_id, "qq": qq},
 		)
+		# 返回请求状态码是否为 HTTPSTATUS.OK
 		return response.status_code == HTTPSTATUS.OK
 
 	# 审核已经申请加入工作室的用户
 	def audit_join(self, shop_id: int, status: Literal["UNACCEPTED", "ACCEPTED"], user_id: int) -> bool:
+		# 发送请求，审核已经申请加入工作室的用户
 		response = self.acquire.send_request(
 			endpoint="/web/work_shops/users/audit",
 			method="POST",
 			payload={"id": shop_id, "status": status, "user_id": user_id},
 		)
+		# 返回请求状态码是否为 HTTPSTATUS.OK
 		return response.status_code == HTTPSTATUS.OK
 
 	# 举报讨论区下的评论

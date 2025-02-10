@@ -9,26 +9,34 @@ from src.utils.decorator import singleton
 @singleton
 class Obtain:
 	def __init__(self) -> None:
+		# 初始化获取帖子信息的客户端
 		self.acquire = acquire.CodeMaoClient()
 
 	# 获取多个帖子信息
 	def get_posts_details(self, ids: int | list[int]) -> dict:
+		# 判断传入的ids类型
 		if isinstance(ids, int):
+			# 如果是单个id，则直接传入
 			params = {"ids": ids}
 		elif isinstance(ids, list):
+			# 如果是多个id，则将id列表转换为字符串
 			params = {"ids": ",".join(map(str, ids))}
+		# 发送请求获取帖子信息
 		response = self.acquire.send_request(endpoint="/web/forums/posts/all", method="GET", params=params)
 		return response.json()
 
 	# 获取单个帖子信息
 	def get_single_post_details(self, ids: int) -> dict:
+		# 发送请求获取单个帖子信息
 		response = self.acquire.send_request(endpoint=f"/web/forums/posts/{ids}/details", method="GET")
 		return response.json()
 
 	# 回帖会单独分配一个独立于被回复帖子的id
 	# 获取帖子回帖
 	def get_post_replies_posts(self, ids: int, sort: str = "-created_at", limit: int | None = 15) -> Generator:
+		# 设置请求参数
 		params = {"page": 1, "limit": 10, "sort": sort}
+		# 发送请求获取帖子回帖
 		return self.acquire.fetch_data(
 			endpoint=f"/web/forums/posts/{ids}/replies",
 			params=params,
@@ -44,6 +52,7 @@ class Obtain:
 		post_id: int,
 		limit: int | None = 10,
 	) -> Generator:
+		# 设置请求参数
 		params = {"page": 1, "limit": 10}
 		return self.acquire.fetch_data(
 			endpoint=f"/web/forums/replies/{post_id}/comments",
@@ -132,6 +141,7 @@ class Obtain:
 @singleton
 class Motion:
 	def __init__(self) -> None:
+		# 初始化acquire对象，用于发送请求
 		self.acquire = acquire.CodeMaoClient()
 
 	# 对某个帖子回帖
@@ -142,18 +152,24 @@ class Motion:
 		*,
 		return_data: bool = False,
 	) -> dict | bool:
+		# 构造请求数据
 		data = {"content": content}
+		# 发送请求
 		response = self.acquire.send_request(
 			endpoint=f"/web/forums/posts/{post_id}/replies",
 			method="POST",
 			payload=data,
 		)
+		# 返回响应数据或状态码
 		return response.json() if return_data else response.status_code == HTTPSTATUS.CREATED
 
 	# 对某个回帖评论进行回复
 	def reply_comment(self, reply_id: int, parent_id: int, content: str, *, return_data: bool = False) -> dict | bool:
+		# 构造请求数据
 		data = {"content": content, "parent_id": parent_id}
+		# 发送请求
 		response = self.acquire.send_request(endpoint=f"/web/forums/replies/{reply_id}/comments", method="POST", payload=data)
+		# 返回响应数据或状态码
 		return response.json() if return_data else response.status_code == HTTPSTATUS.CREATED
 
 	# 点赞某个回帖或评论
@@ -165,11 +181,13 @@ class Motion:
 	) -> bool:
 		# 每个回帖都有唯一id
 		params = {"source": source}
+		# 发送请求
 		response = self.acquire.send_request(
 			endpoint=f"/web/forums/comments/{ids}/liked",
 			method=method,
 			params=params,
 		)
+		# 返回状态码
 		return response.status_code == HTTPSTATUS.NO_CONTENT
 
 	# 举报某个回帖
@@ -189,11 +207,13 @@ class Motion:
 			"discussion_id": comment_id,
 			"source": source,
 		}
+		# 发送请求
 		response = self.acquire.send_request(
 			endpoint="/web/reports/posts/discussions",
 			method="POST",
 			payload=data,
 		)
+		# 返回响应数据或状态码
 		return response.json() if return_data else response.status_code == HTTPSTATUS.CREATED
 
 	# 举报某个帖子
@@ -211,27 +231,33 @@ class Motion:
 			"description": description,
 			"post_id": post_id,
 		}
+		# 发送请求
 		response = self.acquire.send_request(
 			endpoint="/web/reports/posts",
 			method="POST",
 			payload=data,
 		)
+		# 返回响应数据或状态码
 		return response.json() if return_data else response.status_code == HTTPSTATUS.CREATED
 
 	# 删除某个回帖或评论或帖子
 	def delete_comment_post_reply(self, ids: int, types: Literal["replies", "comments", "posts"]) -> bool:
+		# 发送请求
 		response = self.acquire.send_request(
 			endpoint=f"/web/forums/{types}/{ids}",
 			method="DELETE",
 		)
+		# 返回状态码
 		return response.status_code == HTTPSTATUS.NO_CONTENT
 
 	# 置顶某个回帖
 	def top_comment(self, comment_id: int, method: Literal["PUT", "DELETE"]) -> bool:
+		# 发送请求
 		response = self.acquire.send_request(
 			endpoint=f"/web/forums/replies/{comment_id}/top",
 			method=method,
 		)
+		# 返回状态码
 		return response.status_code == HTTPSTATUS.NO_CONTENT
 
 	# 发布帖子
@@ -251,9 +277,11 @@ class Motion:
 			url = f"/web/forums/boards/{board_id}/posts"
 		elif method == "work_shop":
 			url = f"/web/works/subjects/{work_shop_id}/post"
+		# 发送请求
 		response = self.acquire.send_request(
 			endpoint=url,
 			method="POST",
 			payload=data,
 		)
+		# 返回响应数据或状态码
 		return response.json() if return_data else response.status_code == HTTPSTATUS.CREATED

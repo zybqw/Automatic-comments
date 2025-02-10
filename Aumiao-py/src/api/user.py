@@ -9,15 +9,18 @@ from src.utils.decorator import singleton
 @singleton
 class Obtain:
 	def __init__(self) -> None:
+		# 初始化获取数据对象
 		self.acquire = acquire.CodeMaoClient()
 
 	# 获取某人账号信息
 	def get_user_details(self, user_id: str) -> dict:
+		# 发送GET请求获取用户详细信息
 		response = self.acquire.send_request(method="GET", endpoint=f"/api/user/info/detail/{user_id}")
 		return response.json()
 
 	# 获取用户荣誉
 	def get_user_honor(self, user_id: str) -> dict:
+		# 发送GET请求获取用户荣誉
 		params = {"user_id": user_id}
 		response = self.acquire.send_request(
 			endpoint="/creation-tools/v1/user/center/honor",
@@ -29,18 +32,21 @@ class Obtain:
 
 	# 获取用户精确数据
 	def get_user_business(self, user_id: str) -> dict:
+		# 发送GET请求获取用户精确数据
 		params = {"user_id": user_id}
 		response = self.acquire.send_request(endpoint="/nemo/v2/works/business/total", method="GET", params=params)
 		return response.json()
 
 	# 获取某人账号信息(简略)
 	def get_user_info(self, user_id: str) -> dict:
+		# 发送GET请求获取用户简略信息
 		params = {"user_id": user_id}
 		response = self.acquire.send_request(method="GET", endpoint="/nemo/v2/user/dynamic/info", params=params)
 		return response.json()
 
 	# 获取账户信息(详细)
 	def get_data_details(self) -> dict:
+		# 发送GET请求获取账户详细信息
 		response = self.acquire.send_request(
 			method="GET",
 			endpoint="/web/users/details",
