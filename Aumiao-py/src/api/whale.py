@@ -43,8 +43,8 @@ class Obtain:
 		self,
 		types: Literal["KITTEN", "BOX2", "ALL"],
 		status: Literal["TOBEDONE", "DONE", "ALL"],
-		target_id: int,
-		method: Literal["admin_id", "work_user_id", "work_id"],
+		method: Literal["admin_id", "work_user_id", "work_id"] | None = None,
+		target_id: int | None = None,
 		limit: int | None = 15,
 	) -> Generator:
 		# 构造请求参数
@@ -57,10 +57,10 @@ class Obtain:
 		self,
 		types: Literal["ALL", "KITTEN", "BOX2", "FICTION", "COMIC", "WORK_SUBJECT"],
 		status: Literal["TOBEDONE", "DONE", "ALL"],
-		target_id: int,
-		method: Literal["admin_id", "comment_user_id", "comment_id"],
+		method: Literal["admin_id", "comment_user_id", "comment_id"] | None = None,
+		target_id: int | None = None,
 		limit: int | None = 15,
-	) -> Generator:
+	) -> Generator[dict]:
 		params = {"source": types, "status": status, method: target_id, "offset": 0, "limit": limit}
 		# url可以为https://api-whale.codemao.cn/reports/comments/search
 		# 或者https://api-whale.codemao.cn/reports/comments
@@ -70,20 +70,63 @@ class Obtain:
 	def get_post_report(
 		self,
 		status: Literal["TOBEDONE", "DONE", "ALL"],
-		target_id: int,
-		method: Literal["post_id"],
+		method: Literal["post_id"] | None = None,
+		target_id: int | None = None,
 		limit: int | None = 15,
-	) -> Generator:
+	) -> Generator[dict]:
 		params = {"status": status, method: target_id, "offset": 0, "limit": limit}
 		return self.acquire.fetch_data(endpoint="https://api-whale.codemao.cn/reports/posts", params=params, limit=limit)
 
-	# 获取回复与评论举报
-	def get_reply_report(
+	# 获取讨论区举报
+	def get_discussion_report(
 		self,
 		status: Literal["TOBEDONE", "DONE", "ALL"],
-		target_id: int,
-		method: Literal["post_id"],
+		method: Literal["post_id"] | None = None,
+		target_id: int | None = None,
 		limit: int | None = 15,
-	) -> Generator:
+	) -> Generator[dict]:
 		params = {"status": status, method: target_id, "offset": 0, "limit": limit}
 		return self.acquire.fetch_data(endpoint="https://api-whale.codemao.cn/reports/posts/discussions", params=params, limit=limit)
+
+
+class Motion:
+	def __init__(self) -> None:
+		self.acquire = acquire.CodeMaoClient()
+
+	# created_at是举报时间,updated_at是处理时间
+
+	# 处理帖子举报
+	def handle_post_report(self, report_id: int, admin_id: int, status: Literal["PASS", "DELETE", "MUTE_SEVEN_DAYS", "MUTE_THREE_MONTHS"]) -> bool:
+		response = self.acquire.send_request(
+			endpoint=f"https://api-whale.codemao.cn/reports/posts/{report_id}",
+			method="PATCH",
+			payload={"admin_id": admin_id, "status": status},
+		)
+		return response.status_code == HTTPSTATUS.NO_CONTENT
+
+	# 处理讨论区举报
+	def handle_discussion_report(self, report_id: int, admin_id: int, status: Literal["PASS", "DELETE", "MUTE_SEVEN_DAYS", "MUTE_THREE_MONTHS"]) -> bool:
+		response = self.acquire.send_request(
+			endpoint=f"https://api-whale.codemao.cn/reports/posts/discussions/{report_id}",
+			method="PATCH",
+			payload={"admin_id": admin_id, "status": status},
+		)
+		return response.status_code == HTTPSTATUS.NO_CONTENT
+
+	# 处理评论举报
+	def handle_comment_report(self, report_id: int, admin_id: int, status: Literal["PASS", "DELETE", "MUTE_SEVEN_DAYS", "MUTE_THREE_MONTHS"]) -> bool:
+		response = self.acquire.send_request(
+			endpoint=f"https://api-whale.codemao.cn/reports/comments/{report_id}",
+			method="PATCH",
+			payload={"admin_id": admin_id, "status": status},
+		)
+		return response.status_code == HTTPSTATUS.NO_CONTENT
+
+	# 处理作品举报
+	def handle_work_report(self, report_id: int, admin_id: int, status: Literal["PASS", "DELETE", "UNLOAD"]) -> bool:
+		response = self.acquire.send_request(
+			endpoint=f"https://api-whale.codemao.cn/reports/works/{report_id}",
+			method="PATCH",
+			payload={"admin_id": admin_id, "status": status},
+		)
+		return response.status_code == HTTPSTATUS.NO_CONTENT

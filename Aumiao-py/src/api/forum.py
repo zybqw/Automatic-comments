@@ -34,7 +34,6 @@ class Obtain:
 	# 回帖会单独分配一个独立于被回复帖子的id
 	# 获取帖子回帖
 	def get_post_replies_posts(self, ids: int, sort: str = "-created_at", limit: int | None = 15) -> Generator:
-		# 设置请求参数
 		params = {"page": 1, "limit": 10, "sort": sort}
 		# 发送请求获取帖子回帖
 		return self.acquire.fetch_data(
@@ -51,8 +50,8 @@ class Obtain:
 		self,
 		post_id: int,
 		limit: int | None = 10,
-	) -> Generator:
-		# 设置请求参数
+	) -> Generator[dict]:
+		# 发送请求获取回帖评论
 		params = {"page": 1, "limit": 10}
 		return self.acquire.fetch_data(
 			endpoint=f"/web/forums/replies/{post_id}/comments",
@@ -63,7 +62,7 @@ class Obtain:
 		)
 
 	# 获取我的帖子或回复的帖子
-	def get_post_mine_all(self, method: Literal["created", "replied"], limit: int | None = 10) -> Generator:
+	def get_post_mine_all(self, method: Literal["created", "replied"], limit: int | None = 10) -> Generator[dict]:
 		params = {"page": 1, "limit": 10}
 		return self.acquire.fetch_data(
 			endpoint=f"/web/forums/posts/mine/{method}",
@@ -127,7 +126,7 @@ class Obtain:
 		return response.json()
 
 	# 通过标题搜索帖子
-	def search_posts(self, title: str, limit: int | None = 20) -> Generator:
+	def search_posts(self, title: str, limit: int | None = 20) -> Generator[dict]:
 		params = {"title": title, "limit": 20, "page": 1}
 		return self.acquire.fetch_data(
 			endpoint="/web/forums/posts/search",

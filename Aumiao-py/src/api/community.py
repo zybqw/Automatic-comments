@@ -358,7 +358,7 @@ class Obtain:
 		return response.json()
 
 	# 获取KN公开课
-	def get_kn_publish_course(self, limit: int | None = 10) -> Generator:
+	def get_kn_publish_course(self, limit: int | None = 10) -> Generator[dict]:
 		params = {"limit": 10, "offset": 0}
 		return self.acquire.fetch_data(
 			endpoint="https://api-creation.codemao.cn/neko/course/publish/list",
@@ -391,7 +391,7 @@ class Obtain:
 		return response.json()
 
 	# 获取nemo端教程合集
-	def get_nemo_course_package(self, platform: int = 1, limit: int | None = 50) -> Generator:
+	def get_nemo_course_package(self, platform: int = 1, limit: int | None = 50) -> Generator[dict]:
 		params = {"limit": 50, "offset": 0, "platform": platform}
 		return self.acquire.fetch_data(
 			endpoint="/creation-tools/v1/course/package/list",
@@ -400,7 +400,7 @@ class Obtain:
 		)
 
 	# 获取nemo教程
-	def get_nemo_package(self, course_package_id: int, limit: int | None = 50) -> Generator:
+	def get_nemo_package(self, course_package_id: int, limit: int | None = 50) -> Generator[dict]:
 		# course_package_id由get_nemo_course_package中获取
 		params = {
 			"course_package_id": course_package_id,
@@ -417,7 +417,7 @@ class Obtain:
 
 	# 获取教学计划
 	# TODO @Aurzex: 未知
-	def get_teaching_plan(self, limit: int = 100) -> Generator:
+	def get_teaching_plan(self, limit: int = 100) -> Generator[dict]:
 		params = {"limit": limit, "offset": 0}
 		return self.acquire.fetch_data(endpoint="https://api-creation.codemao.cn/neko/teaching-plan/list/team", params=params, limit=limit)
 

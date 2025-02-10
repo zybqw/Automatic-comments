@@ -94,7 +94,7 @@ class Obtain:
 		return response.json()
 
 	# 获取个人作品列表的函数
-	def get_user_works_web(self, user_id: str, types: Literal["newest", "hot"] = "newest", limit: int | None = 5) -> Generator:
+	def get_user_works_web(self, user_id: str, types: Literal["newest", "hot"] = "newest", limit: int | None = 5) -> Generator[dict]:
 		params = {
 			"type": types,
 			"user_id": user_id,
@@ -130,7 +130,7 @@ class Obtain:
 		return response.json()
 
 	# 获取用户nemo作品
-	def get_works_nemo_published(self, method: Literal["published"], limit: int | None = 15) -> Generator:
+	def get_works_nemo_published(self, method: Literal["published"], limit: int | None = 15) -> Generator[dict]:
 		params = {"limit": 15, "offset": 0}
 		return self.acquire.fetch_data(
 			endpoint=f"/nemo/v2/works/list/user/{method}",
@@ -150,7 +150,7 @@ class Obtain:
 			| None
 		) = None,
 		limit: int | None = 15,
-	) -> Generator:
+	) -> Generator[dict]:
 		# kn获取全部作品示例链接:https://api-creation.codemao.cn/neko/works/v2/list/user?name=&limit=24&offset=0&status=1&work_business_classify=1
 		if method == "published":
 			url = "https://api-creation.codemao.cn/neko/works/list/user/published"
@@ -168,7 +168,7 @@ class Obtain:
 		status: Literal["PUBLISHED", "UNPUBLISHED", "all"],
 		work_status: Literal["SHOW"] = "SHOW",
 		limit: int | None = 30,
-	) -> Generator:
+	) -> Generator[dict]:
 		params = {
 			"offset": 0,
 			"limit": 30,
@@ -183,7 +183,7 @@ class Obtain:
 		)
 
 	# 获取用户nemo作品列表
-	def get_works_nemo(self, status: Literal["PUBLISHED", "UNPUBLISHED", "all"], limit: int | None = 30) -> Generator:
+	def get_works_nemo(self, status: Literal["PUBLISHED", "UNPUBLISHED", "all"], limit: int | None = 30) -> Generator[dict]:
 		params = {"offset": 0, "limit": 30, "published_status": status}
 		return self.acquire.fetch_data(
 			endpoint="/creation-tools/v1/works/list",
@@ -198,7 +198,7 @@ class Obtain:
 		language_type: int = 0,
 		work_status: Literal["SHOW"] = "SHOW",
 		limit: int | None = 30,
-	) -> Generator:
+	) -> Generator[dict]:
 		params = {
 			"offset": 0,
 			"limit": 30,
@@ -213,7 +213,7 @@ class Obtain:
 		)
 
 	# 获取用户box作品列表
-	def get_works_box(self, status: Literal["all", "PUBLISHED", "UNPUBLISHED"], work_status: Literal["SHOW"] = "SHOW", limit: int | None = 30) -> Generator:
+	def get_works_box(self, status: Literal["all", "PUBLISHED", "UNPUBLISHED"], work_status: Literal["SHOW"] = "SHOW", limit: int | None = 30) -> Generator[dict]:
 		params = {
 			"offset": 0,
 			"limit": 30,
@@ -227,7 +227,7 @@ class Obtain:
 		)
 
 	# 获取用户小说列表
-	def get_works_fanfic(self, fiction_status: Literal["SHOW"] = "SHOW", limit: int | None = 30) -> Generator:
+	def get_works_fanfic(self, fiction_status: Literal["SHOW"] = "SHOW", limit: int | None = 30) -> Generator[dict]:
 		params = {"offset": 0, "limit": 30, "fiction_status": fiction_status}
 		return self.acquire.fetch_data(
 			endpoint="/web/fanfic/my/new",
@@ -237,7 +237,7 @@ class Obtain:
 
 	# 获取用户coco作品列表
 	# TODO@Aurzex: 参数不确定
-	def get_works_coco(self, status: int = 1, *, published: bool = True, limit: int | None = 30) -> Generator:
+	def get_works_coco(self, status: int = 1, *, published: bool = True, limit: int | None = 30) -> Generator[dict]:
 		params = {
 			"offset": 0,
 			"limit": 30,
@@ -253,7 +253,7 @@ class Obtain:
 		)
 
 	# 获取粉丝列表
-	def get_user_fans(self, user_id: str, limit: int = 15) -> Generator:
+	def get_user_fans(self, user_id: str, limit: int = 15) -> Generator[dict]:
 		params = {
 			"user_id": user_id,
 			"offset": 0,
@@ -267,7 +267,7 @@ class Obtain:
 		)
 
 	# 获取关注列表
-	def get_user_follows(self, user_id: str, limit: int = 15) -> Generator:
+	def get_user_follows(self, user_id: str, limit: int = 15) -> Generator[dict]:
 		params = {
 			"user_id": user_id,
 			"offset": 0,
@@ -281,7 +281,7 @@ class Obtain:
 		)
 
 	# 获取用户收藏的作品的信息
-	def get_user_collects(self, user_id: str, limit: int = 5) -> Generator:
+	def get_user_collects(self, user_id: str, limit: int = 5) -> Generator[dict]:
 		params = {
 			"user_id": user_id,
 			"offset": 0,
