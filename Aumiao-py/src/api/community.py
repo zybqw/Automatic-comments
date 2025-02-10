@@ -9,9 +9,22 @@ from src.utils.decorator import singleton
 # 编程猫所有api中若包含v2等字样,表示第几版本,同样比它低的版本也可使用
 @singleton
 class Login:
+	"""
+概述：用户登录
+
+参数：
+
+`identity (str)`: 用户身份标识。
+`password (str)`: 用户密码。
+`pid (str = "65edCTyg")`: 请求的 PID，用于标识请求来源。
+返回值：
+
+str | None: 函数返回一个字符串，表示登录请求的响应结果。如果请求失败，则返回 None。"""
 	def __init__(self) -> None:
+		# 初始化CodeMaoClient和CodeMaoProcess对象
 		self.acquire = acquire.CodeMaoClient()
 		self.tool_process = tool.CodeMaoProcess()
+		# 获取设置数据
 		self.setting = data.SettingManager().data
 
 	# 密码登录函数
@@ -29,6 +42,8 @@ class Login:
 		#   )
 		#   见https://api.docs.codemao.work/user/login?id=pid
 		#   pid = loads(soup.find_all("script")[0].string.split("=")[1])["pid"]
+
+		# 发送登录请求
 		response = self.acquire.send_request(
 			endpoint="/tiger/v3/web/accounts/login",
 			method="POST",
@@ -39,22 +54,27 @@ class Login:
 			},
 		)
 
+		# 更新cookies
 		self.acquire.update_cookies(response.cookies)
 
 	# cookie登录
 	def login_cookie(self, cookies: str) -> None | bool:
+		"""通过cookie登录"""
 		try:
+			# 将cookie字符串转换为字典
 			cookie = dict([item.split("=", 1) for item in cookies.split("; ")])
 			# 检查是否合规,不能放到headers中
 		except (KeyError, ValueError) as err:
 			print(f"表达式输入不合法 {err}")
 			return False
+		# 发送登录请求
 		self.acquire.send_request(
 			endpoint=self.setting.PARAMETER.cookie_check_url,
 			method="POST",
 			payload={},
 			headers={**self.acquire.headers, "cookie": cookies},
 		)
+		# 更新cookies
 		self.acquire.update_cookies(cookie)
 		return None
 
@@ -77,19 +97,21 @@ class Login:
 		# token_ca = {"authorization": token, "__ca_uid_key__": str(uuid_ca)}
 		# 无上面这两句会缺少__ca_uid_key__
 		token_ca = {"authorization": token}
-		cookie_str = self.tool_process.convert_cookie_to_str(token_ca)
-		headers = {**self.acquire.headers, "cookie": cookie_str}
-		response = self.acquire.send_request(method="GET", endpoint="/web/users/details", headers=headers)
-		_auth = response.cookies.get_dict()
-		return {**token_ca, **_auth}
+		cookie_str = self.tool_process.convert_cookie_to_str(token_ca) #  将cookie转换为字符串
+		headers = {**self.acquire.headers, "cookie": cookie_str} #  添加cookie到headers中
+		response = self.acquire.send_request(method="GET", endpoint="/web/users/details", headers=headers) #  发送请求获取用户详情
+		_auth = response.cookies.get_dict() #  获取cookie
+		return {**token_ca, **_auth} #  返回完整cookie
 
 	# 退出登录
 	def logout(self, method: Literal["web", "app"]) -> bool:
+		# 发送请求，请求路径为/tiger/v3/{method}/accounts/logout，请求方法为POST，请求体为空
 		response = self.acquire.send_request(
 			endpoint=f"/tiger/v3/{method}/accounts/logout",
 			method="POST",
 			payload={},
 		)
+		# 返回响应状态码是否为204
 		return response.status_code == HTTPSTATUS.NO_CONTENT
 
 	# 登录信息
@@ -101,6 +123,7 @@ class Login:
 		pid: str = "65edCTyg",
 		agreement_ids: list = [-1],
 	) -> dict:
+		# 创建一个字典，包含用户名、密码、pid和agreement_ids
 		data = {
 			"identity": identity,
 			"password": password,
@@ -108,13 +131,16 @@ class Login:
 			"agreement_ids": agreement_ids,
 		}
 
+		# 发送POST请求，获取登录安全信息
 		response = self.acquire.send_request(
 			endpoint="/tiger/v3/web/accounts/login/security",
 			method="POST",
 			payload=data,
 			headers={**self.acquire.headers, "x-captcha-ticket": ticket},
 		)
+		# 更新cookies
 		self.acquire.update_cookies(response.cookies)
+		# 返回响应的json数据
 		return response.json()
 
 	# 登录ticket获取
@@ -152,18 +178,22 @@ class Login:
 @singleton
 class Obtain:
 	def __init__(self) -> None:
+		# 初始化acquire对象
 		self.acquire = acquire.CodeMaoClient()
 
 	# 获取随机昵称
 	def get_name_random(self) -> str:
+		# 发送GET请求，获取随机昵称
 		response = self.acquire.send_request(
 			method="GET",
 			endpoint="/api/user/random/nickname",
 		)
+		# 返回响应中的昵称
 		return response.json()["data"]["nickname"]
 
 	# 获取新消息数量
 	def get_message_count(self, method: Literal["web", "nemo"]) -> dict:
+		# 根据方法选择不同的url
 		if method == "web":
 			url = "/web/message-record/count"
 		elif method == "nemo":
@@ -171,10 +201,12 @@ class Obtain:
 		else:
 			msg = "不支持的方法"
 			raise ValueError(msg)
+		# 发送GET请求，获取新消息数量
 		record = self.acquire.send_request(
 			endpoint=url,
 			method="GET",
 		)
+		# 返回响应
 		return record.json()
 
 	# 获取回复
@@ -184,6 +216,7 @@ class Obtain:
 		limit: int = 15,
 		offset: int = 0,
 	) -> dict:
+		# 构造参数
 		params = {"query_type": types, "limit": limit, "offset": offset}
 		# 获取前*个回复
 		response = self.acquire.send_request(
@@ -391,6 +424,7 @@ class Obtain:
 @singleton
 class Motion:
 	def __init__(self) -> None:
+		# 初始化CodeMaoClient对象
 		self.acquire = acquire.CodeMaoClient()
 
 	# 签订友好协议

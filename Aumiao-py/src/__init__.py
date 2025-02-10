@@ -23,16 +23,16 @@ __loaded_modules: dict[str, ModuleType] = {}
 _module_paths = {
 	"client": ".core.client",
 	"data": ".utils.data",
-	"decorator": ".utils.decorator",
-	"community": ".api.community",
-	"edu": ".api.edu",
-	"forum": ".api.forum",
-	"library": ".api.library",
-	"pickduck": ".api.pickduck",
-	"shop": ".api.shop",
-	"user": ".api.user",
-	"whale": ".api.whale",
-	"work": ".api.work",
+	"decorator": ".utils.decorator", #  装饰器模块
+	"community": ".api.community", #  社区模块
+	"edu": ".api.edu", #  教育模块
+	"forum": ".api.forum", #  论坛模块
+	"library": ".api.library", #  图书馆模块
+	"pickduck": ".api.pickduck", #  点鸭模块
+	"shop": ".api.shop", #  商店模块
+	"user": ".api.user", #  用户模块
+	"whale": ".api.whale", #  Whale模块
+	"work": ".api.work", #  工作模块
 }
 
 

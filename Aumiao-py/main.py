@@ -2,8 +2,11 @@ from src import *  # noqa: F403
 
 
 def login() -> None:
+	"""尝试登录并获取数据"""
 	try:
+		# 输入用户名
 		identity = input("请输入用户名: ")
+		# 输入密码
 		password = input("请输入密码: ")
 		# 登录并获取数据
 		community.Login().login_token(identity=identity, password=password)  # noqa: F405
@@ -28,29 +31,37 @@ def login() -> None:
 
 
 def clear_comments() -> None:
+	"""尝试执行清除评论的操作"""
 	try:
 		source = input("请输入来源类型 (work/post): ")
 		action_type = input("请输入操作类型 (ads/duplicates/blacklist): ")
+		# 判断输入是否有效
 		if source not in ["work", "post"] or action_type not in ["ads", "duplicates", "blacklist"]:
 			print("无效的输入")
 			return
+		# 调用Motion类的clear_comments方法，清除评论
 		client.Motion().clear_comments(source=source, action_type=action_type)  # type: ignore  # noqa: F405, PGH003
 	except Exception as e:
 		print(f"清除评论失败: {e}")
 
 
 def clear_red_point() -> None:
+	"""尝试执行清除红点操作"""
 	try:
 		method = input("请输入方法 (nemo/web): ")
+		# 判断输入是否有效
 		if method not in ["nemo", "web"]:
 			print("无效的输入")
 			return
+		# 调用Motion类的clear_red_point方法，传入方法参数
 		client.Motion().clear_red_point(method=method)  # type: ignore  # noqa: F405, PGH003
 	except Exception as e:
+		# 如果出现异常，则输出清除邮箱红点失败的信息
 		print(f"清除邮箱红点失败: {e}")
 
 
 def reply_work() -> None:
+	"""尝试执行自动回复操作"""
 	try:
 		client.Motion().reply_work()  # noqa: F405
 	except Exception as e:
@@ -58,17 +69,21 @@ def reply_work() -> None:
 
 
 def logout() -> None:
+	"""尝试执行登出操作"""
 	try:
 		method = input("请输入方法 (web): ")
 		if method != "web":
 			print("无效的输入")
 			return
+		# 调用community.Login().logout()方法，传入method参数
 		community.Login().logout(method=method)  # noqa: F405
+	# 捕获异常，并输出错误信息
 	except Exception as e:
 		print(f"登出失败: {e}")
 
 
 def main() -> None:
+	"""主函数"""
 	client.Index().index()  # noqa: F405
 	while True:
 		print("\n请选择操作:")
