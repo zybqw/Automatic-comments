@@ -11,7 +11,7 @@
 		"cookie_check_url": "/nemo/v2/works/174408420/like",
 		"get_works_method": "newest",
 		"password_login_method": "token",
-		"spam_max": 2
+		"spam_max": 3
 	},
 	"PLUGIN": {
 		"DASHSCOPE": {

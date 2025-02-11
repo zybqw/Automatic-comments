@@ -71,7 +71,7 @@ def reply_work() -> None:
 def handle_report() -> None:
 	"""尝试执行处理举报操作"""
 	try:
-		token = input("请输入Authorization")
+		token = input("请输入 Authorization: ")
 		whale.Routine().set_token(token=token)  # noqa: F405
 		admin_id = int(input("请输入管理员ID: "))
 		client.Motion().handle_report(admin_id=admin_id)  # noqa: F405

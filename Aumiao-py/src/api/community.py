@@ -19,7 +19,8 @@ class Login:
 	`pid (str = "65edCTyg")`: 请求的 PID,用于标识请求来源。
 	返回值:
 
-	str | None: 函数返回一个字符串,表示登录请求的响应结果。如果请求失败,则返回 None。"""
+	str | None: 函数返回一个字符串,表示登录请求的响应结果。如果请求失败,则返回 None。
+	"""
 
 	def __init__(self) -> None:
 		# 初始化CodeMaoClient和CodeMaoProcess对象
