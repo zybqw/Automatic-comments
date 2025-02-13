@@ -172,6 +172,7 @@ class Obtain(ClassUnion):
 		com_id: int,
 		source: Literal["work", "post", "shop"],
 		method: Literal["user_id", "comment_id"],
+		max_limit: int | None = 200,
 	) -> list[str]: ...
 
 	@overload
@@ -180,6 +181,7 @@ class Obtain(ClassUnion):
 		com_id: int,
 		source: Literal["work", "post", "shop"],
 		method: Literal["comments"],
+		max_limit: int | None = 200,
 	) -> list[dict]: ...
 
 	# 获取评论区信息
@@ -188,6 +190,7 @@ class Obtain(ClassUnion):
 		com_id: int,
 		source: Literal["work", "post", "shop"],
 		method: Literal["user_id", "comments", "comment_id"] = "user_id",
+		max_limit: int | None = 200,
 	) -> list[dict] | list[str]:
 		def _get_replies(source: str, comment: dict) -> Generator[dict]:
 			"""统一获取评论的回复"""
@@ -252,7 +255,7 @@ class Obtain(ClassUnion):
 			msg = "不支持的来源类型"
 			raise ValueError(msg)
 		method_func, arg_key = source_methods[source]
-		comments = method_func(**{arg_key: com_id, "limit": 200})
+		comments = method_func(**{arg_key: com_id, "limit": max_limit})
 
 		# 处理方法映射表
 		method_handlers = {
@@ -602,8 +605,8 @@ class Motion(ClassUnion):
 				if isinstance(item, int | str)
 			]
 			target_id = message.get("reply_id", "")
-			search_pattern = f".{target_id}" if source_type == "work" else target_id
-			if (found_id := self.tool_routine.find_prefix_suffix(search_pattern, comment_ids)[0]) is None:
+			# search_pattern = f".{target_id}" if source_type == "work" else target_id
+			if (found_id := self.tool_routine.find_prefix_suffix(target_id, comment_ids)[0]) is None:
 				msg = "未找到匹配的评论ID"
 				raise ValueError(msg)
 			comment_id = int(found_id)
@@ -680,6 +683,7 @@ class Motion(ClassUnion):
 					"source_id_field": "comment_source_object_id",
 					"source_name_field": "comment_source_object_name",
 					"special_check": lambda: item.get("comment_source") == "WORK_SHOP",
+					"com_id": "comment_id",
 				},
 				"post": {
 					"content_field": "post_title",
@@ -687,6 +691,7 @@ class Motion(ClassUnion):
 					"handle_method": "handle_post_report",
 					"source_id_field": "post_id",
 					"special_check": lambda: True,
+					"com_id": "post_id",
 				},
 				"discussion": {
 					"content_field": "discussion_content",
@@ -694,6 +699,7 @@ class Motion(ClassUnion):
 					"handle_method": "handle_discussion_report",
 					"source_id_field": "post_id",
 					"special_check": lambda: True,
+					"com_id": "discussion_id",
 				},
 			}
 
@@ -750,6 +756,25 @@ class Motion(ClassUnion):
 			print(f"所属帖子ID: https://shequ.codemao.cn/community/{item[cfg['source_id_field']]}")
 
 		print(f"违规用户ID: https://shequ.codemao.cn/user/{item[f'{cfg["user_field"]}_id']}")
+		if report_type in ("comment", "discussion"):
+			source = "shop" if report_type == "comment" else "post"
+			comments = Obtain().get_comments_detail_new(com_id=item[cfg["source_id_field"]], source=source, method="comments", max_limit=200)
+			if report_type == "comment" and item["comment_parent_id"] != "0":
+				for comment in comments:
+					if comment["id"] == item["comment_parent_id"]:
+						for reply in comment["replies"]:
+							if reply["id"] == item["comment_id"]:
+								print(f"发送时间: {self.tool_process.format_timestamp(reply['created_at'])}")
+								break
+						break
+			else:
+				for comment in comments:
+					if comment["id"] == item["comment_id"]:
+						print(f"发送时间: {self.tool_process.format_timestamp(comment['created_at'])}")
+						break
+		else:
+			details = self.forum_obtain.get_single_post_details(ids=item[cfg["source_id_field"]])
+			print(f"发送时间: {self.tool_process.format_timestamp(details['created_at'])}")  # 有的帖子可能有更新,但是大部分是created_at,为了迎合网页显示的发布时间
 
 	def _check_violations(self, item: dict, report_type: Literal["comment", "post", "discussion"], cfg: dict) -> None:
 		"""统一违规检查逻辑"""
