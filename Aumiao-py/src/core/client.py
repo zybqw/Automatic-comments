@@ -28,17 +28,12 @@ OK_CODE = 200
 class Union:
 	# 初始化Union类
 	def __init__(self) -> None:
-		# 获取CodeMaoClient对象
 		self.acquire = acquire.CodeMaoClient()
-		# 获取CacheManager对象
 		self.cache = data.CacheManager().data
-		# 获取Obtain对象
 		self.community_obtain = community.Obtain()
-		# 获取DataManager对象
 		self.data = data.DataManager().data
-		# 获取Obtain对象
 		self.edu_obtain = edu.Obtain()
-		# 获取CodeMaoFile对象
+		self.edu_motion = edu.Motion()
 		self.file = file.CodeMaoFile()
 		self.forum_motion = forum.Motion()
 		self.forum_obtain = forum.Obtain()
@@ -426,6 +421,7 @@ class Motion(ClassUnion):
 		content_map[key].append(
 			f"{item_id}.{data['id']}:{'reply' if is_reply else 'comment'}",
 		)
+		# (user_id,content):[item_id.comment_id:reply/comment]
 
 	def clear_red_point(self, method: Literal["nemo", "web"] = "web") -> bool:
 		def get_message_counts(method: Literal["web", "nemo"]) -> dict:
@@ -673,7 +669,6 @@ class Motion(ClassUnion):
 
 	# 处理举报
 	# 需要风纪权限
-
 	def handle_report(self, admin_id: int) -> None:
 		def process_item(item: dict, report_type: Literal["comment", "post", "discussion"]) -> None:
 			# 类型字段映射表
@@ -780,6 +775,7 @@ class Motion(ClassUnion):
 				values=item[f"{cfg['user_field']}_id"],
 			)
 			self._analyze_comments(user_comments, int(source_id))
+
 		else:
 			search_list = forum.Obtain().search_posts(title=source_id, limit=None)
 			user_list = self.tool_process.filter_items_by_values(
@@ -792,7 +788,7 @@ class Motion(ClassUnion):
 				for post in user_list:
 					print(f"违规帖子ID: https://shequ.codemao.cn/community/{post['id']}")
 
-	def _analyze_comments(self, comments: list, source_id: int) -> None:
+	def _analyze_comments(self, comments: list, source_id: int) -> None | Generator:
 		"""分析评论违规"""
 		content_map = defaultdict(list)
 		for comment in comments:
@@ -805,11 +801,85 @@ class Motion(ClassUnion):
 				self._track_duplicates(reply, source_id, content_map, is_reply=True)
 				if any(ad in reply["content"].lower() for ad in self.data.USER_DATA.ads):
 					print(f"广告回复: {reply['content']}")
-
-		for (_, content), ids in content_map.items():
+		# (user_id,content):[item_id.comment_id1:reply/comment,item_id.comment_id2:reply/comment]
+		for (user_id, content), ids in content_map.items():
 			if len(ids) >= self.setting.PARAMETER.spam_max:
 				print(f"发现刷屏评论: {content}")
 				print(f"此用户已经刷屏,共发布{len(ids)}次")
+				yield {(user_id, content): ids}
+		return None
+
+	def _switch_edu_account(self, limit: int) -> Generator:
+		"""返回指定数量学生账密"""
+		students = self.edu_obtain.get_students(limit=limit)
+		for student in students:
+			password = self.edu_motion.reset_password(student["id"])
+			yield {student["username"]: password}
+
+	@overload
+	def report_work(
+		self,
+		source: Literal["forum", "work", "shop"],
+		target_id: int,
+		source_id: int,
+		reason_id: Literal[0, 1, 2, 3, 4, 5, 6, 7, 8],
+		parent_id: Literal[None],
+		*,
+		is_reply: Literal[False],
+	) -> bool: ...
+	@overload
+	def report_work(
+		self,
+		source: Literal["forum", "work", "shop"],
+		target_id: int,
+		source_id: int,
+		reason_id: Literal[0, 1, 2, 3, 4, 5, 6, 7, 8],
+		parent_id: int,
+		*,
+		is_reply: Literal[True],
+	) -> bool: ...
+
+	def report_work(
+		self,
+		source: Literal["forum", "work", "shop"],
+		target_id: int,
+		source_id: int,
+		reason_id: Literal[0, 1, 2, 3, 4, 5, 6, 7, 8],
+		parent_id: int | None = None,
+		*,
+		is_reply: bool = False,
+	) -> bool:
+		"""
+		举报
+		1: 违法违规; 2: 色情暴力
+		3: 侵犯隐私; 4: 人身攻击
+		5: 引战; 6: 垃圾广告
+		7: 无意义刷屏; 8: 不良信息
+		0: 自定义
+		"""
+		reason_content = self.community_obtain.get_report_reason()["items"][reason_id]["content"]
+		match source:
+			case "work":
+				return self.work_motion.report_comment_work(work_id=target_id, comment_id=source_id, reason=reason_content)
+			case "forum":
+				_source = "COMMENT" if is_reply else "REPLY"
+				return self.forum_motion.report_reply_or_comment(comment_id=target_id, reason_id=reason_id, description=reason_content, source=_source, return_data=False)
+			case "shop":
+				if is_reply:
+					parent_id = cast(int, parent_id)
+					return self.shop_motion.report_comment(
+						comment_id=target_id,
+						reason_content=reason_content,
+						reason_id=reason_id,
+						reporter_id=int(self.data.ACCOUNT_DATA.id),
+						comment_parent_id=parent_id,
+					)
+				return self.shop_motion.report_comment(
+					comment_id=target_id,
+					reason_content=reason_content,
+					reason_id=reason_id,
+					reporter_id=int(self.data.ACCOUNT_DATA.id),
+				)
 
 
 # "POST_COMMENT",

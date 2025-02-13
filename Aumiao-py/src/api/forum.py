@@ -1,5 +1,5 @@
 from collections.abc import Generator
-from typing import Literal
+from typing import Literal, overload
 
 from src.utils import acquire
 from src.utils.acquire import HTTPSTATUS
@@ -189,6 +189,28 @@ class Motion:
 		)
 		# 返回状态码
 		return response.status_code == HTTPSTATUS.NO_CONTENT
+
+	@overload
+	def report_reply_or_comment(
+		self,
+		comment_id: int,
+		reason_id: Literal[0, 1, 2, 3, 4, 5, 6, 7, 8],
+		description: str,
+		source: Literal["REPLY", "COMMENT"],
+		*,
+		return_data: Literal[False],
+	) -> bool: ...
+
+	@overload
+	def report_reply_or_comment(
+		self,
+		comment_id: int,
+		reason_id: Literal[0, 1, 2, 3, 4, 5, 6, 7, 8],
+		description: str,
+		source: Literal["REPLY", "COMMENT"],
+		*,
+		return_data: Literal[True],
+	) -> dict: ...
 
 	# 举报某个回帖
 	def report_reply_or_comment(

@@ -209,12 +209,12 @@ class Motion:
 	def report_comment(
 		self,
 		comment_id: int,
-		comment_parent_id: int,
-		description: str,
 		reason_content: str,
-		reason_id: int,
+		reason_id: Literal[0, 1, 2, 3, 4, 5, 6, 7, 8],
 		reporter_id: int,
 		comment_source: Literal["WORK_SHOP"] = "WORK_SHOP",
+		comment_parent_id: int = 0,
+		description: str = "",
 	) -> bool:
 		response = self.acquire.send_request(
 			endpoint="/web/reports/comments",
