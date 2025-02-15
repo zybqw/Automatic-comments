@@ -2,6 +2,7 @@ import json
 import time
 from collections.abc import Generator
 from enum import Enum
+from io import BytesIO
 from pathlib import Path
 from typing import Literal, Protocol, TypedDict, cast
 
@@ -204,3 +205,49 @@ class CodeMaoClient:
 			"response_amount_key": "limit",
 			"response_offset_key": "offset",
 		}
+
+	def stream_upload(self, file_path: Path, upload_path: str = "aumiao", chunk_size: int = 8192) -> str:
+		"""
+		简单的流式上传实现
+		:param file_path: 文件路径
+		:param upload_path: 上传目标路径,默认为 "aumiao"
+		:param chunk_size: 每次读取的文件块大小,默认为 8192 字节
+		:return: 返回文件的 URL 和消息
+		"""
+		try:
+			# 打开文件并定义生成器
+			with file_path.open("rb") as f:
+
+				def file_generator() -> Generator[bytes]:
+					while True:
+						chunk = f.read(chunk_size)
+						if not chunk:
+							break
+						yield chunk
+
+				# 将生成器内容包装为 BytesIO 对象,模拟文件对象
+				file_content = BytesIO()
+				for chunk in file_generator():
+					file_content.write(chunk)
+				file_content.seek(0)  # 重置文件指针
+
+				files = {
+					"file": (file_path.name, file_content, "application/octet-stream"),
+				}
+				data = {"path": upload_path}
+
+				# 发送请求
+				response = requests.post(
+					url="https://api.pgaot.com/user/up_cat_file",
+					files=files,
+					data=data,
+					timeout=120,
+				)
+				# 处理响应
+				response.raise_for_status()  # 如果响应状态码不是 200,会抛出异常
+				result = response.json()
+				return result.get("url", None)
+		except requests.exceptions.RequestException as e:
+			return f"请求错误: {e}"
+		except Exception as e:
+			return f"上传出错: {e!s}"

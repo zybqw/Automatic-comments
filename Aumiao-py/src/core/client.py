@@ -374,7 +374,7 @@ class Motion(ClassUnion):
 			for item in reversed(target_list):
 				print(f" - {item.split(':')[0]}")
 
-			if input(f"删除所有{label}?(y/n)").lower() != "y":
+			if input(f"删除所有{label}?(y/n)  ").lower() != "y":
 				print("取消删除操作")
 				return True
 
@@ -673,79 +673,143 @@ class Motion(ClassUnion):
 
 	# 处理举报
 	# 需要风纪权限
-	def handle_report(self, admin_id: int) -> None:  # noqa: PLR0915
-		def process_report(item: dict, item_type: str, handle_func: ...) -> None:
-			print("=" * 50)
+
+	def handle_report(self, admin_id: int) -> None:
+		def process_item(item: dict, report_type: Literal["comment", "post", "discussion"]) -> None:
+			# 类型字段映射表
+			type_config = {
+				"comment": {
+					"content_field": "comment_content",
+					"user_field": "comment_user",
+					"handle_method": "handle_comment_report",
+					"source_id_field": "comment_source_object_id",
+					"source_name_field": "comment_source_object_name",
+					"special_check": lambda: item.get("comment_source") == "WORK_SHOP",
+				},
+				"post": {
+					"content_field": "post_title",
+					"user_field": "post_user",
+					"handle_method": "handle_post_report",
+					"source_id_field": "post_id",
+					"special_check": lambda: True,
+				},
+				"discussion": {
+					"content_field": "discussion_content",
+					"user_field": "discussion_user",
+					"handle_method": "handle_discussion_report",
+					"source_id_field": "post_id",
+					"special_check": lambda: True,
+				},
+			}
+
+			cfg = type_config[report_type]
+			print(f"\n{'=' * 50}")
 			print(f"举报ID: {item['id']}")
-			print(f"举报内容: {item[f'{item_type}_content']}")
-			print(f"所属板块: {item[f'{item_type}_source_object_name'] if item_type == 'comment' else item['board_name']}")
-			print(f"被举报人: {item[f'{item_type}_user_nickname']}")
+			print(f"举报内容: {item[cfg['content_field']]}")
+			print(f"所属板块: {item.get('board_name', item.get(cfg.get('source_name_field', ''), ''))}")
+			if report_type == "post":
+				print(f"被举报人: {item[f'{cfg["user_field"]}_nick_name']}")
+			else:
+				print(f"被举报人: {item[f'{cfg["user_field"]}_nickname']}")
 			print(f"举报原因: {item['reason_content']}")
-			print(f"举报时间: {item['created_at']}")
-			print("-" * 50)
+			print(f"举报时间: {self.tool_process.format_timestamp(item['created_at'])}")
+			if report_type == "post":
+				print(f"举报线索: {item['description']}")
 
 			while True:
-				choice = input("选择操作: D:删除评论, S:禁言7天, P:通过, C:查看, F:检查违规").upper()
-				if choice == "D":
-					handle_func(report_id=item["id"], status="DELETE", admin_id=admin_id)
-					break
-				if choice == "S":
-					handle_func(report_id=item["id"], status="MUTE_SEVEN_DAYS", admin_id=admin_id)
-					break
-				if choice == "P":
-					handle_func(report_id=item["id"], status="PASS", admin_id=admin_id)
+				print("-" * 50)
+				choice = input("选择操作: D:删除, S:禁言7天, P:通过, C:查看, F:检查违规  ").upper()
+				handler = getattr(self.whale_motion, cfg["handle_method"])
+
+				if choice in ("D", "S", "P"):
+					status_map = {"D": "DELETE", "S": "MUTE_SEVEN_DAYS", "P": "PASS"}
+					handler(report_id=item["id"], status=status_map[choice], admin_id=admin_id)
 					break
 				if choice == "C":
-					if item_type == "comment":
-						print(f"违规板块ID: https://shequ.codemao.cn/work_shop/{item['comment_source_object_id']}")
-						print(f"违规用户ID: https://shequ.codemao.cn/user/{item['comment_user_id']}")
-					elif item_type == "post":
-						print(f"违规帖子ID: https://shequ.codemao.cn/community/{item['post_id']}")
-						print(f"违规用户ID: https://shequ.codemao.cn/user/{item['post_user_id']}")
-					elif item_type == "discussion":
-						print(f"所属帖子标题: {item['discussion_title']}")
-						print(f"所属帖子帖主ID: https://shequ.codemao.cn/user/{item['post_user_id']}")
-						print(f"所属帖子帖主: https://shequ.codemao.cn/user/{item['post_user_nick_name']}")
-						print(f"所属帖子ID: https://shequ.codemao.cn/community/{item['discussion_id']}")
-						print(f"违规用户ID: https://shequ.codemao.cn/user/{item['discussion_user_id']}")
-					continue
-				if choice == "F" and item_type == "comment" and item["comment_source"] == "WORK_SHOP":
-					_check_violations(item)
+					self._show_details(item, report_type, cfg)
+				elif choice == "F" and cfg["special_check"]():
+					self._check_violations(item, report_type, cfg)
 				else:
 					print("无效输入")
 
-		def _check_violations(item: dict) -> None:
-			comments = Obtain().get_comments_detail_new(com_id=int(item["comment_source_object_id"]), source="shop", method="comments")
-			user_comments = self.tool_process.filter_items_by_values(data=comments, id_path="user_id", values=item["comment_user_id"])
-			content_map = defaultdict(list)
-			for user_single_comment in user_comments:
-				content = user_single_comment["content"].lower()
-				if any(ad in content for ad in self.data.USER_DATA.ads):
-					print(f"广告回复: {content}")
+		# 获取所有待处理举报
+		lists: list[tuple[Generator[dict], Literal["comment", "post", "discussion"]]] = [
+			(self.whale_obtain.get_comment_report(types="ALL", status="TOBEDONE", limit=None), "comment"),
+			(self.whale_obtain.get_post_report(status="TOBEDONE", limit=None), "post"),
+			(self.whale_obtain.get_discussion_report(status="TOBEDONE", limit=None), "discussion"),
+		]
 
-				self._track_duplicates(user_single_comment, item["comment_source_object_id"], content_map)
-				for reply in user_single_comment["replies"]:
-					self._track_duplicates(reply, item["comment_source_object_id"], content_map, is_reply=True)
-					content = reply["content"].lower()
-					if any(ad in content for ad in self.data.USER_DATA.ads):
-						print(f"广告回复: {content}")
+		for report_list, report_type in lists:
+			for item in report_list:
+				process_item(item, report_type)
 
-			for (_uid, content), ids in content_map.items():
-				if len(ids) >= self.setting.PARAMETER.spam_max:
-					print(f"发现刷屏评论:{content}")
+	def _show_details(self, item: dict, report_type: Literal["comment", "post", "discussion"], cfg: dict) -> None:
+		"""显示详细信息"""
+		if report_type == "comment":
+			print(f"违规板块ID: https://shequ.codemao.cn/work_shop/{item[cfg['source_id_field']]}")
+		elif report_type == "post":
+			print(f"违规帖子ID: https://shequ.codemao.cn/community/{item[cfg['source_id_field']]}")
+		elif report_type == "discussion":
+			print(f"所属帖子标题: {item['post_title']}")
+			print(f"所属帖子帖主ID: https://shequ.codemao.cn/user/{item['post_user_id']}")
+			print(f"所属帖子ID: https://shequ.codemao.cn/community/{item[cfg['source_id_field']]}")
 
-		comments_list = self.whale_obtain.get_comment_report(types="ALL", status="TOBEDONE", limit=None)
-		posts_list = self.whale_obtain.get_post_report(status="TOBEDONE", limit=None)
-		discussions_list = self.whale_obtain.get_discussion_report(status="TOBEDONE", limit=None)
+		print(f"违规用户ID: https://shequ.codemao.cn/user/{item[f'{cfg["user_field"]}_id']}")
 
-		for item in comments_list:
-			process_report(item, "comment", self.whale_motion.handle_comment_report)
+	def _check_violations(self, item: dict, report_type: Literal["comment", "post", "discussion"], cfg: dict) -> None:
+		"""统一违规检查逻辑"""
+		source_map: dict[str, tuple[Literal["shop", "post", "forum"], Literal["comments", "posts"], str]] = {
+			"comment": ("shop", "comments", item[cfg["source_id_field"]]),
+			"discussion": ("post", "comments", item[cfg["source_id_field"]]),
+			"post": ("forum", "posts", item[cfg["content_field"]]),
+		}
 
-		for item in posts_list:
-			process_report(item, "post", self.whale_motion.handle_post_report)
+		source_type, method, source_id = source_map[report_type]
 
-		for item in discussions_list:
-			process_report(item, "discussion", self.whale_motion.handle_discussion_report)
+		if report_type in ("comment", "discussion"):
+			source_type = cast(Literal["shop", "post"], source_type)
+			method = cast(Literal["comments"], method)
+			comments = Obtain().get_comments_detail_new(
+				com_id=int(source_id),
+				source=source_type,
+				method=method,
+			)
+			user_comments = self.tool_process.filter_items_by_values(
+				data=comments,
+				id_path="user_id",
+				values=item[f"{cfg['user_field']}_id"],
+			)
+			self._analyze_comments(user_comments, int(source_id))
+		else:
+			search_list = forum.Obtain().search_posts(title=source_id, limit=None)
+			user_list = self.tool_process.filter_items_by_values(
+				data=list(search_list),
+				id_path="user.id",
+				values=item[f"{cfg['user_field']}_id"],
+			)
+			if user_list and len(user_list) >= self.setting.PARAMETER.spam_max:
+				print(f"此用户已经刷屏,共发布{len(user_list)}次")
+				for post in user_list:
+					print(f"违规帖子ID: https://shequ.codemao.cn/community/{post['id']}")
+
+	def _analyze_comments(self, comments: list, source_id: int) -> None:
+		"""分析评论违规"""
+		content_map = defaultdict(list)
+		for comment in comments:
+			content = comment["content"].lower()
+			if any(ad in content for ad in self.data.USER_DATA.ads):
+				print(f"广告回复: {content}")
+
+			self._track_duplicates(comment, source_id, content_map)
+			for reply in comment.get("replies", []):
+				self._track_duplicates(reply, source_id, content_map, is_reply=True)
+				if any(ad in reply["content"].lower() for ad in self.data.USER_DATA.ads):
+					print(f"广告回复: {reply['content']}")
+
+		for (_, content), ids in content_map.items():
+			if len(ids) >= self.setting.PARAMETER.spam_max:
+				print(f"发现刷屏评论: {content}")
+				print(f"此用户已经刷屏,共发布{len(ids)}次")
 
 
 # "POST_COMMENT",

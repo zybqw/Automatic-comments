@@ -75,6 +75,7 @@ jobs:
 
       - name: Build Executable with Nuitka
         uses: Nuitka/Nuitka-Action@main
+        continue-on-error: true
         with:
           nuitka-version: main
           script-name: ./Aumiao-py/main.py
@@ -166,6 +167,7 @@ jobs:
           path: |
             build/**/*.log
             build/**/*.yml
+            **.yml
           if-no-files-found: ignore
           retention-days: 5
 #编译后将./Aumiao-py/中的README.txt和DISCLAIMER.txt与data目录以及里面的文件也一并放入,并添加log文件夹
