@@ -3,6 +3,7 @@ from collections.abc import Generator
 from enum import Enum
 from json import loads
 from random import choice
+from time import sleep
 from typing import Any, Literal, TypedDict, cast, overload
 
 from src.api import community, edu, forum, shop, user, whale, work
@@ -807,40 +808,48 @@ class Motion(ClassUnion):
 
 			if analyze_comments:
 				report_count = 0
+				token = self.acquire.headers["Authorization"].split(" ")[1]
 				del self.acquire.headers["Authorization"]
-				accounts = self._switch_edu_account(limit=None)
+				accounts = self._switch_edu_account(limit=10)
 				report_source = "shop" if report_type == "comment" else "forum"
 				comment_ids = Obtain().get_comments_detail_new(com_id=int(source_id), source=source_type, method="comment_id")
 				for comment in analyze_comments:
 					for entry in comment.values():
-						if report_count == 0:
-							try:
-								user = next(accounts)
-								del self.acquire.headers["Cookie"]
-								self.community_login.login_token(user[0], user[1])
-								self.community_motion.sign_nature()
-							except StopIteration:
-								print("无可用账号")
-								break
-						if report_count >= self.setting.PARAMETER.report_max:
-							report_count = 0
 						for single_item in entry:
+							if report_count == 0:
+								try:
+									user = next(accounts)
+									del self.acquire.headers["Cookie"]
+									self.community_login.logout("web")
+									sleep(5)
+									self.community_login.login_password(user[0], user[1])
+									print(f"切换至账号{user[0]}")
+									# self.community_motion.sign_nature()
+								except StopIteration:
+									print("无可用账号")
+									break
+							if report_count >= self.setting.PARAMETER.report_max:
+								report_count = 0
 							item_id, comment_id = single_item.split(":")[0].split(".")
 							parent_id, reply_id = self.tool_routine.find_prefix_suffix(text=comment_id, candidates=comment_ids)
 							parent_id = cast(int, parent_id)
 							is_reply = ":reply" in entry
 							is_reply = cast(Literal[True], is_reply)
-
+							print(report_count)
 							# (user_id,content):[item_id.comment_id1:reply/comment,item_id.comment_id2:reply/comment]
-							self.report_work(
+
+							if self.report_work(
 								source=report_source,
 								target_id=int(comment_id),
 								source_id=int(source_id),
 								reason_id=7,
 								parent_id=parent_id,
 								is_reply=is_reply,
-							)
-							report_count += 1
+							):
+								report_count += 1
+
+				self.whale_routine.set_token(token)
+
 		else:
 			search_list = forum.Obtain().search_posts(title=source_id, limit=None)
 			user_list = self.tool_process.filter_items_by_values(
@@ -878,7 +887,9 @@ class Motion(ClassUnion):
 	def _switch_edu_account(self, limit: int | None) -> Generator[tuple[str, str]]:
 		"""返回指定数量学生账密"""
 		students = self.edu_obtain.get_students(limit=limit)
-		for student in students:
+		for student in list(students)[::-1]:
+			self.community_login.logout("web")
+			self.community_login.login_token(identity="15271420410", password="AumiaoBlack114514")
 			password = self.edu_motion.reset_password(student["id"])["password"]
 			# self.community_login.login_token(identity=student["username"], password=password)
 			yield student["username"], password
