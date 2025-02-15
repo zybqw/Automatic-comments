@@ -101,6 +101,44 @@ class Motion:
 		return response.json() if return_data else response.status_code == HTTPSTATUS.OK
 		# 返回响应数据或请求状态码是否为200
 
+	# 删除作品
+	def delete_work(self, work_id: int) -> bool:
+		response = self.acquire.send_request(
+			endpoint=f"https://eduzone.codemao.cn/edu/zone/work/{work_id}/delete",
+			method="POST",
+			payload={},
+		)
+		return response.status_code == HTTPSTATUS.OK
+
+	# 移除班级内的学生至无班级学生
+	def remove_student_to_no_class(self, class_id: int, stu_id: int) -> bool:
+		params = {"student_ids[]": stu_id}
+		response = self.acquire.send_request(
+			endpoint=f"https://eduzone.codemao.cn/edu/zone/class/{class_id}/students",
+			method="DELETE",
+			params=params,
+		)
+		return response.status_code == HTTPSTATUS.NO_CONTENT
+
+	# 获取活动课程包
+	def get_activity_package(self, package_id: int) -> dict:
+		payload = {"packageId": package_id}
+		response = self.acquire.send_request(
+			endpoint="https://eduzone.codemao.cn/edu/zone/activity/open/package",
+			method="POST",
+			payload=payload,
+		)
+		return response.json()
+
+	# 标记所有消息为已读
+	def mark_all_message_read(self) -> bool:
+		response = self.acquire.send_request(
+			endpoint="https://eduzone.codemao.cn/edu/zone/invite/message/all/read",
+			method="POST",
+			payload={},
+		)
+		return response.status_code == HTTPSTATUS.OK
+
 
 @singleton
 class Obtain:
@@ -143,6 +181,30 @@ class Obtain:
 		)
 		# 返回响应数据
 		return response.json()
+
+	# 获取通知公告消息列表
+	def get_message_list(self, limit: int | None = 10) -> Generator[dict]:
+		time_stamp = community.Obtain().get_timestamp()["data"]
+		params = {"page": 1, "limit": 10, "TIME": time_stamp}
+		return self.acquire.fetch_data(
+			endpoint="https://eduzone.codemao.cn/edu/zone/system/message/list",
+			params=params,
+			pagination_method="page",
+			args={"amount": "limit", "remove": "page"},
+			limit=limit,
+		)
+
+	# 获取消息提醒列表
+	def get_message_remind(self, limit: int | None = 10) -> Generator[dict]:
+		time_stamp = community.Obtain().get_timestamp()["data"]
+		params = {"page": 1, "limit": 10, "TIME": time_stamp}
+		return self.acquire.fetch_data(
+			endpoint="https://eduzone.codemao.cn/edu/zone/invite/teacher/messages",
+			params=params,
+			pagination_method="page",
+			args={"amount": "limit", "remove": "page"},
+			limit=limit,
+		)
 
 	# 获取学校分类列表
 	def get_school_label(self) -> dict:
@@ -199,7 +261,7 @@ class Obtain:
 		)
 
 	# 获取班级内全部学生
-	def get_students(self, invalid: int = 1, limit: int | None = 50) -> Generator[dict]:
+	def get_students(self, invalid: int = 1, limit: int | None = 100) -> Generator[dict]:
 		# invalid为1时为已加入班级学生,为0则反之
 		data = {"invalid": invalid}
 		params = {"page": 1, "limit": 100}
@@ -307,6 +369,14 @@ class Obtain:
 		# "behavior_score": 课堂表现分
 		# "average_score": 作品平均分
 		# "high_score": 作品最高分
+		# -------------
+		# "total_classes": 班级数
+		# "activated_students": 激活学生数
+		# "total_periods": 上课数
+		# "total_works": 作品数
+		# "average_score": 作品平均分
+		# "high_score": 作品最高分
+
 		time_stamp = community.Obtain().get_timestamp()["data"]
 		params = {"TIME": time_stamp}
 		response = self.acquire.send_request(
@@ -343,6 +413,35 @@ class Obtain:
 		params = {"page": 1, "TIME": time_stamp}
 		return self.acquire.fetch_data(
 			endpoint="https://eduzone.codemao.cn/edu/zone/work/manager/student/works",
+			params=params,
+			pagination_method="page",
+			args={"remove": "page", "res_amount_key": "limit"},
+			limit=limit,
+		)
+
+	# 获取老师管理的作品
+	# class_id为班级id,mark_status为评分状态,max_score&min_score为分数范围,name为作品名
+	# status为发布状态,updated_at_from&updated_at_to为时间戳范围,username为学生id
+	# type为作品类型,teachingRecordId为上课记录id
+	def get_teacher_works(self, limit: int | None = 50) -> Generator[dict]:
+		time_stamp = community.Obtain().get_timestamp()["data"]
+		params = {"page": 1, "TIME": time_stamp}
+		return self.acquire.fetch_data(
+			endpoint="https://eduzone.codemao.cn/edu/zone/work/manager/works",
+			params=params,
+			pagination_method="page",
+			args={"remove": "page", "res_amount_key": "limit"},
+			limit=limit,
+		)
+
+	# 获取我的作品
+	# mark_status为评分状态,max_score&min_score为分数范围,name为作品名
+	# status为发布状态,updated_at_from&updated_at_to为时间戳范围
+	def get_my_works(self, limit: int | None = 50) -> Generator[dict]:
+		time_stamp = community.Obtain().get_timestamp()["data"]
+		params = {"page": 1, "TIME": time_stamp}
+		return self.acquire.fetch_data(
+			endpoint="https://eduzone.codemao.cn/edu/zone/work/manager/self/works",
 			params=params,
 			pagination_method="page",
 			args={"remove": "page", "res_amount_key": "limit"},
