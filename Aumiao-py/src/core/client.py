@@ -710,10 +710,11 @@ class Motion(ClassUnion):
 			print(f"举报ID: {item['id']}")
 			print(f"举报内容: {item[cfg['content_field']]}")
 			print(f"所属板块: {item.get('board_name', item.get(cfg.get('source_name_field', ''), ''))}")
+			cfg_user_field = cfg["user_field"]
 			if report_type == "post":
-				print(f"被举报人: {item[f'{cfg["user_field"]}_nick_name']}")
+				print(f"被举报人: {item[f'{cfg_user_field}_nick_name']}")
 			else:
-				print(f"被举报人: {item[f'{cfg["user_field"]}_nickname']}")
+				print(f"被举报人: {item[f'{cfg_user_field}_nickname']}")
 			print(f"举报原因: {item['reason_content']}")
 			print(f"举报时间: {self.tool_process.format_timestamp(item['created_at'])}")
 			if report_type == "post":
@@ -757,7 +758,8 @@ class Motion(ClassUnion):
 			print(f"所属帖子帖主ID: https://shequ.codemao.cn/user/{item['post_user_id']}")
 			print(f"所属帖子ID: https://shequ.codemao.cn/community/{item[cfg['source_id_field']]}")
 
-		print(f"违规用户ID: https://shequ.codemao.cn/user/{item[f'{cfg["user_field"]}_id']}")
+		cfg_user_field = cfg["user_field"]
+		print(f"违规用户ID: https://shequ.codemao.cn/user/{item[f'{cfg_user_field}_id']}")
 		if report_type in ("comment", "discussion"):
 			source = "shop" if report_type == "comment" else "post"
 			comments = Obtain().get_comments_detail_new(com_id=item[cfg["source_id_field"]], source=source, method="comments", max_limit=200)
