@@ -154,7 +154,7 @@ class Motion:
 	) -> dict | bool:
 		# 构造请求数据
 		data = {"content": content}
-		# 发送请求
+
 		response = self.acquire.send_request(
 			endpoint=f"/web/forums/posts/{post_id}/replies",
 			method="POST",
@@ -167,7 +167,7 @@ class Motion:
 	def reply_comment(self, reply_id: int, parent_id: int, content: str, *, return_data: bool = False) -> dict | bool:
 		# 构造请求数据
 		data = {"content": content, "parent_id": parent_id}
-		# 发送请求
+
 		response = self.acquire.send_request(endpoint=f"/web/forums/replies/{reply_id}/comments", method="POST", payload=data)
 		# 返回响应数据或状态码
 		return response.json() if return_data else response.status_code == HTTPSTATUS.CREATED
@@ -181,7 +181,7 @@ class Motion:
 	) -> bool:
 		# 每个回帖都有唯一id
 		params = {"source": source}
-		# 发送请求
+
 		response = self.acquire.send_request(
 			endpoint=f"/web/forums/comments/{ids}/liked",
 			method=method,
@@ -229,7 +229,7 @@ class Motion:
 			"discussion_id": comment_id,
 			"source": source,
 		}
-		# 发送请求
+
 		response = self.acquire.send_request(
 			endpoint="/web/reports/posts/discussions",
 			method="POST",
@@ -253,7 +253,7 @@ class Motion:
 			"description": description,
 			"post_id": post_id,
 		}
-		# 发送请求
+
 		response = self.acquire.send_request(
 			endpoint="/web/reports/posts",
 			method="POST",
@@ -264,7 +264,6 @@ class Motion:
 
 	# 删除某个回帖或评论或帖子
 	def delete_comment_post_reply(self, ids: int, types: Literal["replies", "comments", "posts"]) -> bool:
-		# 发送请求
 		response = self.acquire.send_request(
 			endpoint=f"/web/forums/{types}/{ids}",
 			method="DELETE",
@@ -274,7 +273,6 @@ class Motion:
 
 	# 置顶某个回帖
 	def top_comment(self, comment_id: int, method: Literal["PUT", "DELETE"]) -> bool:
-		# 发送请求
 		response = self.acquire.send_request(
 			endpoint=f"/web/forums/replies/{comment_id}/top",
 			method=method,
@@ -299,7 +297,7 @@ class Motion:
 			url = f"/web/forums/boards/{board_id}/posts"
 		elif method == "work_shop":
 			url = f"/web/works/subjects/{work_shop_id}/post"
-		# 发送请求
+
 		response = self.acquire.send_request(
 			endpoint=url,
 			method="POST",

@@ -35,17 +35,10 @@ class AccountData:
 
 
 @dataclass
-class BlackRoomData:
-	post: list[str] = field(default_factory=list)
-	user: list[str] = field(default_factory=list)
-	work: list[str] = field(default_factory=list)
-
-
-@dataclass
 class UserData:
 	ads: list[str] = field(default_factory=list)
 	answers: list[dict[str, str | list[str]]] = field(default_factory=list)
-	black_room: BlackRoomData = field(default_factory=BlackRoomData)
+	black_room: list[str] = field(default_factory=list)
 	comments: list[str] = field(default_factory=list)
 	emojis: list[str] = field(default_factory=list)
 	replies: list[str] = field(default_factory=list)
@@ -72,6 +65,7 @@ class Parameter:
 	get_works_method: str = ""
 	password_login_method: str = ""
 	spam_max: int = 0
+	report_max: int = 0
 
 
 @dataclass

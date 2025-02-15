@@ -31,6 +31,8 @@ class Union:
 		self.acquire = acquire.CodeMaoClient()
 		self.cache = data.CacheManager().data
 		self.community_obtain = community.Obtain()
+		self.community_login = community.Login()
+		self.community_motion = community.Motion()
 		self.data = data.DataManager().data
 		self.edu_obtain = edu.Obtain()
 		self.edu_motion = edu.Motion()
@@ -312,7 +314,7 @@ class Motion(ClassUnion):
 		lists = {"ads": [], "blacklist": [], "duplicates": []}
 		params = {
 			"ads": self.data.USER_DATA.ads,
-			"blacklist": self.data.USER_DATA.black_room.user,
+			"blacklist": self.data.USER_DATA.black_room,
 			"spam_max": self.setting.PARAMETER.spam_max,
 		}
 
@@ -799,8 +801,44 @@ class Motion(ClassUnion):
 				id_path="user_id",
 				values=item[f"{cfg['user_field']}_id"],
 			)
-			self._analyze_comments(user_comments, int(source_id))
+			analyze_comments = self._analyze_comments(user_comments, int(source_id))
 
+			if analyze_comments:
+				report_count = 0
+				del self.acquire.headers["Authorization"]
+				accounts = self._switch_edu_account(limit=None)
+				report_source = "shop" if report_type == "comment" else "forum"
+				comment_ids = Obtain().get_comments_detail_new(com_id=int(source_id), source=source_type, method="comment_id")
+				for comment in analyze_comments:
+					for entry in comment.values():
+						if report_count == 0:
+							try:
+								user = next(accounts)
+								del self.acquire.headers["Cookie"]
+								self.community_login.login_token(user[0], user[1])
+								self.community_motion.sign_nature()
+							except StopIteration:
+								print("无可用账号")
+								break
+						if report_count >= self.setting.PARAMETER.report_max:
+							report_count = 0
+						for single_item in entry:
+							item_id, comment_id = single_item.split(":")[0].split(".")
+							parent_id, reply_id = self.tool_routine.find_prefix_suffix(text=comment_id, candidates=comment_ids)
+							parent_id = cast(int, parent_id)
+							is_reply = ":reply" in entry
+							is_reply = cast(Literal[True], is_reply)
+
+							# (user_id,content):[item_id.comment_id1:reply/comment,item_id.comment_id2:reply/comment]
+							self.report_work(
+								source=report_source,
+								target_id=int(comment_id),
+								source_id=int(source_id),
+								reason_id=7,
+								parent_id=parent_id,
+								is_reply=is_reply,
+							)
+							report_count += 1
 		else:
 			search_list = forum.Obtain().search_posts(title=source_id, limit=None)
 			user_list = self.tool_process.filter_items_by_values(
@@ -808,12 +846,13 @@ class Motion(ClassUnion):
 				id_path="user.id",
 				values=item[f"{cfg['user_field']}_id"],
 			)
+
 			if user_list and len(user_list) >= self.setting.PARAMETER.spam_max:
 				print(f"此用户已经刷屏,共发布{len(user_list)}次")
 				for post in user_list:
 					print(f"违规帖子ID: https://shequ.codemao.cn/community/{post['id']}")
 
-	def _analyze_comments(self, comments: list, source_id: int) -> None | Generator:
+	def _analyze_comments(self, comments: list, source_id: int) -> None | Generator[dict[tuple[int, str], list[str]]]:
 		"""分析评论违规"""
 		content_map = defaultdict(list)
 		for comment in comments:
@@ -827,19 +866,20 @@ class Motion(ClassUnion):
 				if any(ad in reply["content"].lower() for ad in self.data.USER_DATA.ads):
 					print(f"广告回复: {reply['content']}")
 		# (user_id,content):[item_id.comment_id1:reply/comment,item_id.comment_id2:reply/comment]
-		for (user_id, content), ids in content_map.items():
-			if len(ids) >= self.setting.PARAMETER.spam_max:
+		for (user_id, content), entry in content_map.items():
+			if len(entry) >= self.setting.PARAMETER.spam_max:
 				print(f"发现刷屏评论: {content}")
-				print(f"此用户已经刷屏,共发布{len(ids)}次")
-				yield {(user_id, content): ids}
+				print(f"此用户已经刷屏,共发布{len(entry)}次")
+				yield {(user_id, content): entry}
 		return None
 
-	def _switch_edu_account(self, limit: int) -> Generator:
+	def _switch_edu_account(self, limit: int | None) -> Generator[tuple[str, str]]:
 		"""返回指定数量学生账密"""
 		students = self.edu_obtain.get_students(limit=limit)
 		for student in students:
-			password = self.edu_motion.reset_password(student["id"])
-			yield {student["username"]: password}
+			password = self.edu_motion.reset_password(student["id"])["password"]
+			# self.community_login.login_token(identity=student["username"], password=password)
+			yield student["username"], password
 
 	@overload
 	def report_work(

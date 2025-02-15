@@ -21,20 +21,19 @@ class Motion:
 		time_stamp = community.Obtain().get_timestamp()["data"]
 		# 构造参数
 		params = {"TIME": time_stamp, "userId": user_id, "realName": real_name}
-		# 发送请求
+
 		response = self.acquire.send_request(
 			endpoint="https://eduzone.codemao.cn/edu/zone/account/updateName",
 			method="GET",
 			params=params,
 		)
-		# 返回请求状态码是否为200
+
 		return response.status_code == HTTPSTATUS.OK
 
 	# 创建班级
 	def create_class(self, name: str) -> dict:
-		# 构造数据
 		data = {"name": name}
-		# 发送请求
+
 		response = self.acquire.send_request(endpoint="https://eduzone.codemao.cn/edu/zone/class", method="POST", payload=data)
 		# 返回响应数据
 		return response.json()
@@ -45,7 +44,7 @@ class Motion:
 		time_stamp = community.Obtain().get_timestamp()["data"]
 		# 构造参数
 		params = {"TIME": time_stamp}
-		# 发送请求
+
 		response = self.acquire.send_request(
 			endpoint=f"https://eduzone.codemao.cn/edu/zone/class/{class_id}",
 			method="DELETE",
@@ -55,49 +54,43 @@ class Motion:
 
 	# 班级内新建学生账号
 	def create_student(self, name: list[str], class_id: int) -> bool:
-		# 构造数据
 		data = {"student_names": name}
-		# 发送请求
+
 		response = self.acquire.send_request(
 			endpoint=f"https://eduzone.codemao.cn/edu/zone/class/{class_id}/students",
 			method="POST",
 			payload=data,
 		)
-		# 返回请求状态码是否为200
+
 		return response.status_code == HTTPSTATUS.OK
 
 	# 重置密码
-	def reset_password(self, stu_id: list[int]) -> bool:
-		# 构造数据
-		data = {"student_id": stu_id}
-		# 发送请求
+	def reset_password(self, stu_id: list[int]) -> dict:
 		response = self.acquire.send_request(
-			endpoint="https://eduzone.codemao.cn/edu/zone/students/password",
+			endpoint=f"https://eduzone.codemao.cn/edu/zone/students/{stu_id}/password",
 			method="PATCH",
-			payload=data,
+			payload={},
 		)
-		# 返回请求状态码是否为200
-		return response.status_code == HTTPSTATUS.OK
+		# {"id":405584024,"password":"805753"}
+		return response.json()
 
 	# 删除班级内学生
 	def remove_student(self, stu_id: int) -> bool:
 		data = {}
 		response = self.acquire.send_request(
-			# 发送请求
 			endpoint=f"https://eduzone.codemao.cn/edu/zone/student/remove/{stu_id}",
 			method="POST",
 			payload=data,
 		)
 		return response.status_code == HTTPSTATUS.OK
-		# 返回请求状态码是否为200
 
 	# 添加、修改自定义备课包
 	# patch为修改信息,post用于创建备课包
 	def add_customized_package(self, method: Literal["POST", "PATCH"], avatar_url: str, description: str, name: str, *, return_data: bool = True) -> dict | bool:
 		data = {"avatar_url": avatar_url, "description": description, "name": name}
-		# 构造数据
+
 		response = self.acquire.send_request(endpoint="https://eduzone.codemao.cn/edu/zone/lesson/customized/packages", method=method, payload=data)
-		# 发送请求
+
 		return response.json() if return_data else response.status_code == HTTPSTATUS.OK
 		# 返回响应数据或请求状态码是否为200
 
@@ -150,7 +143,7 @@ class Obtain:
 	def get_data_details(self) -> dict:
 		time_stamp = community.Obtain().get_timestamp()["data"]
 		params = {"TIME": time_stamp}
-		# 发送请求
+
 		response = self.acquire.send_request(endpoint="https://eduzone.codemao.cn/edu/zone", method="GET", params=params)
 		return response.json()
 
@@ -160,7 +153,7 @@ class Obtain:
 		time_stamp = community.Obtain().get_timestamp()["data"]
 		# 设置参数
 		params = {"TIME": time_stamp}
-		# 发送请求
+
 		response = self.acquire.send_request(
 			endpoint="https://eduzone.codemao.cn/api/home/account",
 			method="GET",
@@ -173,7 +166,7 @@ class Obtain:
 		time_stamp = community.Obtain().get_timestamp()["data"]
 		# 设置参数
 		params = {"TIME": time_stamp}
-		# 发送请求
+
 		response = self.acquire.send_request(
 			endpoint="https://eduzone.codemao.cn/edu/zone/system/message/unread/num",
 			method="GET",
@@ -212,7 +205,7 @@ class Obtain:
 		time_stamp = community.Obtain().get_timestamp()["data"]
 		# 设置参数
 		params = {"TIME": time_stamp}
-		# 发送请求
+
 		response = self.acquire.send_request(
 			endpoint="https://eduzone.codemao.cn/edu/zone/school/open/grade/list",
 			method="GET",

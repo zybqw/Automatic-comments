@@ -1,4 +1,3 @@
-import json
 import time
 from collections.abc import Generator
 from enum import Enum
@@ -16,6 +15,7 @@ from .decorator import singleton
 
 LOG_DIR: Path = Path.cwd() / "log"
 LOG_FILE_PATH: Path = LOG_DIR / f"{int(time.time())}.txt"
+DICT_ITEM = 2
 
 
 class HTTPSTATUS(Enum):
@@ -50,7 +50,7 @@ class CodeMaoClient:
 		self._file: Loggable = file.CodeMaoFile()
 
 		self.base_url = "https://api.codemao.cn"
-		self.headers = self._config.PROGRAM.HEADERS.copy()
+		self.headers: dict[str, str] = self._config.PROGRAM.HEADERS.copy()
 		self.tool_process = tool.CodeMaoProcess()
 		LOG_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -70,32 +70,35 @@ class CodeMaoClient:
 		"""增强型请求方法,支持重试机制和更安全的超时处理"""
 		url = endpoint if endpoint.startswith("http") else f"{self.base_url}{endpoint}"
 		merged_headers = {**self.headers, **(headers or {})}
+		self._session.headers.clear()
 		for attempt in range(retries):
 			try:
 				response = self._session.request(method=method, url=url, headers=merged_headers, params=params, json=payload, timeout=timeout)
 				response.raise_for_status()
 
-			except HTTPError as e:
-				self._log_error(e.response, f"HTTP Error {e.response.status_code}")
-				if e.response.status_code in (429, 503):
+			except HTTPError as err:
+				print(f"HTTP Error {type(err).__name__} - {err}")
+				if err.response.status_code in (429, 503):
 					time.sleep(2**attempt * backoff_factor)
 					continue
 				break
-			except (ReqConnectionError, Timeout) as e:
-				print(f"Network error ({type(e).__name__}): {e}")
+			except (ReqConnectionError, Timeout) as err:
+				print(f"Network error ({type(err).__name__}): {err}")
 				if attempt == retries - 1:
 					raise
 				time.sleep(2**attempt * backoff_factor)
-			except RequestException as e:
-				print(f"Request failed: {type(e).__name__} - {e}")
+			except RequestException as err:
+				print(f"Request failed: {type(err).__name__} - {err}")
 				break
-			except Exception as e:
-				print(e)
+			except Exception as err:
+				print(err)
+				print(f"Unknown error: {type(err).__name__} - {err}")
 			else:
 				if log:
 					self._log_request(response)
 				# self.update_cookies(response.cookies)
 				return response
+
 		return cast(requests.Response, None)
 
 	def fetch_data(
@@ -149,7 +152,7 @@ class CodeMaoClient:
 			elif pagination_method == "page":
 				params[args["remove"]] = page + 1
 
-			response = self.send_request(endpoint, fetch_method, params)
+			response = self.send_request(endpoint, fetch_method, params, payload=payload)
 			if not response:
 				continue
 
@@ -160,41 +163,46 @@ class CodeMaoClient:
 				if limit and yielded_count >= limit:  # 达到限制立即停止
 					return
 
-	def update_cookies(self, cookies: RequestsCookieJar | dict) -> None:
-		"""类型安全的Cookie更新方法"""
-		# if isinstance(cookies, str):
-		# 	self._session.cookies.update(requests.utils.cookiejar_from_dict(self._processor.convert_cookie_to_str(cookies)))
-		if isinstance(cookies, dict):
-			self._session.cookies.update(cookies)
-		elif isinstance(cookies, RequestsCookieJar):
-			self._session.cookies = cookies
-		else:
-			msg = f"Unsupported cookie type: {type(cookies).__name__}"
+	def update_cookies(self, cookies: RequestsCookieJar | dict | str) -> None:
+		"""仅操作headers中的Cookie,不涉及session cookies"""
+		# 清除旧Cookie
+		if "Cookie" in self.headers:
+			del self.headers["Cookie"]
+
+		# 转换所有类型为Cookie字符串
+		def _to_cookie_str(cookie: RequestsCookieJar | dict | str) -> str:
+			if isinstance(cookie, RequestsCookieJar):
+				return "; ".join(f"{cookie.name}={cookie.value}" for cookie in cookie)
+			if isinstance(cookie, dict):
+				return "; ".join(f"{k}={v}" for k, v in cookie.items())
+			if isinstance(cookie, str):
+				# 过滤非法字符
+				return ";".join(part.strip() for part in cookie.split(";") if "=" in part and len(part.split("=")) == DICT_ITEM)
+			msg = f"不支持的Cookie类型: {type(cookie).__name__}"
 			raise TypeError(msg)
 
+		try:
+			cookie_str = _to_cookie_str(cookies)
+			if cookie_str:
+				self.headers["Cookie"] = cookie_str
+		except Exception as e:
+			print(f"Cookie更新失败: {e!s}")
+			msg = "无效的Cookie格式"
+			raise ValueError(msg) from e
+
 	def _log_request(self, response: requests.Response) -> None:
-		"""结构化日志记录"""
-		log_entry = {
-			"timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-			"method": response.request.method,
-			"url": response.url,
-			"status": response.status_code,
-			"request_headers": dict(response.request.headers),
-			"response_headers": dict(response.headers),
-			"response": response.text,
-		}
-
-		self._file.file_write(path=LOG_FILE_PATH, content=json.dumps(log_entry, ensure_ascii=False) + "\n", method="a")
-
-	def _log_error(self, response: requests.Response | None, error_msg: str) -> None:
-		"""统一错误日志处理"""
-		error_info = {
-			"error": error_msg,
-			"url": response.url if response else "Unknown",
-			"status": response.status_code if response else 0,
-			"response": response.text[:200] + "..." if response else "",
-		}
-		print(f"API Error: {json.dumps(error_info, ensure_ascii=False)}")
+		"""简化的日志记录,使用文本格式而不是字典"""
+		log_entry = (
+			f"[{time.strftime('%Y-%m-%d %H:%M:%S')}]\n"
+			f"Method: {response.request.method}\n"
+			f"URL: {response.url}\n"
+			f"Status: {response.status_code}\n"
+			f"Request Headers: {response.request.headers}\n"
+			f"Response Headers: {response.headers}\n"
+			f"Response: {response.text}\n"
+			f"{'=' * 50}\n"
+		)
+		self._file.file_write(path=LOG_FILE_PATH, content=log_entry, method="a")
 
 	@staticmethod
 	def _get_default_pagination_config(method: str) -> PaginationConfig:
@@ -236,7 +244,6 @@ class CodeMaoClient:
 				}
 				data = {"path": upload_path}
 
-				# 发送请求
 				response = requests.post(
 					url="https://api.pgaot.com/user/up_cat_file",
 					files=files,

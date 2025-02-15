@@ -14,7 +14,7 @@ class Login:
 	def login(self, phonenum: int, password: str) -> dict:
 		# 构造请求数据
 		data = {"phonenum": phonenum, "password": password}
-		# 发送请求
+
 		response = self.acquire.send_request(endpoint="https://x.chatmindai.net/api/user/login", method="POST", payload=data)
 		# 返回响应结果
 		return response.json()
@@ -80,7 +80,7 @@ class Explore:
 				"searchValue": searchValue,
 			},
 		}
-		# 发送请求
+
 		response = self.acquire.send_request(
 			endpoint="https://x.chatmindai.net/api/model/query",
 			method="POST",
@@ -103,7 +103,6 @@ class Explore:
 		else:
 			url = ""
 
-		# 发送请求
 		response = self.acquire.send_request(endpoint=url, method="POST", payload={}, headers=HEADERS)
 		# 返回响应数据
 		return response.json()

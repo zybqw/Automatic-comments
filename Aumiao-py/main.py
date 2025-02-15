@@ -4,14 +4,10 @@ from src import *  # noqa: F403
 def login() -> None:
 	"""尝试登录并获取数据"""
 	try:
-		# 输入用户名
 		identity = input("请输入用户名: ")
-		# 输入密码
 		password = input("请输入密码: ")
-		# 登录并获取数据
 		community.Login().login_token(identity=identity, password=password)  # noqa: F405
 		_data = user.Obtain().get_data_details()  # noqa: F405
-		# 使用 update 方法更新字典中的数据
 		account_data_manager = data.DataManager()  # noqa: F405
 		account_data_manager.update(
 			{

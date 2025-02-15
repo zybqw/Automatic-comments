@@ -317,7 +317,7 @@ class Motion:
 	def set_data_doing(self, doing: str) -> bool:
 		"""发送PUT请求,设置正在做的事"""
 		response = self.acquire.send_request(endpoint="/nemo/v2/user/basic", method="PUT", payload={"doing": doing})
-		# 返回请求状态码是否为200
+
 		return response.status_code == HTTPSTATUS.OK
 
 	def set_data_username(self, username: str) -> bool:
@@ -381,7 +381,7 @@ class Motion:
 			msg = "至少需要传入一个参数"
 			raise ValueError(msg)
 		response = self.acquire.send_request(endpoint="/nemo/v2/user/basic", method="PUT", payload=data)
-		# 返回请求状态码是否为200
+
 		return response.status_code == HTTPSTATUS.OK
 
 	def cancel_avatar_frame(self) -> bool:
@@ -390,7 +390,7 @@ class Motion:
 			endpoint="/creation-tools/v1/user/avatar-frame/cancel",
 			method="PUT",
 		)
-		# 返回请求状态码是否为200
+
 		return response.status_code == HTTPSTATUS.OK
 
 	# id 2,3,4 代表Lv2,3,4头像框
@@ -400,7 +400,7 @@ class Motion:
 			endpoint=f"/creation-tools/v1/user/avatar-frame/{frame_id}",
 			method="PUT",
 		)
-		# 返回请求状态码是否为200
+
 		return response.status_code == HTTPSTATUS.OK
 
 	# 设置info

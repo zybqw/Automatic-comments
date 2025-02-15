@@ -37,7 +37,7 @@ class Motion:
 			"work_source_label": work_source_label,
 			"save_type": save_type,
 		}
-		# 发送请求
+
 		response = self.acquire.send_request(
 			endpoint="https://api-creation.codemao.cn/kitten/r2/work",
 			method="POST",
@@ -68,7 +68,7 @@ class Motion:
 		# if_default_cover: 1表示使用默认封面,2表示自定义封面
 		# 构造请求参数
 		# description: 作品描述,operation:操作说明
-		# 获取数据
+
 		data = {
 			"name": name,
 			"description": description,
@@ -384,9 +384,8 @@ class Obtain:
 
 	# 获取评论区评论
 	def get_work_comments(self, work_id: int, limit: int = 15) -> Generator:
-		# 设置参数
 		params = {"limit": 15, "offset": 0}
-		# 获取数据
+
 		return self.acquire.fetch_data(
 			endpoint=f"/creation-tools/v1/works/{work_id}/comments",
 			params=params,
@@ -397,102 +396,92 @@ class Obtain:
 
 	# 获取作品信息
 	def get_work_detail(self, work_id: int) -> dict:
-		# 发送请求获取数据
 		response = self.acquire.send_request(
 			endpoint=f"/creation-tools/v1/works/{work_id}",
 			method="GET",
 		)
-		# 返回数据
+
 		return response.json()
 
 	# 获取kitten作品信息
 	def get_kitten_work_detail(self, work_id: int) -> dict:
-		# 发送请求获取数据
 		response = self.acquire.send_request(
 			endpoint=f"https://api-creation.codemao.cn/kitten/work/detail/{work_id}",
 			method="GET",
 		)
-		# 返回数据
+
 		return response.json()
 
 	# 获取KN作品信息
 	def get_kn_work_detail(self, work_id: int) -> dict:
-		# 发送请求获取数据
 		response = self.acquire.send_request(
 			endpoint=f"https://api-creation.codemao.cn/neko/works/{work_id}",
 			method="GET",
 		)
-		# 返回数据
+
 		return response.json()
 
 	# 获取KN作品信息
 	# KN作品发布需要审核,发布后该接口不断定时获取数据
 	# #若接口数据返回正常,则表示发布成功,并将KN作品编辑页面的发布按钮改为更新
 	def get_kn_work_info(self, work_id: int) -> dict:
-		# 发送请求获取数据
 		response = self.acquire.send_request(
 			endpoint=f"https://api-creation.codemao.cn/neko/community/work/detail/{work_id}",
 			method="GET",
 		)
-		# 返回数据
+
 		return response.json()
 
 	# 获取KN作品状态
 	def get_kn_work_status(self, work_id: int) -> dict:
-		# 发送请求获取数据
 		response = self.acquire.send_request(
 			endpoint=f"https://api-creation.codemao.cn/neko/works/status/{work_id}",
 			method="GET",
 		)
-		# 返回数据
+
 		return response.json()
 
 	# 获取其他作品推荐_web端
 	def get_other_recommended_web(self, work_id: int) -> dict:
-		# 发送请求获取数据
 		response = self.acquire.send_request(
 			endpoint=f"/nemo/v2/works/web/{work_id}/recommended",
 			method="GET",
 		)
-		# 返回数据
+
 		return response.json()
 
 	# 获取其他作品推荐_nemo端
 	def get_other_recommended_nemo(self, work_id: int) -> dict:
-		# 设置参数
 		params = {"work_id": work_id}
-		# 发送请求获取数据
+
 		response = self.acquire.send_request(
 			endpoint="/nemo/v3/work-details/recommended/list",
 			method="GET",
 			params=params,
 		)
-		# 返回数据
+
 		return response.json()
 
 	# 获取作品信息(info)
 	def get_work_info(self, work_id: int) -> dict:
-		# 发送请求获取数据
 		response = self.acquire.send_request(endpoint=f"/api/work/info/{work_id}", method="GET")
-		# 返回数据
+
 		return response.json()
 
 	# 获取作品标签
 	def get_work_label(self, work_id: int) -> dict:
-		# 设置参数
 		params = {"work_id": work_id}
-		# 发送请求获取数据
+
 		response = self.acquire.send_request(
 			endpoint="/creation-tools/v1/work-details/work-labels",
 			method="GET",
 			params=params,
 		)
-		# 返回数据
+
 		return response.json()
 
 	# 获取所有kitten作品标签
 	def get_kitten_work_label(self) -> dict:
-		# 发送请求获取数据
 		response = self.acquire.send_request(endpoint="https://api-creation.codemao.cn/kitten/work/labels", method="GET")
 		return response.json()
 
