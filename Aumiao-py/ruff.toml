@@ -1,18 +1,4 @@
-exclude = [
-    ".git",
-    ".pytest_cache",
-    ".ruff_cache",
-    ".svn",
-    ".venv",
-    ".vscode",
-    "video",
-    "test",
-    "gui",
-    "build",
-    "dist",
-    "node_modules",
-    "venv",
-]
+extend-exclude = ["test", "**gui.py"]
 line-length = 180
 indent-width = 4
 target-version = "py313"

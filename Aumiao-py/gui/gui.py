@@ -1,7 +1,7 @@
+# ruff: noqa: {code}
 import sys  # noqa: I001
 import ctypes
 import numpy as np
-import PyQt5.sip
 
 from PyQt5.QtWidgets import *  # noqa: F403
 from PyQt5.QtGui import *  # noqa: F403
@@ -19,6 +19,7 @@ from scipy.ndimage import convolve
 # 	[0.003, 0.013, 0.022, 0.013, 0.003]
 # ])
 
+
 def apply_gaussian_blur(image: QImage):
 	# 将 QImage 转换为 NumPy 数组
 	width = image.width()
@@ -30,16 +31,16 @@ def apply_gaussian_blur(image: QImage):
 	# buffer.setsize(height * width * 4)
 	img_array = np.frombuffer(buffer, dtype=np.uint8).reshape(image.height(), image.width(), 4)
 	# img_array = np.frombuffer(buffer, dtype=np.uint8).reshape((height, width, 4)) # type: ignore
-	
+
 	# 分离颜色通道
 	red = img_array[:, :, 0]
 	green = img_array[:, :, 1]
 	blue = img_array[:, :, 2]
 
 	# 应用高斯核卷积
-	blurred_red = convolve(red, gaussian_kernel, mode='constant', cval=0.0)
-	blurred_green = convolve(green, gaussian_kernel, mode='constant', cval=0.0)
-	blurred_blue = convolve(blue, gaussian_kernel, mode='constant', cval=0.0)
+	blurred_red = convolve(red, gaussian_kernel, mode="constant", cval=0.0)
+	blurred_green = convolve(green, gaussian_kernel, mode="constant", cval=0.0)
+	blurred_blue = convolve(blue, gaussian_kernel, mode="constant", cval=0.0)
 
 	# 合并通道
 	blurred_red = blurred_red.astype(np.uint8)
@@ -52,6 +53,7 @@ def apply_gaussian_blur(image: QImage):
 	# 创建新的 QImage
 	result_image = QImage(img_array.data, width, height, width * 4, QImage.Format_RGBA8888)
 	return result_image
+
 
 def apply_gaussian_blur_manual(image: QImage):
 	width = image.width()
@@ -86,18 +88,15 @@ def apply_gaussian_blur_manual(image: QImage):
 
 	return new_image
 
+
 class MainWindow(QMainWindow):  # noqa: F405
 	def update(self) -> None:
 		"""更新"""
 		self.paintBackground()
 
-
-
-	
-	def __init__(self : QWidget, parent=None) -> None:
+	def __init__(self: QWidget, parent=None) -> None:
 		super().__init__(parent)
 
-		
 		self.setGeometry(100, 100, 400, 300)
 		# 子窗口内容
 		central_widget = QWidget()
@@ -110,30 +109,30 @@ class MainWindow(QMainWindow):  # noqa: F405
 		self.backgroundColor = QColor(255, 255, 255, 0)  # 设置背景颜色为透明
 		self.background_image = None
 
-		self.isLogin : bool = False
+		self.isLogin: bool = False
 
 		self.setWindowTitle("毛毡工具")
 		self.setGeometry(100, 100, 400, 300)
 
-		self.layout : QVBoxLayout = QVBoxLayout()
+		self.layout: QVBoxLayout = QVBoxLayout()
 
-		self.login_button : QPushButton = QPushButton("登录")  # noqa: F405
+		self.login_button: QPushButton = QPushButton("登录")  # noqa: F405
 		self.login_button.clicked.connect(self.login)
 		self.layout.addWidget(self.login_button)
 
-		self.clear_comments_button : QPushButton = QPushButton("清除评论")  # noqa: F405
+		self.clear_comments_button: QPushButton = QPushButton("清除评论")  # noqa: F405
 		self.clear_comments_button.clicked.connect(self.clear_comments)
 		self.layout.addWidget(self.clear_comments_button)
 
-		self.clear_red_point_button : QPushButton = QPushButton("清除邮箱红点")  # noqa: F405
+		self.clear_red_point_button: QPushButton = QPushButton("清除邮箱红点")  # noqa: F405
 		self.clear_red_point_button.clicked.connect(self.clear_red_point)
 		self.layout.addWidget(self.clear_red_point_button)
 
-		self.reply_work_button : QPushButton = QPushButton("自动回复")  # noqa: F405
+		self.reply_work_button: QPushButton = QPushButton("自动回复")  # noqa: F405
 		self.reply_work_button.clicked.connect(self.reply_work)
 		self.layout.addWidget(self.reply_work_button)
 
-		self.logout_button : QPushButton = QPushButton("登出")  # noqa: F405
+		self.logout_button: QPushButton = QPushButton("登出")  # noqa: F405
 		self.logout_button.clicked.connect(self.logout)
 		self.layout.addWidget(self.logout_button)
 
@@ -143,10 +142,8 @@ class MainWindow(QMainWindow):  # noqa: F405
 
 		self.set_button_disabled(self.isLogin)
 
-		
-		
 		# self.central_widget : QLabel = QLabel(self)
-		
+
 		# 创建一个定时器并连接到update方法
 		# self.timer = QTimer()
 		# self.timer.timeout.connect(self.update)
@@ -156,7 +153,7 @@ class MainWindow(QMainWindow):  # noqa: F405
 		"""暂时不用"""
 		painter = QPainter(self)
 		screen = QApplication.primaryScreen()
-		self.background_image = screen.grabWindow(0).copy(self.x(), self.y(), self.width(), self.height())#.scaled(self.width(), self.height())
+		self.background_image = screen.grabWindow(0).copy(self.x(), self.y(), self.width(), self.height())  # .scaled(self.width(), self.height())
 
 		# 绘制背景图像
 		painter.drawPixmap(0, 0, self.background_image)
@@ -188,39 +185,35 @@ class MainWindow(QMainWindow):  # noqa: F405
 		# 绘制模糊后的图像
 		painter.drawPixmap(0, 0, self.background_image)
 
-
-		
-
-
 	def enable_gaussian_blur(self, hwnd):
 		# 创建 Direct2D 高斯模糊效果
 		d2d_factory = ctypes.windll.d2d1.D2D1CreateFactory(
 			ctypes.c_uint(0),  # D2D1_FACTORY_TYPE_SINGLE_THREADED
-			ctypes.c_void_p()  # CLSID_D2D1Factory
+			ctypes.c_void_p(),  # CLSID_D2D1Factory
 		)
 
 		d2d_context = ctypes.windll.d2d1.D2D1CreateDeviceContext(
 			ctypes.c_void_p(),  # ID2D1Device
-			ctypes.c_void_p()  # ID2D1DeviceContext
+			ctypes.c_void_p(),  # ID2D1DeviceContext
 		)
 
 		gaussian_blur_effect = ctypes.windll.d2d1.D2D1CreateEffect(
 			ctypes.c_void_p(),  # ID2D1EffectFactory
-			ctypes.c_void_p()  # CLSID_D2D1GaussianBlur
+			ctypes.c_void_p(),  # CLSID_D2D1GaussianBlur
 		)
 
 		# 设置高斯模糊参数
 		ctypes.windll.d2d1.ID2D1Effect_SetValue(
 			gaussian_blur_effect,
 			ctypes.c_int(0),  # D2D1_GAUSSIANBLUR_PROP_STANDARD_DEVIATION
-			ctypes.c_float(3.0)  # 标准差
+			ctypes.c_float(3.0),  # 标准差
 		)
 
 		# 应用高斯模糊效果
 		ctypes.windll.d2d1.ID2D1DeviceContext_SetEffect(
 			d2d_context,
 			gaussian_blur_effect,
-			ctypes.c_void_p()  # ID2D1Image
+			ctypes.c_void_p(),  # ID2D1Image
 		)
 
 		# 释放资源
@@ -235,7 +228,7 @@ class MainWindow(QMainWindow):  # noqa: F405
 		self.clear_red_point_button.setEnabled(is_disabled)
 		self.reply_work_button.setEnabled(is_disabled)
 		self.logout_button.setEnabled(is_disabled)
-	
+
 	def login(self) -> None:
 		"""登录"""
 		identity, ok1 = QInputDialog.getText(self, "登录", "请输入用户名:")  # noqa: F405
@@ -306,7 +299,6 @@ class MainWindow(QMainWindow):  # noqa: F405
 				self.set_button_disabled(self.isLogin)
 			except Exception as e:
 				QMessageBox.critical(self, "错误", f"登出失败: {e}")  # noqa: F405
-	
 
 
 def mainWindows() -> None:
@@ -314,6 +306,7 @@ def mainWindows() -> None:
 	window = MainWindow()
 	window.show()
 	sys.exit(app.exec())
+
 
 if __name__ == "__main__":
 	mainWindows()
