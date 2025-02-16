@@ -78,6 +78,7 @@ class CodeMaoClient:
 
 			except HTTPError as err:
 				print(f"HTTP Error {type(err).__name__} - {err}")
+				print(response.json())
 				if err.response.status_code in (429, 503):
 					time.sleep(2**attempt * backoff_factor)
 					continue

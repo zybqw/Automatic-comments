@@ -788,80 +788,92 @@ class Motion(ClassUnion):
 			"discussion": ("post", "comments", item[cfg["source_id_field"]]),
 			"post": ("forum", "posts", item[cfg["content_field"]]),
 		}
-
 		source_type, method, source_id = source_map[report_type]
 
 		if report_type in ("comment", "discussion"):
-			source_type = cast(Literal["shop", "post"], source_type)
-			method = cast(Literal["comments"], method)
 			comments = Obtain().get_comments_detail_new(
 				com_id=int(source_id),
-				source=source_type,
-				method=method,
+				source=cast(Literal["shop", "post"], source_type),
+				method=cast(Literal["comments"], method),
 			)
 			user_comments = self.tool_process.filter_items_by_values(
 				data=comments,
 				id_path="user_id",
 				values=item[f"{cfg['user_field']}_id"],
 			)
-			analyze_comments = self._analyze_comments(user_comments, int(source_id))
-
-			if analyze_comments:
-				report_count = 0
-				token = self.acquire.headers["Authorization"].split(" ")[1]
-				del self.acquire.headers["Authorization"]
-				accounts = self._switch_edu_account(limit=10)
-				report_source = "shop" if report_type == "comment" else "forum"
-				comment_ids = Obtain().get_comments_detail_new(com_id=int(source_id), source=source_type, method="comment_id")
-				for comment in analyze_comments:
-					for entry in comment.values():
-						for single_item in entry:
-							if report_count == 0:
-								try:
-									user = next(accounts)
-									del self.acquire.headers["Cookie"]
-									self.community_login.logout("web")
-									sleep(5)
-									self.community_login.login_password(user[0], user[1])
-									print(f"切换至账号{user[0]}")
-									# self.community_motion.sign_nature()
-								except StopIteration:
-									print("无可用账号")
-									break
-							if report_count >= self.setting.PARAMETER.report_max:
-								report_count = 0
-							item_id, comment_id = single_item.split(":")[0].split(".")
-							parent_id, reply_id = self.tool_routine.find_prefix_suffix(text=comment_id, candidates=comment_ids)
-							parent_id = cast(int, parent_id)
-							is_reply = ":reply" in entry
-							is_reply = cast(Literal[True], is_reply)
-							print(report_count)
-							# (user_id,content):[item_id.comment_id1:reply/comment,item_id.comment_id2:reply/comment]
-
-							if self.report_work(
-								source=report_source,
-								target_id=int(comment_id),
-								source_id=int(source_id),
-								reason_id=7,
-								parent_id=parent_id,
-								is_reply=is_reply,
-							):
-								report_count += 1
-
-				self.whale_routine.set_token(token)
-
-		else:
-			search_list = forum.Obtain().search_posts(title=source_id, limit=None)
-			user_list = self.tool_process.filter_items_by_values(
-				data=list(search_list),
-				id_path="user.id",
-				values=item[f"{cfg['user_field']}_id"],
+			# 调用新的自动举报方法
+			self._auto_report_comments(
+				user_comments=user_comments,
+				source_type=source_type,
+				source_id=int(source_id),
+				report_source="shop" if report_type == "comment" else "forum",
 			)
 
-			if user_list and len(user_list) >= self.setting.PARAMETER.spam_max:
-				print(f"此用户已经刷屏,共发布{len(user_list)}次")
-				for post in user_list:
-					print(f"违规帖子ID: https://shequ.codemao.cn/community/{post['id']}")
+	def _auto_report_comments(self, user_comments: list, source_type: str, source_id: int, report_source: str) -> None:
+		"""自动举报违规评论的新方法"""
+		analyze_comments = self._analyze_comments(user_comments, source_id)
+		if not analyze_comments:
+			return
+
+		original_token = self.acquire.headers["Authorization"].split(" ")[1]
+		del self.acquire.headers["Authorization"]
+		accounts = self._switch_edu_account(limit=None)
+		report_count = 0
+		max_retries = 3  # 最大重试次数
+
+		for comment in analyze_comments:
+			for entry in comment.values():
+				for single_item in entry:
+					retries = 0
+					success = False
+
+					while not success and retries < max_retries:
+						try:
+							if report_count % self.setting.PARAMETER.report_max == 0:
+								current_account = next(accounts)
+								self._switch_account(current_account)
+								report_count = 0
+
+							item_id, comment_id = single_item.split(":")[0].split(".")
+							comments = Obtain().get_comments_detail_new(
+								com_id=source_id,
+								source=cast(Literal["shop", "post"], source_type),  # 添加类型断言
+								method="comment_id",
+							)
+							parent_id, reply_id = self.tool_routine.find_prefix_suffix(
+								text=comment_id,
+								candidates=comments,
+							)
+
+							if self.report_work(
+								source=cast(Literal["forum", "work", "shop"], report_source),  # 添加类型断言
+								target_id=int(comment_id),
+								source_id=source_id,
+								reason_id=7,
+								parent_id=cast(int, parent_id),  # 确保非空
+								is_reply=bool(":reply" in single_item),
+							):
+								report_count += 1
+								success = True
+							else:
+								print("举报失败")
+
+						except Exception as e:
+							print(f"举报出错: {e}, 尝试切换账号...")
+							retries += 1
+							current_account = next(accounts)
+							self._switch_account(current_account)
+
+		# 恢复原始账号
+		self.whale_routine.set_token(original_token)
+
+	def _switch_account(self, account: tuple[str, str]) -> None:
+		"""执行账号切换的通用方法"""
+		self.community_login.logout("web")
+		del self.acquire.headers["Cookie"]
+		sleep(3)
+		print(f"切换至账号{account[0]}")
+		self.community_login.login_password(account[0], account[1])
 
 	def _analyze_comments(self, comments: list, source_id: int) -> None | Generator[dict[tuple[int, str], list[str]]]:
 		"""分析评论违规"""
@@ -893,29 +905,6 @@ class Motion(ClassUnion):
 			password = self.edu_motion.reset_password(student["id"])["password"]
 			# self.community_login.login_token(identity=student["username"], password=password)
 			yield student["username"], password
-
-	@overload
-	def report_work(
-		self,
-		source: Literal["forum", "work", "shop"],
-		target_id: int,
-		source_id: int,
-		reason_id: Literal[0, 1, 2, 3, 4, 5, 6, 7, 8],
-		parent_id: Literal[None],
-		*,
-		is_reply: Literal[False],
-	) -> bool: ...
-	@overload
-	def report_work(
-		self,
-		source: Literal["forum", "work", "shop"],
-		target_id: int,
-		source_id: int,
-		reason_id: Literal[0, 1, 2, 3, 4, 5, 6, 7, 8],
-		parent_id: int,
-		*,
-		is_reply: Literal[True],
-	) -> bool: ...
 
 	def report_work(
 		self,
