@@ -1,4 +1,5 @@
-extend-exclude = ["test", "**gui.py"]
+extend-exclude = ["test"]
+exclude = ["**/gui.py"]
 line-length = 180
 indent-width = 4
 target-version = "py313"
