@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 # 类型检查时显式导入 (仅供 IDE 识别)
 if TYPE_CHECKING:
-	from . import community, edu, forum, library, pickduck, shop, user, whale, work  # noqa: TC004
+	from . import community, edu, forum, library, pickduck, shop, user, whale, work
 
 # 修改后的 __all__ 列表,确保包含你需要的模块
 __all__ = ["community", "edu", "forum", "library", "pickduck", "shop", "user", "whale", "work"]

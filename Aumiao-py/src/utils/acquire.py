@@ -74,11 +74,12 @@ class CodeMaoClient:
 		for attempt in range(retries):
 			try:
 				response = self._session.request(method=method, url=url, headers=merged_headers, params=params, json=payload, timeout=timeout)
+				# print(f"Request {method} {url} {response.status_code}")
+				# print(response.json() if len(response.text) <= 100 else response.text[:100] + "...")
 				response.raise_for_status()
 
 			except HTTPError as err:
 				print(f"HTTP Error {type(err).__name__} - {err}")
-				print(response.json())
 				if err.response.status_code in (429, 503):
 					time.sleep(2**attempt * backoff_factor)
 					continue

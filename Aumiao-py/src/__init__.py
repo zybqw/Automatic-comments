@@ -9,9 +9,9 @@ _is_compiling = any("nuitka" in arg.lower() for arg in argv)
 
 # 类型检查时显式导入 (仅供 IDE 识别)
 if TYPE_CHECKING or _is_compiling:
-	from .api import community, edu, forum, library, pickduck, shop, user, whale, work
-	from .core import client
-	from .utils import data, decorator
+	from .api import community, edu, forum, library, pickduck, shop, user, whale, work  # noqa: F401
+	from .core import client  # noqa: F401
+	from .utils import data, decorator  # noqa: F401
 
 # 修改后的 __all__ 列表,确保包含你需要的模块
 # __all__ = ["client", "community", "data", "decorator", "edu", "forum", "library", "pickduck", "shop", "user", "whale", "work"]
@@ -23,19 +23,20 @@ __loaded_modules: dict[str, ModuleType] = {}
 _module_paths = {
 	"client": ".core.client",
 	"data": ".utils.data",
-	"decorator": ".utils.decorator", #  装饰器模块
-	"community": ".api.community", #  社区模块
-	"edu": ".api.edu", #  教育模块
-	"forum": ".api.forum", #  论坛模块
-	"library": ".api.library", #  图书馆模块
-	"pickduck": ".api.pickduck", #  点鸭模块
-	"shop": ".api.shop", #  商店模块
-	"user": ".api.user", #  用户模块
-	"whale": ".api.whale", #  Whale模块
-	"work": ".api.work", #  工作模块
+	"decorator": ".utils.decorator",  #  装饰器模块
+	"community": ".api.community",  #  社区模块
+	"edu": ".api.edu",  #  教育模块
+	"forum": ".api.forum",  #  论坛模块
+	"library": ".api.library",  #  图书馆模块
+	"pickduck": ".api.pickduck",  #  点鸭模块
+	"shop": ".api.shop",  #  商店模块
+	"user": ".api.user",  #  用户模块
+	"whale": ".api.whale",  #  Whale模块
+	"work": ".api.work",  #  工作模块
 }
 
-__all__ = list(_module_paths.keys())# | __all__
+__all__ = list(_module_paths.keys())  # type: ignore # | __all__  # noqa: PGH003
+
 
 def __getattr__(name: str) -> ModuleType:
 	"""实现动态延迟加载"""

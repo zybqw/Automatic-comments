@@ -206,6 +206,7 @@ class Motion:
 		return response.status_code == HTTPSTATUS.OK
 
 	# 举报讨论区下的评论
+	# {"comment_id": "13337461", "comment_source": "WORK_SHOP", "comment_parent_id": 0, "reporter_id": 12770114, "reason_id": "6", "reason_content": "垃圾广告", "description": ""}
 	def report_comment(
 		self,
 		comment_id: int,
@@ -224,7 +225,7 @@ class Motion:
 				"comment_parent_id": comment_parent_id,
 				"description": description,
 				"reason_content": reason_content,
-				"reason_id": reason_id,
+				"reason_id": str(reason_id),
 				"reporter_id": reporter_id,
 				"comment_source": comment_source,
 			},

@@ -646,26 +646,17 @@ class Motion(ClassUnion):
 
 	# 查看账户所有信息综合
 	def get_account_all_data(self) -> dict[Any, Any]:
-		s = self.user_obtain.get_data_details()
 		# 创建一个空列表来存储所有字典
 		all_data: list[dict] = []
 		# 调用每个函数并将结果添加到列表中
-		s = self.user_obtain.get_data_details()
-		all_data.append(s)
-		s = self.user_obtain.get_data_level()
-		all_data.append(s)
-		s = self.user_obtain.get_data_name()
-		all_data.append(s)
-		s = self.user_obtain.get_data_privacy()
-		all_data.append(s)
-		s = self.user_obtain.get_data_score()
-		all_data.append(s)
-		s = self.user_obtain.get_data_profile("web")
-		all_data.append(s)
-		s = self.user_obtain.get_data_tiger()
-		all_data.append(s)
-		s = self.edu_obtain.get_data_details()
-		all_data.append(s)
+		all_data.append(self.user_obtain.get_data_details())
+		all_data.append(self.user_obtain.get_data_level())
+		all_data.append(self.user_obtain.get_data_name())
+		all_data.append(self.user_obtain.get_data_privacy())
+		all_data.append(self.user_obtain.get_data_score())
+		all_data.append(self.user_obtain.get_data_profile("web"))
+		all_data.append(self.user_obtain.get_data_tiger())
+		all_data.append(self.edu_obtain.get_data_details())
 		return self.tool_routine.merge_user_data(data_list=all_data)
 
 	# 查看账户状态
@@ -809,18 +800,33 @@ class Motion(ClassUnion):
 				report_source="shop" if report_type == "comment" else "forum",
 			)
 
-	def _auto_report_comments(self, user_comments: list, source_type: str, source_id: int, report_source: str) -> None:
-		"""自动举报违规评论的新方法"""
+	def _auto_report_comments(self, user_comments: list, source_type: str, source_id: int, report_source: str) -> None:  # noqa: PLR0915
+		"""自动举报违规评论的优化方法"""
 		analyze_comments = self._analyze_comments(user_comments, source_id)
-		if not analyze_comments:
+		choice = input("是否自动举报违规评论? (Y/N) ").upper()
+		if not analyze_comments or choice != "Y":
 			return
 
+		# 账号管理优化
 		original_token = self.acquire.headers["Authorization"].split(" ")[1]
 		del self.acquire.headers["Authorization"]
-		accounts = self._switch_edu_account(limit=None)
+
+		# 预先获取所有可用教育账号并缓存
+		try:
+			all_accounts = list(self._switch_edu_account(limit=20))
+			if not all_accounts:
+				print("没有可用的教育账号")
+				return
+		except Exception as e:
+			print(f"获取教育账号失败: {e}")
+			return
+
+		current_account_idx = 0
 		report_count = 0
 		max_retries = 3  # 最大重试次数
+		success_count = 0  # 成功举报计数器
 
+		# 优化后的举报处理流程
 		for comment in analyze_comments:
 			for entry in comment.values():
 				for single_item in entry:
@@ -829,15 +835,25 @@ class Motion(ClassUnion):
 
 					while not success and retries < max_retries:
 						try:
-							if report_count % self.setting.PARAMETER.report_max == 0:
-								current_account = next(accounts)
-								self._switch_account(current_account)
-								report_count = 0
+							# 当达到最大举报次数或需要切换账号时
+							if report_count >= self.setting.PARAMETER.report_max or success_count == 0:
+								if current_account_idx >= len(all_accounts):
+									print("所有账号均已尝试")
+									return
 
+								# 获取新账号并登录
+								current_account = all_accounts[current_account_idx]
+								print(f"切换到账号 {current_account[0]}")
+								self._switch_account(current_account)
+								current_account_idx += 1
+								report_count = 0
+								success_count = 0
+
+							# 执行举报逻辑
 							item_id, comment_id = single_item.split(":")[0].split(".")
 							comments = Obtain().get_comments_detail_new(
 								com_id=source_id,
-								source=cast(Literal["shop", "post"], source_type),  # 添加类型断言
+								source=cast(Literal["shop", "post"], source_type),
 								method="comment_id",
 							)
 							parent_id, reply_id = self.tool_routine.find_prefix_suffix(
@@ -846,34 +862,53 @@ class Motion(ClassUnion):
 							)
 
 							if self.report_work(
-								source=cast(Literal["forum", "work", "shop"], report_source),  # 添加类型断言
+								source=cast(Literal["forum", "work", "shop"], report_source),
 								target_id=int(comment_id),
 								source_id=source_id,
 								reason_id=7,
-								parent_id=cast(int, parent_id),  # 确保非空
+								parent_id=cast(int, parent_id),
 								is_reply=bool(":reply" in single_item),
 							):
 								report_count += 1
+								success_count += 1
 								success = True
+								print(f"举报成功: {single_item} (当前账号成功次数: {success_count})")
 							else:
-								print("举报失败")
+								print("举报失败,尝试切换账号")
+								retries = max_retries  # 强制切换账号
 
 						except Exception as e:
-							print(f"举报出错: {e}, 尝试切换账号...")
+							print(f"举报出错: {e}")
 							retries += 1
-							current_account = next(accounts)
-							self._switch_account(current_account)
+							if retries >= max_retries:
+								print("达到最大重试次数,切换账号")
+								current_account_idx += 1
+								report_count = 0
+								success_count = 0
+
+					if not success:
+						print(f"无法处理举报项: {single_item}")
 
 		# 恢复原始账号
 		self.whale_routine.set_token(original_token)
 
+	def _switch_edu_account(self, limit: int | None) -> list[tuple[str, str]]:
+		"""返回所有学生账密列表(优化版本)"""
+		students = self.edu_obtain.get_students(limit=limit)
+		return [(student["username"], self.edu_motion.reset_password(student["id"])["password"]) for student in students]
+
 	def _switch_account(self, account: tuple[str, str]) -> None:
-		"""执行账号切换的通用方法"""
-		self.community_login.logout("web")
-		del self.acquire.headers["Cookie"]
-		sleep(3)
-		print(f"切换至账号{account[0]}")
-		self.community_login.login_password(account[0], account[1])
+		"""优化后的账号切换方法"""
+		try:
+			# 仅在需要时注销(比如Cookie存在时)
+			if "Cookie" in self.acquire.headers:
+				self.community_login.logout("web")
+				del self.acquire.headers["Cookie"]
+			self.community_login.login_password(account[0], account[1])
+			# 适当减少等待时间
+			sleep(1)
+		except Exception as e:
+			print(f"账号切换失败: {account[0]},错误信息: {e}")
 
 	def _analyze_comments(self, comments: list, source_id: int) -> None | Generator[dict[tuple[int, str], list[str]]]:
 		"""分析评论违规"""
@@ -895,16 +930,6 @@ class Motion(ClassUnion):
 				print(f"此用户已经刷屏,共发布{len(entry)}次")
 				yield {(user_id, content): entry}
 		return None
-
-	def _switch_edu_account(self, limit: int | None) -> Generator[tuple[str, str]]:
-		"""返回指定数量学生账密"""
-		students = self.edu_obtain.get_students(limit=limit)
-		for student in list(students)[::-1]:
-			self.community_login.logout("web")
-			self.community_login.login_token(identity="15271420410", password="AumiaoBlack114514")
-			password = self.edu_motion.reset_password(student["id"])["password"]
-			# self.community_login.login_token(identity=student["username"], password=password)
-			yield student["username"], password
 
 	def report_work(
 		self,
