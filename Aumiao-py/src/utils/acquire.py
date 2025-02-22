@@ -1,12 +1,12 @@
 import time
 from collections.abc import Generator
+from dataclasses import dataclass
 from enum import Enum
 from io import BytesIO
 from pathlib import Path
-from typing import Literal, Protocol, TypedDict, cast
+from typing import Literal, TypedDict, cast
 
 import requests
-from requests.cookies import RequestsCookieJar
 from requests.exceptions import ConnectionError as ReqConnectionError
 from requests.exceptions import HTTPError, RequestException, Timeout
 
@@ -16,6 +16,13 @@ from .decorator import singleton
 LOG_DIR: Path = Path.cwd() / "log"
 LOG_FILE_PATH: Path = LOG_DIR / f"{int(time.time())}.txt"
 DICT_ITEM = 2
+
+
+@dataclass
+class Token:
+	average = ""
+	edu = ""
+	judgement = ""
 
 
 class HTTPSTATUS(Enum):
@@ -32,8 +39,8 @@ class PaginationConfig(TypedDict, total=False):
 	response_offset_key: Literal["offset", "page"]
 
 
-class Loggable(Protocol):
-	def file_write(self, path: Path, content: str, method: str) -> None: ...
+# class Loggable(Protocol):
+# 	def file_write(self, path: Path, content: str, method: str) -> None: ...
 
 
 HttpMethod = Literal["GET", "POST", "DELETE", "PATCH", "PUT"]
@@ -47,8 +54,8 @@ class CodeMaoClient:
 		self._session = requests.Session()
 		self._config = data.SettingManager().data
 		self._processor = tool.CodeMaoProcess()
-		self._file: Loggable = file.CodeMaoFile()
-
+		self._file = file.CodeMaoFile()
+		self.token = Token()
 		self.base_url = "https://api.codemao.cn"
 		self.headers: dict[str, str] = self._config.PROGRAM.HEADERS.copy()
 		self.tool_process = tool.CodeMaoProcess()
@@ -70,11 +77,14 @@ class CodeMaoClient:
 		"""增强型请求方法,支持重试机制和更安全的超时处理"""
 		url = endpoint if endpoint.startswith("http") else f"{self.base_url}{endpoint}"
 		merged_headers = {**self.headers, **(headers or {})}
-		self._session.headers.clear()
+		# self._session.headers.clear()
 		for attempt in range(retries):
 			try:
 				response = self._session.request(method=method, url=url, headers=merged_headers, params=params, json=payload, timeout=timeout)
+				# print("=" * 82)
 				# print(f"Request {method} {url} {response.status_code}")
+				# if "Authorization" in response.request.headers:
+				# 	print(response.request.headers["Authorization"])
 				# print(response.json() if len(response.text) <= 100 else response.text[:100] + "...")
 				response.raise_for_status()
 
@@ -165,32 +175,43 @@ class CodeMaoClient:
 				if limit and yielded_count >= limit:  # 达到限制立即停止
 					return
 
-	def update_cookies(self, cookies: RequestsCookieJar | dict | str) -> None:
-		"""仅操作headers中的Cookie,不涉及session cookies"""
-		# 清除旧Cookie
-		if "Cookie" in self.headers:
-			del self.headers["Cookie"]
+	def switch_account(self, token: str, identity: Literal["judgement", "average", "edu"]) -> None:
+		self.headers["Cookie"] = ""
+		self.headers["Authorization"] = token
+		match identity:
+			case "average":
+				self.token.average = token
+			case "edu":
+				self.token.edu = token
+			case "judgement":
+				self.token.judgement = token
 
-		# 转换所有类型为Cookie字符串
-		def _to_cookie_str(cookie: RequestsCookieJar | dict | str) -> str:
-			if isinstance(cookie, RequestsCookieJar):
-				return "; ".join(f"{cookie.name}={cookie.value}" for cookie in cookie)
-			if isinstance(cookie, dict):
-				return "; ".join(f"{k}={v}" for k, v in cookie.items())
-			if isinstance(cookie, str):
-				# 过滤非法字符
-				return ";".join(part.strip() for part in cookie.split(";") if "=" in part and len(part.split("=")) == DICT_ITEM)
-			msg = f"不支持的Cookie类型: {type(cookie).__name__}"
-			raise TypeError(msg)
+	# def update_cookies(self, cookies: RequestsCookieJar | dict | str) -> None:
+	# 	"""仅操作headers中的Cookie,不涉及session cookies"""
+	# 	# 清除旧Cookie
+	# 	if "Cookie" in self.headers:
+	# 		del self.headers["Cookie"]
 
-		try:
-			cookie_str = _to_cookie_str(cookies)
-			if cookie_str:
-				self.headers["Cookie"] = cookie_str
-		except Exception as e:
-			print(f"Cookie更新失败: {e!s}")
-			msg = "无效的Cookie格式"
-			raise ValueError(msg) from e
+	# 	# 转换所有类型为Cookie字符串
+	# 	def _to_cookie_str(cookie: RequestsCookieJar | dict | str) -> str:
+	# 		if isinstance(cookie, RequestsCookieJar):
+	# 			return "; ".join(f"{cookie.name}={cookie.value}" for cookie in cookie)
+	# 		if isinstance(cookie, dict):
+	# 			return "; ".join(f"{k}={v}" for k, v in cookie.items())
+	# 		if isinstance(cookie, str):
+	# 			# 过滤非法字符
+	# 			return ";".join(part.strip() for part in cookie.split(";") if "=" in part and len(part.split("=")) == DICT_ITEM)
+	# 		msg = f"不支持的Cookie类型: {type(cookie).__name__}"
+	# 		raise TypeError(msg)
+
+	# 	try:
+	# 		cookie_str = _to_cookie_str(cookies)
+	# 		if cookie_str:
+	# 			self.headers["Cookie"] = cookie_str
+	# 	except Exception as e:
+	# 		print(f"Cookie更新失败: {e!s}")
+	# 		msg = "无效的Cookie格式"
+	# 		raise ValueError(msg) from e
 
 	def _log_request(self, response: requests.Response) -> None:
 		"""简化的日志记录,使用文本格式而不是字典"""

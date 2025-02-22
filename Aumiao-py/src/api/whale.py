@@ -14,10 +14,11 @@ class Routine:
 		self.tool_process = tool.CodeMaoProcess()
 
 	# 登录方法,传入用户名、密码、key和code,发送POST请求,更新cookies
-	def login(self, username: str, password: str, key: int, code: str) -> None:
+	def login(self, username: str, password: str, key: int, code: str) -> dict:
 		data = {"username": username, "password": password, "key": key, "code": code}
 		response = self.acquire.send_request(endpoint="https://api-whale.codemao.cn/admins/login", method="POST", payload=data)
-		self.acquire.update_cookies(response.cookies)
+		return response.json()
+		# self.acquire.update_cookies(response.cookies)
 
 	# 登出方法,发送DELETE请求,返回状态码是否为204
 	def logout(self) -> bool:
@@ -30,7 +31,8 @@ class Routine:
 		return response.json()
 
 	def set_token(self, token: str) -> None:
-		self.acquire.headers["Authorization"] = f"Bearer {token}"
+		self.acquire.switch_account(f"Bearer {token}", "judgement")
+		# self.acquire.headers["Authorization"] = f"Bearer {token}"
 
 
 @singleton

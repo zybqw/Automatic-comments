@@ -35,7 +35,8 @@ class Login:
 		identity: str,
 		password: str,
 		pid: str = "65edCTyg",
-	) -> str | None:
+		status: Literal["judgement", "average", "edu"] = "average",
+	) -> dict:
 		# cookies = utils.dict_from_cookiejar(response.cookies)
 
 		#   soup = BeautifulSoup(
@@ -57,10 +58,17 @@ class Login:
 		)
 
 		# 更新cookies
-		self.acquire.update_cookies(response.cookies)
+		# if save_status:
+		# 	self.acquire.update_cookies(response.cookies)
+		self.acquire.switch_account(token=response.json()["auth"]["token"], identity=status)
+		return response.json()
 
 	# cookie登录
-	def login_cookie(self, cookies: str) -> None | bool:
+	def login_cookie(
+		self,
+		cookies: str,
+		status: Literal["judgement", "average", "edu"] = "average",
+	) -> None | bool:
 		"""通过cookie登录"""
 		try:
 			# 将cookie字符串转换为字典
@@ -77,15 +85,24 @@ class Login:
 			headers={**self.acquire.headers, "cookie": cookies},
 		)
 		# 更新cookies
-		self.acquire.update_cookies(cookie)
+		# self.acquire.update_cookies(cookie)
+		self.acquire.switch_account(cookie["authorization"], identity=status)
 		return None
 
 	# token登录(毛毡最新登录方式)
-	def login_token(self, identity: str, password: str, pid: str = "65edCTyg") -> None:
+	def login_token(
+		self,
+		identity: str,
+		password: str,
+		pid: str = "65edCTyg",
+		status: Literal["judgement", "average", "edu"] = "average",
+	) -> dict:
 		timestamp = Obtain().get_timestamp()["data"]
 		response = self.get_login_ticket(identity=identity, timestamp=timestamp, pid=pid)
 		ticket = response["ticket"]
-		response = self.get_login_security(identity=identity, password=password, ticket=ticket, pid=pid)
+		resp = self.get_login_security(identity=identity, password=password, ticket=ticket, pid=pid)
+		self.acquire.switch_account(token=resp["auth"]["token"], identity=status)
+		return resp
 
 	# 返回完整cookie
 	def get_login_auth(self, token: str) -> dict[str, Any]:
@@ -141,7 +158,7 @@ class Login:
 			headers={**self.acquire.headers, "x-captcha-ticket": ticket},
 		)
 		# 更新cookies
-		self.acquire.update_cookies(response.cookies)
+		# self.acquire.update_cookies(response.cookies)
 		# 返回响应的json数据
 		return response.json()
 
@@ -173,7 +190,7 @@ class Login:
 			payload=data,
 			# headers=headers,
 		)
-		self.acquire.update_cookies(response.cookies)
+		# self.acquire.update_cookies(response.cookies)
 		return response.json()
 
 

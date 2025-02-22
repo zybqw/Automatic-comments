@@ -714,9 +714,10 @@ class Motion(ClassUnion):
 
 			while True:
 				print("-" * 50)
-				choice = input("选择操作: D:删除, S:禁言7天, P:通过, C:查看, F:检查违规  ").upper()
+				choice = input("选择操作: D:删除, S:禁言7天, P:通过, C:查看, F:检查违规, J:跳过").upper()
 				handler = getattr(self.whale_motion, cfg["handle_method"])
-
+				if choice == "J":
+					break
 				if choice in ("D", "S", "P"):
 					status_map = {"D": "DELETE", "S": "MUTE_SEVEN_DAYS", "P": "PASS"}
 					handler(report_id=item["id"], status=status_map[choice], admin_id=admin_id)
@@ -737,7 +738,8 @@ class Motion(ClassUnion):
 
 		for report_list, report_type in lists:
 			for item in report_list:
-				process_item(item, report_type)
+				process_item(item=item, report_type=report_type)
+		self.acquire.switch_account(token=self.acquire.token.average, identity="average")
 
 	def _show_details(self, item: dict, report_type: Literal["comment", "post", "discussion"], cfg: dict) -> None:
 		"""显示详细信息"""
@@ -795,12 +797,12 @@ class Motion(ClassUnion):
 			# 调用新的自动举报方法
 			self._auto_report_comments(
 				user_comments=user_comments,
-				source_type=source_type,
+				# source_type=source_type,
 				source_id=int(source_id),
 				report_source="shop" if report_type == "comment" else "forum",
 			)
 
-	def _auto_report_comments(self, user_comments: list, source_type: str, source_id: int, report_source: str) -> None:  # noqa: PLR0915
+	def _auto_report_comments(self, user_comments: list, source_id: int, report_source: str) -> None:
 		"""自动举报违规评论的优化方法"""
 		analyze_comments = self._analyze_comments(user_comments, source_id)
 		choice = input("是否自动举报违规评论? (Y/N) ").upper()
@@ -808,12 +810,13 @@ class Motion(ClassUnion):
 			return
 
 		# 账号管理优化
-		original_token = self.acquire.headers["Authorization"].split(" ")[1]
-		del self.acquire.headers["Authorization"]
+		# original_token = self.acquire.headers["Authorization"].split(" ")[1]
+		# del self.acquire.headers["Authorization"]
 
 		# 预先获取所有可用教育账号并缓存
 		try:
-			all_accounts = list(self._switch_edu_account(limit=20))
+			self.acquire.switch_account(token=self.acquire.token.average, identity="average")
+			all_accounts = self._switch_edu_account(limit=20)
 			if not all_accounts:
 				print("没有可用的教育账号")
 				return
@@ -837,28 +840,39 @@ class Motion(ClassUnion):
 						try:
 							# 当达到最大举报次数或需要切换账号时
 							if report_count >= self.setting.PARAMETER.report_max or success_count == 0:
-								if current_account_idx >= len(all_accounts):
+								try:
+									current_account = next(all_accounts)
+								except StopIteration:
 									print("所有账号均已尝试")
 									return
+								# if current_account_idx >= len(all_accounts):
+								# 	print("所有账号均已尝试")
+								# 	return
 
 								# 获取新账号并登录
-								current_account = all_accounts[current_account_idx]
+								# current_account = all_accounts[current_account_idx]
 								print(f"切换到账号 {current_account[0]}")
-								self._switch_account(current_account)
-								current_account_idx += 1
+								sleep(5)
+								# self.acquire.switch_account("", identity="edu")
+								self.community_login.login_token(identity=current_account[0], password=current_account[1], status="edu")
+								# self.acquire.switch_account(token=self.acquire.token.edu, identity="edu")
+								# print("*" * 85)
+								# print(f"token={self.acquire.token.edu}")
+								# self._switch_account(current_account)
+								# current_account_idx += 1
 								report_count = 0
 								success_count = 0
 
 							# 执行举报逻辑
 							item_id, comment_id = single_item.split(":")[0].split(".")
-							comments = Obtain().get_comments_detail_new(
-								com_id=source_id,
-								source=cast(Literal["shop", "post"], source_type),
-								method="comment_id",
-							)
+							# comments = Obtain().get_comments_detail_new(
+							# 	com_id=source_id,
+							# 	source=cast(Literal["shop", "post"], source_type),
+							# 	method="comment_id",
+							# )
 							parent_id, reply_id = self.tool_routine.find_prefix_suffix(
 								text=comment_id,
-								candidates=comments,
+								candidates=user_comments,
 							)
 
 							if self.report_work(
@@ -890,25 +904,28 @@ class Motion(ClassUnion):
 						print(f"无法处理举报项: {single_item}")
 
 		# 恢复原始账号
-		self.whale_routine.set_token(original_token)
+		self.whale_routine.set_token(self.acquire.token.judgement)
 
-	def _switch_edu_account(self, limit: int | None) -> list[tuple[str, str]]:
+	def _switch_edu_account(self, limit: int | None) -> Generator:
 		"""返回所有学生账密列表(优化版本)"""
 		students = self.edu_obtain.get_students(limit=limit)
-		return [(student["username"], self.edu_motion.reset_password(student["id"])["password"]) for student in students]
+		for student in students:
+			self.acquire.switch_account(token=self.acquire.token.average, identity="average")
+			yield student["username"], self.edu_motion.reset_password(student["id"])["password"]
+		# return [(student["username"], self.edu_motion.reset_password(student["id"])["password"]) for student in students]
 
-	def _switch_account(self, account: tuple[str, str]) -> None:
-		"""优化后的账号切换方法"""
-		try:
-			# 仅在需要时注销(比如Cookie存在时)
-			if "Cookie" in self.acquire.headers:
-				self.community_login.logout("web")
-				del self.acquire.headers["Cookie"]
-			self.community_login.login_password(account[0], account[1])
-			# 适当减少等待时间
-			sleep(1)
-		except Exception as e:
-			print(f"账号切换失败: {account[0]},错误信息: {e}")
+	# def _switch_account(self, account: tuple[str, str]) -> None:
+	# 	"""优化后的账号切换方法"""
+	# 	try:
+	# 		# 仅在需要时注销(比如Cookie存在时)
+	# 		if "Cookie" in self.acquire.headers:
+	# 			self.community_login.logout("web")
+	# 			del self.acquire.headers["Cookie"]
+	# 		self.community_login.login_password(account[0], account[1])
+	# 		# 适当减少等待时间
+	# 		sleep(1)
+	# 	except Exception as e:
+	# 		print(f"账号切换失败: {account[0]},错误信息: {e}")
 
 	def _analyze_comments(self, comments: list, source_id: int) -> None | Generator[dict[tuple[int, str], list[str]]]:
 		"""分析评论违规"""

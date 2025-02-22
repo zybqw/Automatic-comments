@@ -9,3 +9,5 @@
 *test.py
 *test/
 **.ipynb
+**.exe
+**.pdb
