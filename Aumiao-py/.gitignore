@@ -1,0 +1,13 @@
+*.VSCodeCounter/
+*.venv/
+*.vscode/
+*__pycache__/
+*data/
+*dist/
+*log/
+*media/
+*test.py
+*test/
+**.ipynb
+**.exe
+**.pdb
