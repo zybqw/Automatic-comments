@@ -140,7 +140,7 @@ class NovelMotion:
 			},
 		)
 		# 如果return_data为True,则返回response的json数据,否则返回response的状态码
-		return response.json() if return_data else response.status_code == HTTPSTATUS.OK
+		return response.json() if return_data else response.status_code == HTTPSTATUS.OK.value
 
 	def like_comment(self, method: select, comment_id: int, *, return_data: bool = False) -> bool | dict:
 		"""点赞小说评论"""
@@ -150,7 +150,7 @@ class NovelMotion:
 			method=method,
 		)
 		# 如果return_data为True,则返回response的json数据,否则返回response的状态码
-		return response.json() if return_data else response.status_code == HTTPSTATUS.OK
+		return response.json() if return_data else response.status_code == HTTPSTATUS.OK.value
 
 	def delete_comment(self, comment_id: int, *, return_data: bool = False) -> bool | dict:
 		"""发送请求,删除小说评论"""
@@ -159,7 +159,7 @@ class NovelMotion:
 			method="DELETE",
 		)
 		# 如果return_data为True,则返回response的json数据,否则返回response的状态码
-		return response.json() if return_data else response.status_code == HTTPSTATUS.OK
+		return response.json() if return_data else response.status_code == HTTPSTATUS.OK.value
 
 
 @singleton
@@ -210,4 +210,4 @@ class BookObtain:
 			endpoint=f"/api/sprite/praise/{book_id}",
 			method=method,
 		)
-		return response.json() if return_data else response.status_code == HTTPSTATUS.OK
+		return response.json() if return_data else response.status_code == HTTPSTATUS.OK.value

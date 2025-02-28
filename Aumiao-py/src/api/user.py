@@ -318,7 +318,7 @@ class Motion:
 		"""发送PUT请求,设置正在做的事"""
 		response = self.acquire.send_request(endpoint="/nemo/v2/user/basic", method="PUT", payload={"doing": doing})
 
-		return response.status_code == HTTPSTATUS.OK
+		return response.status_code == HTTPSTATUS.OK.value
 
 	def set_data_username(self, username: str) -> bool:
 		"""发送PATCH请求,设置登录用户名(实验性功能)"""
@@ -328,7 +328,7 @@ class Motion:
 			payload={"username": username},
 		)
 		# 返回请求状态码是否为204
-		return response.status_code == HTTPSTATUS.NO_CONTENT
+		return response.status_code == HTTPSTATUS.NO_CONTENT.value
 
 	def verify_phone(self, phone_num: int) -> dict:
 		"""发送GET请求,验证手机号"""
@@ -350,7 +350,7 @@ class Motion:
 			payload=data,
 		)
 		# 返回请求状态码是否为204
-		return response.status_code == HTTPSTATUS.NO_CONTENT
+		return response.status_code == HTTPSTATUS.NO_CONTENT.value
 
 	def modify_phonenum_captcha(self, old_phonenum: int, new_phonenum: int) -> bool:
 		"""发送POST请求,修改手机号(获取验证码)"""
@@ -361,7 +361,7 @@ class Motion:
 			payload=data,
 		)
 		# 返回请求状态码是否为204
-		return response.status_code == HTTPSTATUS.NO_CONTENT
+		return response.status_code == HTTPSTATUS.NO_CONTENT.value
 
 	def modify_phonenum(self, captcha: int, phonenum: int) -> bool:
 		"""发送PATCH请求,修改手机号"""
@@ -382,7 +382,7 @@ class Motion:
 			raise ValueError(msg)
 		response = self.acquire.send_request(endpoint="/nemo/v2/user/basic", method="PUT", payload=data)
 
-		return response.status_code == HTTPSTATUS.OK
+		return response.status_code == HTTPSTATUS.OK.value
 
 	def cancel_avatar_frame(self) -> bool:
 		"""取消设置头像框"""
@@ -391,7 +391,7 @@ class Motion:
 			method="PUT",
 		)
 
-		return response.status_code == HTTPSTATUS.OK
+		return response.status_code == HTTPSTATUS.OK.value
 
 	# id 2,3,4 代表Lv2,3,4头像框
 	def set_avatar_frame(self, frame_id: Literal[2, 3, 4]) -> bool:
@@ -401,7 +401,7 @@ class Motion:
 			method="PUT",
 		)
 
-		return response.status_code == HTTPSTATUS.OK
+		return response.status_code == HTTPSTATUS.OK.value
 
 	# 设置info
 	# birthday值为timestamp
@@ -433,4 +433,4 @@ class Motion:
 			payload=data,
 		)
 		# 返回请求状态码是否为204
-		return response.status_code == HTTPSTATUS.NO_CONTENT
+		return response.status_code == HTTPSTATUS.NO_CONTENT.value

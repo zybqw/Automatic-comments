@@ -131,7 +131,7 @@ class Login:
 			payload={},
 		)
 		# 返回响应状态码是否为204
-		return response.status_code == HTTPSTATUS.NO_CONTENT
+		return response.status_code == HTTPSTATUS.NO_CONTENT.value
 
 	# 登录信息
 	def get_login_security(
@@ -449,7 +449,7 @@ class Motion:
 	# 签订友好协议
 	def sign_nature(self) -> bool:
 		response = self.acquire.send_request(endpoint="/nemo/v3/user/level/signature", method="POST")
-		return response.status_code == HTTPSTATUS.OK
+		return response.status_code == HTTPSTATUS.OK.value
 
 	# 获取用户协议
 	def get_nature(self) -> dict:
@@ -487,4 +487,4 @@ class Motion:
 			endpoint=f"/web/message-record/{message_id}",
 			method="DELETE",
 		)
-		return response.status_code == HTTPSTATUS.NO_CONTENT
+		return response.status_code == HTTPSTATUS.NO_CONTENT.value

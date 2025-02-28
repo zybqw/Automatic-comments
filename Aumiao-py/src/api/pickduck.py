@@ -13,4 +13,4 @@ class PickDuck:
 	def cookie_out(self, cookies: str) -> bool:
 		data = {"cookie": cookies, "do": "apply"}
 		response = self.acquire.send_request(endpoint="https://shequ.pgaot.com/?mod=bcmcookieout", method="POST", payload=data)
-		return response.status_code == HTTPSTATUS.OK
+		return response.status_code == HTTPSTATUS.OK.value

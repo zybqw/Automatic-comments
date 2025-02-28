@@ -161,7 +161,7 @@ class Motion:
 			payload=data,
 		)
 		# 返回响应数据或状态码
-		return response.json() if return_data else response.status_code == HTTPSTATUS.CREATED
+		return response.json() if return_data else response.status_code == HTTPSTATUS.CREATED.value
 
 	# 对某个回帖评论进行回复
 	def reply_comment(self, reply_id: int, parent_id: int, content: str, *, return_data: bool = False) -> dict | bool:
@@ -170,7 +170,7 @@ class Motion:
 
 		response = self.acquire.send_request(endpoint=f"/web/forums/replies/{reply_id}/comments", method="POST", payload=data)
 		# 返回响应数据或状态码
-		return response.json() if return_data else response.status_code == HTTPSTATUS.CREATED
+		return response.json() if return_data else response.status_code == HTTPSTATUS.CREATED.value
 
 	# 点赞某个回帖或评论
 	def like_comment_or_reply(
@@ -188,7 +188,7 @@ class Motion:
 			params=params,
 		)
 		# 返回状态码
-		return response.status_code == HTTPSTATUS.NO_CONTENT
+		return response.status_code == HTTPSTATUS.NO_CONTENT.value
 
 	@overload
 	def report_reply_or_comment(
@@ -236,7 +236,7 @@ class Motion:
 			payload=data,
 		)
 		# 返回响应数据或状态码
-		return response.json() if return_data else response.status_code == HTTPSTATUS.CREATED
+		return response.json() if return_data else response.status_code == HTTPSTATUS.CREATED.value
 
 	# 举报某个帖子
 	def report_post(
@@ -260,7 +260,7 @@ class Motion:
 			payload=data,
 		)
 		# 返回响应数据或状态码
-		return response.json() if return_data else response.status_code == HTTPSTATUS.CREATED
+		return response.json() if return_data else response.status_code == HTTPSTATUS.CREATED.value
 
 	# 删除某个回帖或评论或帖子
 	def delete_comment_post_reply(self, ids: int, types: Literal["replies", "comments", "posts"]) -> bool:
@@ -269,7 +269,7 @@ class Motion:
 			method="DELETE",
 		)
 		# 返回状态码
-		return response.status_code == HTTPSTATUS.NO_CONTENT
+		return response.status_code == HTTPSTATUS.NO_CONTENT.value
 
 	# 置顶某个回帖
 	def top_comment(self, comment_id: int, method: Literal["PUT", "DELETE"]) -> bool:
@@ -278,7 +278,7 @@ class Motion:
 			method=method,
 		)
 		# 返回状态码
-		return response.status_code == HTTPSTATUS.NO_CONTENT
+		return response.status_code == HTTPSTATUS.NO_CONTENT.value
 
 	# 发布帖子
 	def create_post(
@@ -304,4 +304,4 @@ class Motion:
 			payload=data,
 		)
 		# 返回响应数据或状态码
-		return response.json() if return_data else response.status_code == HTTPSTATUS.CREATED
+		return response.json() if return_data else response.status_code == HTTPSTATUS.CREATED.value

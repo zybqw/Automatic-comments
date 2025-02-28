@@ -23,7 +23,7 @@ class Routine:
 	# 登出方法,发送DELETE请求,返回状态码是否为204
 	def logout(self) -> bool:
 		response = self.acquire.send_request(endpoint="https://api-whale.codemao.cn/admins/logout", method="DELETE", payload={})
-		return response.status_code == HTTPSTATUS.NO_CONTENT
+		return response.status_code == HTTPSTATUS.NO_CONTENT.value
 
 	# 获取数据信息方法,发送GET请求,返回json数据
 	def get_data_info(self) -> dict:
@@ -107,7 +107,7 @@ class Motion:
 			method="PATCH",
 			payload={"admin_id": admin_id, "status": status},
 		)
-		return response.status_code == HTTPSTATUS.NO_CONTENT
+		return response.status_code == HTTPSTATUS.NO_CONTENT.value
 
 	# 处理讨论区举报
 	def handle_discussion_report(self, report_id: int, admin_id: int, status: Literal["PASS", "DELETE", "MUTE_SEVEN_DAYS", "MUTE_THREE_MONTHS"]) -> bool:
@@ -116,7 +116,7 @@ class Motion:
 			method="PATCH",
 			payload={"admin_id": admin_id, "status": status},
 		)
-		return response.status_code == HTTPSTATUS.NO_CONTENT
+		return response.status_code == HTTPSTATUS.NO_CONTENT.value
 
 	# 处理评论举报
 	def handle_comment_report(self, report_id: int, admin_id: int, status: Literal["PASS", "DELETE", "MUTE_SEVEN_DAYS", "MUTE_THREE_MONTHS"]) -> bool:
@@ -125,7 +125,7 @@ class Motion:
 			method="PATCH",
 			payload={"admin_id": admin_id, "status": status},
 		)
-		return response.status_code == HTTPSTATUS.NO_CONTENT
+		return response.status_code == HTTPSTATUS.NO_CONTENT.value
 
 	# 处理作品举报
 	def handle_work_report(self, report_id: int, admin_id: int, status: Literal["PASS", "DELETE", "UNLOAD"]) -> bool:
@@ -134,4 +134,4 @@ class Motion:
 			method="PATCH",
 			payload={"admin_id": admin_id, "status": status},
 		)
-		return response.status_code == HTTPSTATUS.NO_CONTENT
+		return response.status_code == HTTPSTATUS.NO_CONTENT.value

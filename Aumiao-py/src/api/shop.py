@@ -132,8 +132,8 @@ class Motion:
 				"preview_url": preview_url,
 			},
 		)
-		# 返回请求状态码是否为 HTTPSTATUS.OK
-		return response.status_code == HTTPSTATUS.OK
+		# 返回请求状态码是否为 HTTPSTATUS.OK.value
+		return response.status_code == HTTPSTATUS.OK.value
 
 	# 创建工作室
 	def create_shop(self, name: str, description: str, preview_url: str) -> dict:
@@ -158,8 +158,8 @@ class Motion:
 			method="POST",
 			payload={"id": shop_id},
 		)
-		# 返回请求状态码是否为 HTTPSTATUS.OK
-		return response.status_code == HTTPSTATUS.OK
+		# 返回请求状态码是否为 HTTPSTATUS.OK.value
+		return response.status_code == HTTPSTATUS.OK.value
 
 	# 在指定工作室投稿作品
 	def contribute_work(self, shop_id: int, work_id: int) -> bool:
@@ -169,8 +169,8 @@ class Motion:
 			method="POST",
 			payload={"id": shop_id, "work_id": work_id},
 		)
-		# 返回请求状态码是否为 HTTPSTATUS.OK
-		return response.status_code == HTTPSTATUS.OK
+		# 返回请求状态码是否为 HTTPSTATUS.OK.value
+		return response.status_code == HTTPSTATUS.OK.value
 
 	# 在指定工作室删除作品
 	def remove_work(self, shop_id: int, work_id: int) -> bool:
@@ -180,8 +180,8 @@ class Motion:
 			method="POST",
 			payload={"id": shop_id, "work_id": work_id},
 		)
-		# 返回请求状态码是否为 HTTPSTATUS.OK
-		return response.status_code == HTTPSTATUS.OK
+		# 返回请求状态码是否为 HTTPSTATUS.OK.value
+		return response.status_code == HTTPSTATUS.OK.value
 
 	# 申请加入工作室
 	def apply_join(self, shop_id: int, qq: str | None = None) -> bool:
@@ -191,8 +191,8 @@ class Motion:
 			method="POST",
 			payload={"id": shop_id, "qq": qq},
 		)
-		# 返回请求状态码是否为 HTTPSTATUS.OK
-		return response.status_code == HTTPSTATUS.OK
+		# 返回请求状态码是否为 HTTPSTATUS.OK.value
+		return response.status_code == HTTPSTATUS.OK.value
 
 	# 审核已经申请加入工作室的用户
 	def audit_join(self, shop_id: int, status: Literal["UNACCEPTED", "ACCEPTED"], user_id: int) -> bool:
@@ -202,8 +202,8 @@ class Motion:
 			method="POST",
 			payload={"id": shop_id, "status": status, "user_id": user_id},
 		)
-		# 返回请求状态码是否为 HTTPSTATUS.OK
-		return response.status_code == HTTPSTATUS.OK
+		# 返回请求状态码是否为 HTTPSTATUS.OK.value
+		return response.status_code == HTTPSTATUS.OK.value
 
 	# 举报讨论区下的评论
 	# {"comment_id": "13337461", "comment_source": "WORK_SHOP", "comment_parent_id": 0, "reporter_id": 12770114, "reason_id": "6", "reason_content": "垃圾广告", "description": ""}
@@ -230,7 +230,7 @@ class Motion:
 				"comment_source": comment_source,
 			},
 		)
-		return response.status_code == HTTPSTATUS.CREATED
+		return response.status_code == HTTPSTATUS.CREATED.value
 
 	# 回复评论
 	# parent_id貌似只能为0
@@ -244,7 +244,7 @@ class Motion:
 				"source": source,
 			},
 		)
-		return response.json() if return_data else response.status_code == HTTPSTATUS.CREATED
+		return response.json() if return_data else response.status_code == HTTPSTATUS.CREATED.value
 
 	# 删除回复
 	def delete_reply(self, comment_id: int, source: Literal["WORK_SHOP"] = "WORK_SHOP") -> bool:
@@ -253,7 +253,7 @@ class Motion:
 			method="DELETE",
 			params={"source": source},
 		)
-		return response.status_code == HTTPSTATUS.NO_CONTENT
+		return response.status_code == HTTPSTATUS.NO_CONTENT.value
 
 	# 评论
 	def comment_work(self, shop_id: int, content: str, rich_content: str, source: Literal["WORK_SHOP"] = "WORK_SHOP", *, return_code: bool = False) -> bool:
@@ -266,7 +266,7 @@ class Motion:
 				"source": source,
 			},
 		)
-		return response.json() if return_code else response.status_code == HTTPSTATUS.CREATED
+		return response.json() if return_code else response.status_code == HTTPSTATUS.CREATED.value
 
 	# 删除评论
 	def delete_comment(self, comment_id: int, source: Literal["WORK_SHOP"] = "WORK_SHOP") -> bool:
@@ -275,4 +275,4 @@ class Motion:
 			method="DELETE",
 			params={"source": source},
 		)
-		return response.status_code == HTTPSTATUS.NO_CONTENT
+		return response.status_code == HTTPSTATUS.NO_CONTENT.value

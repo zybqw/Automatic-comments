@@ -28,7 +28,7 @@ class Motion:
 			params=params,
 		)
 
-		return response.status_code == HTTPSTATUS.OK
+		return response.status_code == HTTPSTATUS.OK.value
 
 	# 创建班级
 	def create_class(self, name: str) -> dict:
@@ -50,7 +50,7 @@ class Motion:
 			method="DELETE",
 			params=params,
 		)
-		return response.status_code == HTTPSTATUS.NO_CONTENT
+		return response.status_code == HTTPSTATUS.NO_CONTENT.value
 
 	# 班级内新建学生账号
 	def create_student(self, name: list[str], class_id: int) -> bool:
@@ -62,7 +62,7 @@ class Motion:
 			payload=data,
 		)
 
-		return response.status_code == HTTPSTATUS.OK
+		return response.status_code == HTTPSTATUS.OK.value
 
 	# 重置密码
 	def reset_password(self, stu_id: list[int]) -> dict:
@@ -82,7 +82,7 @@ class Motion:
 			method="POST",
 			payload=data,
 		)
-		return response.status_code == HTTPSTATUS.OK
+		return response.status_code == HTTPSTATUS.OK.value
 
 	# 添加、修改自定义备课包
 	# patch为修改信息,post用于创建备课包
@@ -91,7 +91,7 @@ class Motion:
 
 		response = self.acquire.send_request(endpoint="https://eduzone.codemao.cn/edu/zone/lesson/customized/packages", method=method, payload=data)
 
-		return response.json() if return_data else response.status_code == HTTPSTATUS.OK
+		return response.json() if return_data else response.status_code == HTTPSTATUS.OK.value
 		# 返回响应数据或请求状态码是否为200
 
 	# 删除作品
@@ -101,7 +101,7 @@ class Motion:
 			method="POST",
 			payload={},
 		)
-		return response.status_code == HTTPSTATUS.OK
+		return response.status_code == HTTPSTATUS.OK.value
 
 	# 移除班级内的学生至无班级学生
 	def remove_student_to_no_class(self, class_id: int, stu_id: int) -> bool:
@@ -111,15 +111,24 @@ class Motion:
 			method="DELETE",
 			params=params,
 		)
-		return response.status_code == HTTPSTATUS.NO_CONTENT
+		return response.status_code == HTTPSTATUS.NO_CONTENT.value
 
 	# 获取活动课程包
-	def get_activity_package(self, package_id: int) -> dict:
+	def get_activity_package_open(self, package_id: int) -> dict:
 		payload = {"packageId": package_id}
 		response = self.acquire.send_request(
 			endpoint="https://eduzone.codemao.cn/edu/zone/activity/open/package",
 			method="POST",
 			payload=payload,
+		)
+		return response.json()
+
+	# 获取活动课程包
+	def get_activity_package(self) -> dict:
+		response = self.acquire.send_request(
+			endpoint="https://eduzone.codemao.cn/edu/zone/activity/list/activity/package",
+			method="POST",
+			payload={},
 		)
 		return response.json()
 
@@ -130,7 +139,7 @@ class Motion:
 			method="POST",
 			payload={},
 		)
-		return response.status_code == HTTPSTATUS.OK
+		return response.status_code == HTTPSTATUS.OK.value
 
 
 @singleton
@@ -543,7 +552,7 @@ class Obtain:
 			method=method,
 			params=params,
 		)
-		return response.json() if method == "GET" else response.status_code == HTTPSTATUS.OK
+		return response.json() if method == "GET" else response.status_code == HTTPSTATUS.OK.value
 
 	# 获取自定义备课包内容
 	def get_customized_package_lesson(self, package_id: int, limit: int) -> dict:

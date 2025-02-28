@@ -89,7 +89,7 @@ class Motion:
 			payload=data,
 		)
 		# 返回响应
-		return response.status_code == HTTPSTATUS.OK
+		return response.status_code == HTTPSTATUS.OK.value
 
 	# 新建KN作品/更新作品信息
 	# 更新作品时会在更新之前运行该函数,之后再publish
@@ -165,7 +165,7 @@ class Motion:
 			method="POST",
 			payload=data,
 		)
-		return response.status_code == HTTPSTATUS.OK
+		return response.status_code == HTTPSTATUS.OK.value
 
 	# 关注的函数
 	def follow_work(self, user_id: int, method: select = "POST") -> bool:
@@ -175,7 +175,7 @@ class Motion:
 			payload={},
 		)
 
-		return response.status_code == HTTPSTATUS.NO_CONTENT
+		return response.status_code == HTTPSTATUS.NO_CONTENT.value
 
 	# 收藏的函数
 	def collection_work(self, work_id: int, method: select = "POST") -> bool:
@@ -184,7 +184,7 @@ class Motion:
 			method=method,
 			payload={},
 		)
-		return response.status_code == HTTPSTATUS.OK
+		return response.status_code == HTTPSTATUS.OK.value
 
 	# 点赞的函数
 	def like_work(self, work_id: int, method: select = "POST") -> bool:
@@ -194,7 +194,7 @@ class Motion:
 			method=method,
 			payload={},
 		)
-		return response.status_code == HTTPSTATUS.OK
+		return response.status_code == HTTPSTATUS.OK.value
 
 	# 分享的函数
 	def share_work(self, work_id: int) -> bool:
@@ -203,7 +203,7 @@ class Motion:
 			method="POST",
 			payload={},
 		)
-		return response.status_code == HTTPSTATUS.OK
+		return response.status_code == HTTPSTATUS.OK.value
 
 	# 对某个作品进行评论的函数
 	def comment_work(self, work_id: int, comment: str, emoji: str | None = None, *, return_data: bool = False) -> bool | dict:
@@ -215,7 +215,7 @@ class Motion:
 				"emoji_content": emoji,
 			},
 		)
-		return response.json() if return_data else response.status_code == HTTPSTATUS.CREATED
+		return response.json() if return_data else response.status_code == HTTPSTATUS.CREATED.value
 
 	# 对某个作品下评论进行回复
 	def reply_work(
@@ -233,7 +233,7 @@ class Motion:
 			method="POST",
 			payload=data,
 		)
-		return response.json() if return_data else response.status_code == HTTPSTATUS.CREATED
+		return response.json() if return_data else response.status_code == HTTPSTATUS.CREATED.value
 
 	# 删除作品某个评论或评论的回复(评论和回复都会分配一个唯一id)
 	def del_comment_work(self, work_id: int, comment_id: int, **_: object) -> bool:
@@ -241,7 +241,7 @@ class Motion:
 			endpoint=f"/creation-tools/v1/works/{work_id}/comment/{comment_id}",
 			method="DELETE",
 		)
-		return response.status_code == HTTPSTATUS.NO_CONTENT
+		return response.status_code == HTTPSTATUS.NO_CONTENT.value
 
 	# 对某个作品举报
 	def report_work(self, describe: str, reason: str, work_id: int) -> bool:
@@ -252,7 +252,7 @@ class Motion:
 		}
 
 		response = self.acquire.send_request(endpoint="/nemo/v2/report/work", method="POST", payload=data)
-		return response.status_code == HTTPSTATUS.OK
+		return response.status_code == HTTPSTATUS.OK.value
 
 	# 设置某个评论置顶
 	def set_comment_top(
@@ -265,12 +265,12 @@ class Motion:
 	) -> bool:
 		response = self.acquire.send_request(endpoint=f"/creation-tools/v1/works/{work_id}/comment/{comment_id}/top", method=method, payload={})
 
-		return response.json() if return_data else response.status_code == HTTPSTATUS.NO_CONTENT
+		return response.json() if return_data else response.status_code == HTTPSTATUS.NO_CONTENT.value
 
 	# 点赞作品的评论
 	def like_comment_work(self, work_id: int, comment_id: int, method: select = "POST") -> bool:
 		response = self.acquire.send_request(endpoint=f"/creation-tools/v1/works/{work_id}/comment/{comment_id}/liked", method=method, payload={})
-		return response.status_code == HTTPSTATUS.CREATED
+		return response.status_code == HTTPSTATUS.CREATED.value
 
 	# 举报作品的评论
 	def report_comment_work(self, work_id: int, comment_id: int, reason: str) -> bool:
@@ -283,7 +283,7 @@ class Motion:
 			method="POST",
 			payload=data,
 		)
-		return response.status_code == HTTPSTATUS.OK
+		return response.status_code == HTTPSTATUS.OK.value
 
 	# 将一个作品设置为协作作品
 	def set_coll_work(self, work_id: int) -> bool:
@@ -292,7 +292,7 @@ class Motion:
 			method="POST",
 			payload={},
 		)
-		return response.status_code == HTTPSTATUS.OK
+		return response.status_code == HTTPSTATUS.OK.value
 
 	# 删除一个未发布的作品
 	def delete_temp_work_kitten(self, work_id: int) -> bool:
@@ -300,7 +300,7 @@ class Motion:
 			endpoint=f"https://api-creation.codemao.cn/kitten/common/work/{work_id}/temporarily",
 			method="DELETE",
 		)
-		return response.status_code == HTTPSTATUS.OK
+		return response.status_code == HTTPSTATUS.OK.value
 
 	# 删除一个kn作品
 	# force疑似1为网页端删除,2为手机端删除
@@ -311,7 +311,7 @@ class Motion:
 			method="DELETE",
 			params=params,
 		)
-		return response.status_code == HTTPSTATUS.OK
+		return response.status_code == HTTPSTATUS.OK.value
 
 	# 取消发布一个已发布的作品
 	def unpublish_work(self, work_id: int) -> bool:
@@ -320,7 +320,7 @@ class Motion:
 			method="PATCH",
 			payload={},
 		)
-		return response.status_code == HTTPSTATUS.NO_CONTENT
+		return response.status_code == HTTPSTATUS.NO_CONTENT.value
 
 	# 取消发布一个已发布的作品
 	def unpublish_work_web(self, work_id: int) -> bool:
@@ -329,7 +329,7 @@ class Motion:
 			method="PUT",
 			payload={},
 		)
-		return response.status_code == HTTPSTATUS.OK
+		return response.status_code == HTTPSTATUS.OK.value
 
 	# 取消发布一个已发布的KN作品
 	def unpublish_kn_work(self, work_id: int) -> bool:
@@ -337,7 +337,7 @@ class Motion:
 			endpoint=f"https://api-creation.codemao.cn/neko/community/work/unpublish/{work_id}",
 			method="PUT",
 		)
-		return response.status_code == HTTPSTATUS.OK
+		return response.status_code == HTTPSTATUS.OK.value
 
 	# 清空回收站kitten作品
 	def clear_recycle_kitten_works(self) -> bool:
@@ -346,7 +346,7 @@ class Motion:
 			method="DELETE",
 		)
 
-		return response.status_code == HTTPSTATUS.NO_CONTENT
+		return response.status_code == HTTPSTATUS.NO_CONTENT.value
 
 	#  清空回收站KN作品
 	def clear_recycle_kn_works(self) -> bool:
@@ -355,7 +355,7 @@ class Motion:
 			method="DELETE",
 		)
 
-		return response.status_code == HTTPSTATUS.OK
+		return response.status_code == HTTPSTATUS.OK.value
 
 	# 重命名作品
 	# TODO@Aurzex: work_type未知,应该是作品标签?work_type可有可无,抓包抓出来有个值为8
@@ -372,7 +372,7 @@ class Motion:
 			method="PATCH",
 			params={"is_check_name": is_check_name, "name": name, "work_type": work_type},
 		)
-		return response.status_code == HTTPSTATUS.OK
+		return response.status_code == HTTPSTATUS.OK.value
 
 
 @singleton
